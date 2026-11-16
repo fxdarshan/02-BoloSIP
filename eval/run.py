@@ -64,7 +64,7 @@ def phase0_checks() -> list[dict]:
     # No third-party packages imported by the core package.
     code = ("import sys, bolosip, bolosip.config, bolosip.guards;"
             "std=set(sys.stdlib_module_names);"
-            "bad=sorted({m.split('.')[0] for m in sys.modules} - std - {'bolosip'});"
+            "bad=sorted({m.split('.')[0] for m in sys.modules} - std - {'bolosip', '__main__'});"
             "print(','.join(bad))")
     proc = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True)
     third_party = [m for m in proc.stdout.strip().split(",") if m]
