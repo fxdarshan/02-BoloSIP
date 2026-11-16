@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 2 · 16 Nov 2026 · The original brief is kept unchanged in [`problem_statement_original.txt`](problem_statement_original.txt).
+Version 2.1 · 16 Nov 2026 · Corpus expanded from 5 to 27 schemes · The original brief is kept unchanged in [`problem_statement_original.txt`](problem_statement_original.txt).
 
 ---
 
@@ -25,23 +25,66 @@ Retail investors and support teams ask the same factual questions about mutual f
 
 ### 3.1 AMC and schemes (the corpus)
 
-One AMC: **HDFC Mutual Fund**. Five schemes, all Direct plan, Growth option:
+One AMC: **HDFC Mutual Fund**. 27 schemes, all Direct plan, Growth option. Names and categories are as shown on each scheme page (checked 16 Nov 2026).
+
+**Equity (16)**
 
 | # | Scheme | Category | Scheme page (data source) |
 |---|---|---|---|
-| 1 | HDFC Large Cap Fund | Equity – Large Cap | https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth |
-| 2 | HDFC Mid Cap Fund | Equity – Mid Cap | https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth |
-| 3 | HDFC Small Cap Fund | Equity – Small Cap | https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth |
-| 4 | HDFC Multi Cap Fund | Equity – Multi Cap | https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth |
-| 5 | HDFC Silver ETF FoF | Fund of Funds – Silver | https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth |
+| 1 | HDFC Large Cap Fund | Large Cap | https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth |
+| 2 | HDFC Mid Cap Fund | Mid Cap | https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth |
+| 3 | HDFC Small Cap Fund | Small Cap | https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth |
+| 4 | HDFC Large & Mid Cap Fund | Large & Mid Cap | https://groww.in/mutual-funds/hdfc-large-mid-cap-fund-direct-growth |
+| 5 | HDFC Multi Cap Fund | Multi Cap | https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth |
+| 6 | HDFC Flexi Cap Fund ¹ | Flexi Cap | https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth |
+| 7 | HDFC Focused Fund | Focused | https://groww.in/mutual-funds/hdfc-focused-fund-direct-growth |
+| 8 | HDFC NIFTY 50 Index Fund | Index (Large Cap) | https://groww.in/mutual-funds/hdfc-nifty-50-index-fund-direct-growth |
+| 9 | HDFC BSE Sensex Index Fund | Index (Large Cap) | https://groww.in/mutual-funds/hdfc-bse-sensex-index-fund-direct-growth |
+| 10 | HDFC Pharma and Healthcare Fund | Sectoral | https://groww.in/mutual-funds/hdfc-pharma-and-healthcare-fund-direct-growth |
+| 11 | HDFC Technology Fund | Sectoral | https://groww.in/mutual-funds/hdfc-technology-fund-direct-growth |
+| 12 | HDFC Transportation and Logistics Fund | Sectoral | https://groww.in/mutual-funds/hdfc-transportation-and-logistics-fund-direct-growth |
+| 13 | HDFC Defence Fund | Thematic | https://groww.in/mutual-funds/hdfc-defence-fund-direct-growth |
+| 14 | HDFC Housing Opportunities Fund | Thematic | https://groww.in/mutual-funds/hdfc-housing-opportunities-fund-direct-growth |
+| 15 | HDFC Business Cycle Fund | Thematic | https://groww.in/mutual-funds/hdfc-business-cycle-fund-direct-growth |
+| 16 | HDFC Infrastructure Fund | Thematic | https://groww.in/mutual-funds/hdfc-infrastructure-fund-direct-growth |
 
-> None of these five schemes is an ELSS (tax-saving) scheme. ELSS lock-in questions are answered with the general rule from an official source, and the answer says that none of the covered schemes is ELSS.
+¹ The page URL still uses the scheme's former name, "HDFC Equity Fund". BoloSIP must recognise both names.
+
+**Hybrid (4)**
+
+| # | Scheme | Category | Scheme page (data source) |
+|---|---|---|---|
+| 17 | HDFC Balanced Advantage Fund | Dynamic Asset Allocation | https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth |
+| 18 | HDFC Multi Asset Allocation Fund | Multi Asset Allocation | https://groww.in/mutual-funds/hdfc-multi-asset-allocation-fund-direct-growth |
+| 19 | HDFC Equity Savings Fund | Equity Savings | https://groww.in/mutual-funds/hdfc-equity-savings-fund-direct-growth |
+| 20 | HDFC Arbitrage Fund | Arbitrage | https://groww.in/mutual-funds/hdfc-arbitrage-fund-direct-growth |
+
+**Debt (6)**
+
+| # | Scheme | Category | Scheme page (data source) |
+|---|---|---|---|
+| 21 | HDFC Overnight Fund | Overnight | https://groww.in/mutual-funds/hdfc-overnight-fund-direct-growth |
+| 22 | HDFC Liquid Fund | Liquid | https://groww.in/mutual-funds/hdfc-liquid-fund-direct-growth |
+| 23 | HDFC Money Market Fund | Money Market | https://groww.in/mutual-funds/hdfc-money-market-fund-direct-growth |
+| 24 | HDFC Ultra Short Term Fund | Ultra Short Term | https://groww.in/mutual-funds/hdfc-ultra-short-term-fund-direct-growth |
+| 25 | HDFC Banking and PSU Debt Fund | Banking and PSU Debt | https://groww.in/mutual-funds/hdfc-banking-and-psu-debt-fund-direct-growth |
+| 26 | HDFC Gilt Fund | Gilt | https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth |
+
+**Fund of Funds (1)**
+
+| # | Scheme | Category | Scheme page (data source) |
+|---|---|---|---|
+| 27 | HDFC Silver ETF FoF | FoF – Silver | https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth |
+
+> None of these 27 schemes is an ELSS (tax-saving) scheme. ELSS lock-in questions are answered with the general rule from an official source, and the answer says that none of the covered schemes is ELSS.
+>
+> Some schemes have similar names, such as Large Cap / Large & Mid Cap / NIFTY 50 Index / BSE Sensex Index, Equity Savings / Flexi Cap ("HDFC Equity"), and Liquid / Money Market / Overnight. Where a name could mean more than one scheme, BoloSIP must ask which one the user means rather than guess.
 
 ### 3.2 Source policy
 
 | Kind of question | Allowed sources |
 |---|---|
-| Scheme facts (expense ratio, exit load, minimum SIP, riskometer, benchmark, fund manager, NAV, AUM) | The five scheme pages above, as prescribed by this brief. Where the same fact is on an HDFC Mutual Fund page (factsheet, SID/KIM, TER disclosure), that page may be cited instead. |
+| Scheme facts (expense ratio, exit load, minimum SIP, riskometer, benchmark, fund manager, NAV, AUM) | The 27 scheme pages above, as prescribed by this brief. Where the same fact is on an HDFC Mutual Fund page (factsheet, SID/KIM, TER disclosure), that page may be cited instead. |
 | Processes (download a statement, capital gains report) | HDFC Mutual Fund, its registrar CAMS, or MF Central |
 | Concepts and education (what is an exit load, riskometer levels, ELSS rules) | AMFI, SEBI, HDFC Mutual Fund |
 | Performance and returns | HDFC Mutual Fund's official factsheet page, as a link only |
@@ -68,7 +111,7 @@ Never used: third-party blogs, news sites, forums, or other aggregator content.
 
 - Investment advice, recommendations, suitability, "best fund" rankings
 - Return calculations, performance comparisons, projections, SIP calculators
-- Any AMC or scheme beyond the five listed
+- Any AMC or scheme beyond the 27 listed
 - Transactions, logins, account lookups, or anything that needs personal data
 - Tax advice (BoloSIP may link to an official page, but does not interpret anyone's tax position)
 
@@ -98,7 +141,7 @@ Checks run in this order. The first one that matches decides the reply.
 | 1 | Personal data in the message (PAN, Aadhaar, account or folio number, OTP, email, phone) | Pattern match | Politely decline. Say BoloSIP does not need or store personal details. **Do not store the raw message**; save only a redacted version. |
 | 2 | Advisory or opinion question ("Should I invest?", "Which is better?", "Is it safe?") | Intent check | Polite refusal that restates the facts-only limit, plus one educational link (AMFI or SEBI). |
 | 3 | Performance or returns question ("What were the 3-year returns?") | Intent check | No numbers. One sentence pointing to the official HDFC factsheet, plus its link. |
-| 4 | Scheme-specific question with no scheme named | No scheme found in the message or earlier in the thread | Ask which of the five schemes the user means. |
+| 4 | Scheme-specific question with no scheme named, or a name that matches more than one scheme | No single scheme found in the message or earlier in the thread | Ask which of the 27 schemes the user means. |
 | 5 | Question not covered by the corpus | Retrieval confidence below threshold | Say the information is not in BoloSIP's sources, with a link to the closest official page. Never guess. |
 | 6 | Covered factual question | Otherwise | Factual answer per 4.1. |
 
@@ -142,7 +185,7 @@ Also:
 
 ## 8. Data freshness
 
-- Scheme facts are rebuilt by running the ingestion script, which re-fetches the five scheme pages.
+- Scheme facts are rebuilt by running the ingestion script, which re-fetches the 27 scheme pages.
 - Each stored fact keeps its source URL and the date it was fetched. That date is what the answer footer shows.
 - Hand-curated notes from official sources carry a "reviewed on" date, updated whenever they are rechecked.
 
@@ -163,13 +206,14 @@ The build is accepted when an automated test run shows all of the following:
 
 | # | Criterion | Check |
 |---|---|---|
-| 1 | Correct facts | Expense ratio, exit load, minimum SIP, riskometer and benchmark for all 5 schemes match the source page (25 questions). |
+| 1 | Correct facts | Expense ratio, exit load, minimum SIP, riskometer and benchmark for all 27 schemes match the source page (5 facts × 27 schemes = 135 checks). |
 | 2 | Answer format | 100% of answers have 3 sentences or fewer, exactly one URL, and the footer. |
 | 3 | Valid citations | Every cited URL is on the allowed-source list (3.2). |
 | 4 | Refusals | At least 10 advisory phrasings ("should I invest", "which is better", "is it safe", "X vs Y", …) are all refused with an AMFI or SEBI link. |
 | 5 | Performance handling | Returns questions get the factsheet link and contain no return figures. |
 | 6 | Privacy | Messages with a sample PAN, Aadhaar, email, phone or OTP are declined, and the stored thread holds only the redacted text. |
 | 7 | Threads | Two threads asking about different schemes give correct follow-up answers without crossing over. |
+| 7a | Similar names | Ambiguous names (e.g. "HDFC Equity", "HDFC large cap index") get a clarifying question; "HDFC Equity Fund" and "HDFC Flexi Cap Fund" both resolve to the same scheme where unambiguous. |
 | 8 | No guessing | Questions outside the corpus (e.g. a scheme from another AMC) get a "not in my sources" reply, not a made-up answer. |
 | 9 | UI | Welcome message, three example questions and the disclaimer are visible on load. |
 
