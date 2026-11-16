@@ -13,3 +13,6 @@
 *.jpg binary
 *.ico binary
 *.pdf binary
+
+# Saved source pages: keep byte-for-byte as fetched (no line-ending conversion).
+data/raw/*.html -text
