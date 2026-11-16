@@ -1,0 +1,15 @@
+# Store text files with LF line endings in git, whatever the OS.
+* text=auto eol=lf
+
+# Windows scripts keep CRLF so PowerShell / cmd handle them natively.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Never touch binary files.
+*.sqlite3 binary
+*.db binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary

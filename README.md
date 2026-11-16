@@ -22,6 +22,14 @@ Run the evaluation report for a phase:
 python -m eval.run --phase 0
 ```
 
+Run every check (tests + evaluation gates) in one go:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts\check.ps1
+```
+
+On macOS / Linux use `sh scripts/check.sh`. The same checks run on GitHub after every push (Python 3.10–3.13, Windows and Linux).
+
 ## Settings and the Groq API key
 
 All local settings live in a `.env` file in the project folder. It is git-ignored, so your key never reaches GitHub.
@@ -55,5 +63,5 @@ The Groq key is optional. Without it, BoloSIP answers with the source text direc
 | [Problem statement](Doc/problem_statement.md) | Scope, the 27 schemes, response rules, acceptance criteria |
 | [Architecture](Doc/architecture.md) | Components, data model, pipeline, API, security |
 | [Implementation plan](Doc/Implementation-plan.md) | Phases 0–9 with tasks and exit criteria |
-| [Edge cases](Doc/edge-case.md) | 232+ corner cases and expected behaviour |
+| [Edge cases](Doc/edge-case.md) | 234 corner cases and expected behaviour |
 | [Evaluation](Doc/eval.md) | Datasets, metrics and pass thresholds per phase |

@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+bolosip/__init__.py
+bolosip/config.py
+bolosip/guards.py
+bolosip.egg-info/PKG-INFO
+bolosip.egg-info/SOURCES.txt
+bolosip.egg-info/dependency_links.txt
+bolosip.egg-info/requires.txt
+bolosip.egg-info/top_level.txt
+tests/test_env_file.py
+tests/test_smoke.py

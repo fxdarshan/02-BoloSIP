@@ -93,7 +93,7 @@ flowchart LR
 4. Confirm `.gitignore` covers `__pycache__/`, `*.sqlite3`, `.env` and `graft/`.
 5. Add a stub `README.md` with a one-paragraph description and the disclaimer.
 
-**Files:** `bolosip/__init__.py`, `bolosip/config.py`, `tests/__init__.py`, `tests/test_smoke.py`, `tests/test_env_file.py`, `requirements.txt`, `.env.example`, `.env` (local only), `README.md`
+**Files:** `bolosip/__init__.py`, `bolosip/config.py`, `tests/__init__.py`, `tests/test_smoke.py`, `tests/test_env_file.py`, `requirements.txt`, `pyproject.toml`, `.env.example`, `.env` (local only), `.gitattributes`, `.editorconfig`, `.github/workflows/tests.yml`, `scripts/check.ps1`, `scripts/check.sh`, `scripts/md_to_txt.py`, `eval/run.py`, `eval/datasets/README.md`, `CHANGELOG.md`, `README.md`
 
 **Exit criteria**
 - [x] `python -m unittest discover tests` passes, with no third-party packages installed.
@@ -413,9 +413,9 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 
 2. **Paraphrase set:** for each of the 9 question types in PS §3.3, write 3 ways of asking (e.g. "TER", "annual charges", "how much does it cost per year"). Add keywords until every paraphrase passes.
 3. **Tune the weights and thresholds** in `config.py` against this suite. Record the final values and the pass rate in a comment.
-4. **Regression guard:** a CI-style script (`scripts/check.ps1` and `scripts/check.sh`) runs ingestion validation (offline mode) and then all tests.
+4. **Regression guard:** extend `scripts/check.ps1` / `check.sh` and the CI workflow (created in Phase 0) to also run ingestion validation in offline mode before the tests.
 
-**Files:** `tests/test_acceptance.py`, `tests/paraphrases.json`, `bolosip/config.py`, `ingest.py` (`--offline` flag), `scripts/check.*`
+**Files:** `tests/test_acceptance.py`, `tests/paraphrases.json`, `bolosip/config.py`, `ingest.py` (`--offline` flag), `scripts/check.*`, `.github/workflows/tests.yml`
 
 **Exit criteria**
 - [ ] `python -m unittest discover tests` passes **100%** offline, with no LLM.

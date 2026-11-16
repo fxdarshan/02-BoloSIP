@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.2 · 16 Nov 2026 · Based on [architecture.md](architecture.md) v1.2 (LLM provider: Groq) and [Implementation-plan.md](Implementation-plan.md) v1.0
+Version 1.2 · 16 Nov 2026 · Based on [architecture.md](architecture.md) v1.2 (LLM provider: Groq) and [Implementation-plan.md](Implementation-plan.md) v1.2
 
 ---
 
@@ -367,10 +367,10 @@ These cases were not handled by architecture v1.0. **All 9 have been added to [a
 | Retrieval | RET-01 – RET-15 | `test_retrieval.py`, `tests/paraphrases.json` |
 | Formatting | FMT-01 – FMT-13 | `test_format.py`, `test_ingest.py` |
 | Ingestion | ING-01 – ING-19 | `test_ingest.py` |
-| LLM | LLM-01 – LLM-16 | `test_llm.py` |
+| LLM | LLM-01 – LLM-18 | `test_llm.py` |
 | Threads and storage | THR-01 – THR-12 | `test_threads.py`, `test_api.py` |
 | UI | UI-01 – UI-16 | Manual checklist (README) |
 | Security | SEC-01 – SEC-10 | `test_api.py` |
 | Compliance | CMP-01 – CMP-06 | `test_ingest.py`, `test_pipeline.py`, manual |
 
-**Total: 232 cases.** Every automated case should appear by ID in a test name, so a failing test points straight back to this document.
+**Total: 234 cases.** Every automated case should appear by ID in a test name, so a failing test points straight back to this document.
