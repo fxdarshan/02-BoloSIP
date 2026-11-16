@@ -16,3 +16,7 @@ graft/.cache/
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# Ingestion temp files (atomic write + lock, GAP-04)
+data/corpus.json.tmp
+data/.ingest.lock

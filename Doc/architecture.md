@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.1 · 16 Nov 2026 · Implements [problem_statement.md](problem_statement.md) v2.1 · v1.1 adds the 9 design-gap fixes from [edge-case.md](edge-case.md) §16 (marked **GAP-xx** below)
+Version 1.2 · 16 Nov 2026 · Implements [problem_statement.md](problem_statement.md) v2.2 · v1.2: the optional LLM is **Groq** · v1.1 added the 9 design-gap fixes from [edge-case.md](edge-case.md) §16 (marked **GAP-xx** below)
 
 ---
 
@@ -18,7 +18,7 @@ These principles drive the design. When two pull in different directions, the fi
 | P2 | **Accuracy over intelligence** | The source text is the answer. An LLM may only rephrase it, and the system works fully without one. |
 | P3 | **One fact, one source** | The corpus is split into single-fact chunks, each carrying its own source URL and date. The citation comes from the chunk, never from the model. |
 | P4 | **Code enforces the rules** | Sentence limit, single link and footer are added or checked in code after composition, not left to a prompt. |
-| P5 | **Small and inspectable** | Python standard library plus one optional dependency (`anthropic`). The corpus is one JSON file you can read, diff and review in git. |
+| P5 | **Small and inspectable** | Python standard library plus one optional dependency (`groq`). The corpus is one JSON file you can read, diff and review in git. |
 
 ## 2. System context
 
@@ -27,7 +27,7 @@ flowchart LR
     U([User in browser]) -->|HTTP JSON| S[BoloSIP server]
     S --> DB[(SQLite threads)]
     S --> C[(corpus.json)]
-    S -.optional.-> L[Claude API]
+    S -.optional.-> L[Groq API]
     I[ingest.py] -->|writes| C
     I -->|fetches| G[27 Groww scheme pages]
     O[official_docs.json<br/>hand-curated: HDFC MF, AMFI,<br/>SEBI, CAMS, MF Central] --> I
@@ -40,7 +40,7 @@ flowchart LR
 | `corpus.json` | Read-only knowledge base, built offline | Trusted (reviewed in git) |
 | Groww scheme pages | Source of scheme facts (the brief's named exception) | Fetched data; parsed, never executed |
 | Official pages | Source of process and education notes | Curated by hand, with a review date |
-| Claude API | Optional rephrasing of retrieved text | Output checked before use |
+| Groq API | Optional rephrasing of retrieved text (third-party service) | Output checked before use; receives no personal data |
 
 ## 3. Components
 
@@ -59,7 +59,7 @@ flowchart TB
         PIPE --> SR[Scheme resolver<br/>bolosip/schemes.py]
         PIPE --> RT[Retriever<br/>bolosip/retriever.py]
         PIPE --> CO[Composer<br/>bolosip/composer.py]
-        CO -.optional.-> LLM[Claude client<br/>bolosip/llm.py]
+        CO -.optional.-> LLM[Groq client<br/>bolosip/llm.py]
         PIPE --> FM[Formatter + validator<br/>bolosip/formatter.py]
         API --> ST[Thread store<br/>bolosip/store.py]
         RT --> CJ
@@ -76,7 +76,7 @@ flowchart TB
 | Scheme resolver | `bolosip/schemes.py` | Map free text to a scheme ID using aliases; detect ambiguity; use the thread's last scheme | Planned |
 | Retriever | `bolosip/retriever.py` | BM25 ranking plus topic and scheme boosts; returns a ranked list with scores | Planned |
 | Composer | `bolosip/composer.py` | Turn the top chunk into answer text, extractive by default with LLM rephrasing optional | Planned |
-| LLM client | `bolosip/llm.py` | Thin wrapper around the Anthropic SDK; returns `None` on any failure | Planned |
+| LLM client | `bolosip/llm.py` | Thin wrapper around the Groq SDK; returns `None` on any failure | Planned |
 | Formatter | `bolosip/formatter.py` | Enforce ≤ 3 sentences, strip stray URLs, attach one citation and the footer | Planned |
 | Pipeline | `bolosip/pipeline.py` | Run the ordered decision rules (section 6) and return a `Reply` | Planned |
 | Thread store | `bolosip/store.py` | SQLite persistence of threads and redacted messages | Planned |
@@ -118,7 +118,7 @@ flowchart TB
 │   ├── test_format.py
 │   ├── test_threads.py
 │   └── test_acceptance.py
-├── requirements.txt                     # anthropic (optional)
+├── requirements.txt                     # groq (optional)
 └── README.md
 ```
 
@@ -225,7 +225,7 @@ sequenceDiagram
     participant P as pipeline
     participant S as store
     participant R as retriever
-    participant L as Claude (optional)
+    participant L as Groq LLM (optional)
 
     UI->>API: POST /api/threads/{id}/messages {text}
     API->>P: handle(text, thread_ctx)
@@ -333,17 +333,20 @@ The answer text is the top chunk's `text`, unchanged. Chunks are written at inge
 
 ### 9.2 LLM mode (optional)
 
-This mode is enabled when Anthropic credentials are available and `BOLOSIP_LLM=on`. The LLM is used **only to rephrase**, so the answer fits the user's wording. For example, "Is there any exit load?" can be answered "Yes, …" instead of just repeating the stored sentence.
+This mode uses **Groq** as the LLM provider. It is enabled when the `groq` package is installed, `GROQ_API_KEY` is set, and `BOLOSIP_LLM` is not `off`. The LLM is used **only to rephrase**, so the answer fits the user's wording. For example, "Is there any exit load?" can be answered "Yes, …" instead of just repeating the stored sentence.
 
 | Setting | Value |
 |---|---|
-| SDK | `anthropic` (official Python SDK) |
-| Model | `claude-opus-5-5` (override with `BOLOSIP_MODEL`) |
-| Effort | `output_config={"effort": "low"}`: a short, simple task |
-| Refusal fallback | `betas=["server-side-fallback-2026-07-01"]`, `fallbacks="default"` |
-| `max_tokens` | 1024 |
-| Input | System prompt + question + **only the top chunk's text** (not the URL) |
+| Provider | Groq (fast hosted inference of open-weight models) |
+| SDK | `groq` (official Python SDK): `from groq import Groq`, then `client.chat.completions.create(...)` |
+| Client | `Groq(timeout=15.0, max_retries=1)`; reads `GROQ_API_KEY` from the environment |
+| Model | `llama-3.3-70b-versatile` (a Groq production model; override with `BOLOSIP_MODEL`) |
+| `temperature` | `0`: the same input gives the same rewording |
+| `max_completion_tokens` | `200`: enough for 3 short sentences |
+| Messages | `system` = rules below; `user` = question + **only the top chunk's text** (not the URL) |
 | Timeout | 15 s, then extractive mode |
+
+Groq retires and adds models over time, so the model ID lives only in `config.py` / `BOLOSIP_MODEL`. Check the current production list at console.groq.com/docs/models before each release. Smaller models (e.g. `llama-3.1-8b-instant`) are faster but must still pass the Phase 7 evaluation before being used.
 
 **System prompt (outline):**
 
@@ -353,7 +356,7 @@ This mode is enabled when Anthropic credentials are available and `BOLOSIP_LLM=o
 
 **Output checks.** If any check fails, the system falls back to extractive mode:
 
-- `stop_reason` is not `refusal`, and the text is not `NOT_IN_SOURCE`.
+- `choices[0].finish_reason` is `stop` (not `length`, which means the reply was cut off), and the text is not `NOT_IN_SOURCE`.
 - Every number in the output also appears in the chunk text, so the model cannot invent figures. Numbers are **normalised before comparing (GAP-06)**: remove `₹`, `Rs`/`Rs.`, `INR` and thousands separators (both `1,00,687` and `100,687` become `100687`); drop trailing zeros after the decimal point (`0.730` → `0.73`); map the number words one to twelve to digits ("one year" = "1 year"); and accept `%` with or without a space. Dates are compared after parsing, so "12 Nov 2026" equals "12-Nov-2026".
 - The output contains no URL and no advice words (it is run through `is_advisory`).
 
@@ -399,7 +402,7 @@ The guards run on the **raw** text. The redacted text is what gets stored and lo
 - **Server:** `http.server.ThreadingHTTPServer` handles each request on its own thread.
 - **Read-only shared data:** the corpus and BM25 index are loaded once at start-up and never changed, so threads can read them safely without locks.
 - **SQLite:** each request opens its own connection (`check_same_thread=False` is not needed). WAL mode is on (`PRAGMA journal_mode=WAL`) so reads don't block writes. A user message and its reply are written in one transaction.
-- **LLM calls:** the Anthropic client is created once and shared between threads. Its HTTP client supports concurrent use.
+- **LLM calls:** the Groq client is created once and shared between threads. Its HTTP client supports concurrent use.
 - **Ordering:** the UI disables the send button for a thread while a request is in flight, so messages within one thread arrive in order. Different threads can still run at the same time.
 
 ## 13. HTTP API
@@ -493,9 +496,9 @@ flowchart LR
 | `BOLOSIP_DB` | `data/bolosip.sqlite3` | Thread store path |
 | `BOLOSIP_CORPUS` | `data/corpus.json` | Corpus path |
 | `BOLOSIP_LLM` | `auto` | `auto` (on if credentials found) · `on` · `off` |
-| `BOLOSIP_MODEL` | `claude-opus-5-5` | Model used for rephrasing |
+| `BOLOSIP_MODEL` | `llama-3.3-70b-versatile` | Groq model used for rephrasing |
 | `BOLOSIP_RATE_MSG` / `BOLOSIP_RATE_ALL` | `30` / `120` | Per-IP limits per minute: messages / all requests (GAP-09) |
-| `ANTHROPIC_API_KEY` | — | Read by the SDK; never logged or committed |
+| `GROQ_API_KEY` | — | Groq API key, read by the SDK; never logged or committed |
 
 ## 17. Security and privacy
 
@@ -510,6 +513,7 @@ flowchart LR
 | Other websites calling the local API (CSRF, DNS rebinding) | `Host` and `Origin` checks, JSON-only `POST` bodies, no CORS headers (GAP-08) |
 | Another AMC's scheme answered with HDFC data | Other-AMC name check before alias matching (GAP-01) |
 | Secrets in git | `.env` git-ignored; key read from the environment only. |
+| Question text sent to a third party (Groq) | Only `answer` replies use the LLM, only after the personal-data guard, and only the question plus one public chunk are sent. `BOLOSIP_LLM=off` keeps everything local. |
 
 ## 18. Testing strategy
 
@@ -536,10 +540,10 @@ python server.py
 
 Then open http://127.0.0.1:8000.
 
-To turn on LLM rephrasing, install the SDK and set `ANTHROPIC_API_KEY` before starting the server:
+To turn on LLM rephrasing, install the Groq SDK and set `GROQ_API_KEY` before starting the server:
 
 ```bash
-pip install anthropic
+pip install groq
 ```
 
 To run the tests:
@@ -572,6 +576,7 @@ python -m unittest discover tests
 | D9 | Reject other-AMC names before alias matching (GAP-01) | Require "HDFC" in every question | Users rarely type "HDFC"; a name list keeps short questions working and stops wrong-AMC answers |
 | D10 | `help` reply kind with no link (GAP-02) | Treat greetings as `not_found` | A greeting states no fact, so a citation would be meaningless |
 | D11 | Origin and Host checks instead of auth tokens (GAP-08) | Login or API key | Keeps "no login" (PS §7) while stopping other sites from using the local API |
+| D12 | Groq as the optional LLM provider | Anthropic Claude, OpenAI, local model | Project choice: fast, low-cost hosted open-weight models; the rephrase-only design means any provider can be swapped behind `llm.py` |
 
 ## 22. Future work
 

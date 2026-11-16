@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.1 · 16 Nov 2026 · Builds what [architecture.md](architecture.md) v1.1 describes, to meet [problem_statement.md](problem_statement.md) v2.1
+Version 1.2 · 16 Nov 2026 · Builds what [architecture.md](architecture.md) v1.2 describes, to meet [problem_statement.md](problem_statement.md) v2.2 · LLM provider: **Groq**
 
 ---
 
@@ -24,7 +24,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 
 | Item | State |
 |---|---|
-| Problem statement v2.1, architecture v1.1, edge cases v1.0 | Done |
+| Problem statement v2.2, architecture v1.2, edge cases v1.2, eval v1.1 | Done |
 | `ingest.py`: fetch with urllib → curl → snapshot, parse, 12 chunks per scheme | Works for **5 of 27** schemes |
 | `data/official_docs.json`: 10 curated official notes | Done; needs one review pass |
 | `data/corpus.json` + `data/raw/` snapshots | 5 schemes only |
@@ -87,7 +87,7 @@ flowchart LR
    - Hold the tunable constants: BM25 `k1`/`b`, `W_SCHEME`, `W_TOPIC`, `W_OTHER`, `MIN_SCORE`, `MIN_LEXICAL`, LLM timeout.
    - Hold the fixed links: AMFI investor page, SEBI investor site, HDFC factsheet page.
 2. Create `tests/__init__.py` and one smoke test, so `python -m unittest discover tests` runs.
-3. Add `requirements.txt` listing only `anthropic`, marked optional in a comment.
+3. Add `requirements.txt` listing only `groq`, marked optional in a comment.
 4. Confirm `.gitignore` covers `__pycache__/`, `*.sqlite3`, `.env` and `graft/`.
 5. Add a stub `README.md` with a one-paragraph description and the disclaimer.
 
@@ -360,10 +360,9 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 
 **Tasks**
 
-1. **`bolosip/llm.py`:** create the `anthropic.Anthropic()` client once, lazily, and only if the SDK is installed and `BOLOSIP_LLM` is not `off`.
-   - Model `claude-opus-5-5` (from config), `max_tokens=1024`, `output_config={"effort": "low"}`.
-   - `betas=["server-side-fallback-2026-07-01"]`, `fallbacks="default"`, 15 s timeout.
-   - `rephrase(question, chunk_text) -> str | None`; returns `None` on **any** exception, refusal, or `NOT_IN_SOURCE`.
+1. **`bolosip/llm.py`:** create the Groq client (`from groq import Groq`; `Groq(timeout=15.0, max_retries=1)`) once, lazily, and only if the `groq` package is installed, `GROQ_API_KEY` is set, and `BOLOSIP_LLM` is not `off`.
+   - `client.chat.completions.create(model=config.MODEL, messages=[system, user], temperature=0, max_completion_tokens=200)`; default model `llama-3.3-70b-versatile`.
+   - `rephrase(question, chunk_text) -> str | None`; returns `None` on **any** exception, a `finish_reason` other than `stop`, empty text, or `NOT_IN_SOURCE`.
 2. **System prompt** (arch §9.2): answer only from the given text, ≤ 3 sentences, no new facts, numbers, opinions, advice, comparisons or URLs; reply `NOT_IN_SOURCE` if the text doesn't answer.
 3. **Output checks** in `composer.py` (arch §9.2):
    - every number in the output also appears in the chunk text, after normalising (GAP-06): remove ₹/Rs/INR and thousands separators, drop trailing decimal zeros, map number words one to twelve to digits, parse dates
@@ -382,7 +381,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 **Files:** `bolosip/llm.py`, `bolosip/composer.py`, `tests/test_llm.py`, `requirements.txt`
 
 **Exit criteria**
-- [ ] With the `anthropic` SDK uninstalled, everything still works and all other tests pass.
+- [ ] With the `groq` SDK uninstalled, everything still works and all other tests pass.
 - [ ] Every stub case falls back correctly.
 - [ ] The live test (if run) shows 0 invented numbers and 0 URLs in accepted outputs.
 
@@ -433,7 +432,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 
 1. **`README.md`** (PS §9):
    - What BoloSIP is, plus the **"Facts-only. No investment advice."** snippet
-   - Setup: Python version, optional `pip install anthropic`, `ANTHROPIC_API_KEY`
+   - Setup: Python version, optional `pip install groq`, `GROQ_API_KEY`
    - Run: `python ingest.py`, `python server.py`, `python -m unittest discover tests`
    - Selected AMC and the 27 schemes (link to PS §3.1)
    - Architecture overview: a short version of arch §2–§3 with one diagram, linking to the full doc
@@ -496,7 +495,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 ## 7. Definition of done (whole project)
 
 - [ ] All 10 phases' exit criteria checked off.
-- [ ] `python -m unittest discover tests` is 100% green, offline, with and without the `anthropic` SDK installed.
+- [ ] `python -m unittest discover tests` is 100% green, offline, with and without the `groq` SDK installed.
 - [ ] Manual UI checklist done on desktop and mobile widths.
 - [ ] README complete; every PS §9 deliverable present.
 - [ ] `v1.0` tagged and pushed; local and GitHub identical.

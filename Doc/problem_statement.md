@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 2.1 · 16 Nov 2026 · Corpus expanded from 5 to 27 schemes · The original brief is kept unchanged in [`problem_statement_original.txt`](problem_statement_original.txt).
+Version 2.2 · 16 Nov 2026 · Corpus expanded from 5 to 27 schemes · Optional LLM provider: Groq · The original brief is kept unchanged in [`problem_statement_original.txt`](problem_statement_original.txt).
 
 ---
 
@@ -222,6 +222,7 @@ The build is accepted when an automated test run shows all of the following:
 - Groww pages may change layout or block automated fetching. Ingestion should keep the last good copy of each page and fall back to it.
 - Facts such as NAV, AUM and expense ratio change often. Answers are only as fresh as the last ingestion run, which the footer makes visible.
 - An LLM may be used to phrase answers, but only from retrieved text. The system must still work without one, by giving the retrieved fact directly.
+- The LLM provider is **Groq** (`groq` Python SDK, key in `GROQ_API_KEY`). Groq is a third-party service, so only the question and one public source chunk are ever sent to it, never personal data.
 
 ## 12. Glossary
 

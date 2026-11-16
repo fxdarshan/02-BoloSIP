@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.0 · 16 Nov 2026 · Evaluates every phase of [Implementation-plan.md](Implementation-plan.md) v1.1, against [problem_statement.md](problem_statement.md) v2.1, [architecture.md](architecture.md) v1.1 and [edge-case.md](edge-case.md) v1.1
+Version 1.1 · 16 Nov 2026 · Evaluates every phase of [Implementation-plan.md](Implementation-plan.md) v1.2, against [problem_statement.md](problem_statement.md) v2.2, [architecture.md](architecture.md) v1.2 and [edge-case.md](edge-case.md) v1.2 · LLM provider: Groq
 
 ---
 
@@ -262,7 +262,7 @@ Each phase lists what is evaluated, the dataset, the metrics and the pass thresh
 
 **Live (only with credentials; reported, not gating unless marked)**
 
-Run the 135 core facts + 30 paraphrases through the real model (`claude-opus-5-5`, effort `low`).
+Run the 135 core facts + 30 paraphrases through the real Groq model (`llama-3.3-70b-versatile` by default, `temperature=0`). To compare models, repeat with another Groq production model (e.g. `llama-3.1-8b-instant`) via `BOLOSIP_MODEL` and report both.
 
 | Metric | Pass |
 |---|---|
@@ -272,9 +272,10 @@ Run the 135 core facts + 30 paraphrases through the real model (`claude-opus-5-5
 | Fallback rate | Reported; investigate if > 20% |
 | Helpfulness vs extractive | 2 reviewers blind-compare 30 pairs (§7 rubric); LLM preferred or tied in ≥ 60% |
 | Latency | p95 reported; must stay under the 15 s timeout |
-| Cost per 100 answers | Reported from `usage` tokens |
+| Cost per 100 answers | Reported from the response `usage` tokens and Groq's price for the model |
+| Rate-limit hits | Reported; a 429 must fall back to extractive, never fail the reply |
 
-Live runs cost money, so they run only when someone chooses to, never in the default suite.
+Live runs use the Groq API (costs money or free-tier quota), so they run only when someone chooses to, never in the default suite. They need `GROQ_API_KEY`.
 
 ### Phase 8: Acceptance suite and tuning, milestone M3
 

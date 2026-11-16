@@ -1,0 +1,6 @@
+# BoloSIP core needs only the Python standard library (Python 3.10+).
+#
+# Optional: Groq SDK, used only for LLM rephrasing (Phase 7).
+# Without it, BoloSIP answers with the retrieved source text directly.
+# Set GROQ_API_KEY in your environment to enable it.
+groq
