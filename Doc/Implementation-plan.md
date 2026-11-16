@@ -105,9 +105,46 @@ flowchart LR
 
 **Goal:** `data/corpus.json` holds a validated scheme registry and about 335 single-fact chunks for all 27 schemes, each with its source URL and date.
 
+**Source URLs: these 27, and no others**
+
+Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1, copied below. No other URL is fetched: no extra Groww pages (peer funds, AMC page, category pages), no other aggregators, and no links found inside these pages. Adding or removing a URL requires a problem statement change first (§6 Working agreements).
+
+| # | Scheme ID | Groww URL |
+|---|---|---|
+| 1 | `hdfc-large-cap` | https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth |
+| 2 | `hdfc-mid-cap` | https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth |
+| 3 | `hdfc-small-cap` | https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth |
+| 4 | `hdfc-large-and-mid-cap` | https://groww.in/mutual-funds/hdfc-large-mid-cap-fund-direct-growth |
+| 5 | `hdfc-multi-cap` | https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth |
+| 6 | `hdfc-flexi-cap` | https://groww.in/mutual-funds/hdfc-equity-fund-direct-growth |
+| 7 | `hdfc-focused` | https://groww.in/mutual-funds/hdfc-focused-fund-direct-growth |
+| 8 | `hdfc-nifty-50-index` | https://groww.in/mutual-funds/hdfc-nifty-50-index-fund-direct-growth |
+| 9 | `hdfc-bse-sensex-index` | https://groww.in/mutual-funds/hdfc-bse-sensex-index-fund-direct-growth |
+| 10 | `hdfc-pharma-and-healthcare` | https://groww.in/mutual-funds/hdfc-pharma-and-healthcare-fund-direct-growth |
+| 11 | `hdfc-technology` | https://groww.in/mutual-funds/hdfc-technology-fund-direct-growth |
+| 12 | `hdfc-transportation-and-logistics` | https://groww.in/mutual-funds/hdfc-transportation-and-logistics-fund-direct-growth |
+| 13 | `hdfc-defence` | https://groww.in/mutual-funds/hdfc-defence-fund-direct-growth |
+| 14 | `hdfc-housing-opportunities` | https://groww.in/mutual-funds/hdfc-housing-opportunities-fund-direct-growth |
+| 15 | `hdfc-business-cycle` | https://groww.in/mutual-funds/hdfc-business-cycle-fund-direct-growth |
+| 16 | `hdfc-infrastructure` | https://groww.in/mutual-funds/hdfc-infrastructure-fund-direct-growth |
+| 17 | `hdfc-balanced-advantage` | https://groww.in/mutual-funds/hdfc-balanced-advantage-fund-direct-growth |
+| 18 | `hdfc-multi-asset-allocation` | https://groww.in/mutual-funds/hdfc-multi-asset-allocation-fund-direct-growth |
+| 19 | `hdfc-equity-savings` | https://groww.in/mutual-funds/hdfc-equity-savings-fund-direct-growth |
+| 20 | `hdfc-arbitrage` | https://groww.in/mutual-funds/hdfc-arbitrage-fund-direct-growth |
+| 21 | `hdfc-overnight` | https://groww.in/mutual-funds/hdfc-overnight-fund-direct-growth |
+| 22 | `hdfc-liquid` | https://groww.in/mutual-funds/hdfc-liquid-fund-direct-growth |
+| 23 | `hdfc-money-market` | https://groww.in/mutual-funds/hdfc-money-market-fund-direct-growth |
+| 24 | `hdfc-ultra-short-term` | https://groww.in/mutual-funds/hdfc-ultra-short-term-fund-direct-growth |
+| 25 | `hdfc-banking-and-psu-debt` | https://groww.in/mutual-funds/hdfc-banking-and-psu-debt-fund-direct-growth |
+| 26 | `hdfc-gilt` | https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth |
+| 27 | `hdfc-silver-etf-fof` | https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth |
+
+> The hand-curated notes in `data/official_docs.json` (HDFC MF, AMFI, SEBI, CAMS, MF Central) are **not fetched** by ingestion. They are typed in by hand, reviewed against their pages, and only cited as links (PS §3.2).
+
 **Tasks**
 
-1. **Scheme registry.** Replace the 5-entry `SCHEMES` dict in `ingest.py` with all 27 from PS §3.1. Each entry has `url`, `group` (Equity / Hybrid / Debt / FoF), `category` and `aliases`.
+1. **Scheme registry.** Replace the 5-entry `SCHEMES` dict in `ingest.py` with the 27 entries in the table above, using exactly those URLs and IDs. Each entry has `url`, `group` (Equity / Hybrid / Debt / FoF), `category` and `aliases`.
+   - **URL allow-list check:** before fetching, `ingest.py` asserts the registry holds exactly these 27 URLs (no more, no fewer, no duplicates), and that `fetch()` is only ever called with a registry URL. Any other URL stops the run with exit code `2`.
    - IDs are slugs of the **current** name, e.g. `hdfc-flexi-cap` for the `hdfc-equity-fund` URL (arch §5.1).
    - Aliases cover short forms, spacing variants ("midcap", "mid-cap"), `&`/"and", and former names ("hdfc equity fund").
    - Shared ambiguous aliases (e.g. "hdfc equity") go under each scheme they could mean.
@@ -128,6 +165,7 @@ flowchart LR
 **Files:** `ingest.py`, `data/official_docs.json`, `data/corpus.json`, `data/raw/*.html` (27), `tests/test_ingest.py`
 
 **Tests (`test_ingest.py`, offline, built from snapshots)**
+- The registry's URL set equals the 27 URLs listed in `Doc/problem_statement.md` §3.1 (the test reads both, so the two can't drift apart); a registry with an extra or missing URL fails.
 - Parser extracts the right fields from 3 sample snapshots: one equity, one debt, one FoF.
 - Validation rejects a corpus with a missing topic, a 4-sentence chunk, or a riskometer outside SEBI's 6 levels.
 - A snapshot whose first `"risk"` value belongs to a peer fund still yields the scheme's own riskometer (GAP-03).
@@ -136,6 +174,7 @@ flowchart LR
 
 **Exit criteria**
 - [ ] `python ingest.py` exits `0` (or `1` with a clear snapshot warning), and the registry has 27 schemes.
+- [ ] The set of URLs fetched in the run equals the 27 URLs in the table above, and every scheme chunk's `source_url` is one of them.
 - [ ] Chunk count is between 330 and 340.
 - [ ] Spot-check 10 random scheme facts against the live pages; all match.
 - [ ] `test_ingest.py` passes.
