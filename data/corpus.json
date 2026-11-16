@@ -1,0 +1,831 @@
+{
+  "built_on": "16 Nov 2026",
+  "factsheet_url": "https://www.hdfcfund.com/mutual-funds/factsheets",
+  "schemes": {
+    "hdfc-mid-cap": {
+      "name": "HDFC Mid Cap Fund Direct Growth",
+      "url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "aliases": [
+        "mid cap",
+        "midcap",
+        "mid-cap",
+        "mid cap opportunities"
+      ],
+      "factsheet_url": "https://www.hdfcfund.com/mutual-funds/factsheets"
+    },
+    "hdfc-small-cap": {
+      "name": "HDFC Small Cap Fund Direct Growth",
+      "url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "aliases": [
+        "small cap",
+        "smallcap",
+        "small-cap"
+      ],
+      "factsheet_url": "https://www.hdfcfund.com/mutual-funds/factsheets"
+    },
+    "hdfc-large-cap": {
+      "name": "HDFC Large Cap Fund Direct Growth",
+      "url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "aliases": [
+        "large cap",
+        "largecap",
+        "large-cap",
+        "top 100"
+      ],
+      "factsheet_url": "https://www.hdfcfund.com/mutual-funds/factsheets"
+    },
+    "hdfc-silver-etf-fof": {
+      "name": "HDFC Silver ETF FoF Direct Growth",
+      "url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "aliases": [
+        "silver",
+        "silver etf",
+        "silver fof",
+        "silver etf fof"
+      ],
+      "factsheet_url": "https://www.hdfcfund.com/mutual-funds/factsheets"
+    },
+    "hdfc-multi-cap": {
+      "name": "HDFC Multi Cap Fund Direct Growth",
+      "url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "aliases": [
+        "multi cap",
+        "multicap",
+        "multi-cap"
+      ],
+      "factsheet_url": "https://www.hdfcfund.com/mutual-funds/factsheets"
+    }
+  },
+  "chunks": [
+    {
+      "id": "hdfc-mid-cap:expense_ratio",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "expense_ratio",
+      "text": "The expense ratio (TER) of HDFC Mid Cap Fund Direct Growth is 0.73% per annum, as on 12 Nov 2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "expense ratio ter total expense ratio cost charges fee fees annual"
+    },
+    {
+      "id": "hdfc-mid-cap:exit_load",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "exit_load",
+      "text": "Exit load for HDFC Mid Cap Fund Direct Growth: exit load of 1% if redeemed within 1 year.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "exit load redemption charge penalty withdraw early redeem"
+    },
+    {
+      "id": "hdfc-mid-cap:min_investment",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "min_investment",
+      "text": "The minimum SIP amount for HDFC Mid Cap Fund Direct Growth is ₹100. The minimum first lump-sum investment is ₹100 and additional purchases start at ₹100.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "minimum sip amount min sip lumpsum lump sum minimum investment start"
+    },
+    {
+      "id": "hdfc-mid-cap:riskometer",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "riskometer",
+      "text": "HDFC Mid Cap Fund Direct Growth is classified as \"Very High\" risk on the riskometer.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "riskometer risk level risk classification risky risk grade"
+    },
+    {
+      "id": "hdfc-mid-cap:benchmark",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "benchmark",
+      "text": "The benchmark index of HDFC Mid Cap Fund Direct Growth is the NIFTY Midcap 150 Total Return Index.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "benchmark index tracks compared against tri"
+    },
+    {
+      "id": "hdfc-mid-cap:lock_in",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "lock_in",
+      "text": "HDFC Mid Cap Fund Direct Growth has no lock-in period, as it is not an ELSS (tax-saving) scheme; exit load rules still apply on early redemption.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "lock in lock-in lockin period elss locked tax saving"
+    },
+    {
+      "id": "hdfc-mid-cap:fund_manager",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "fund_manager",
+      "text": "HDFC Mid Cap Fund Direct Growth is managed by Chirag Setalvad and Dhruv Muchhal.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "fund manager managed by who manages manager"
+    },
+    {
+      "id": "hdfc-mid-cap:category",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "category",
+      "text": "HDFC Mid Cap Fund Direct Growth is a Mid Cap equity scheme of HDFC Mutual Fund. Objective: The scheme seeks to provide long-term capital appreciation/income by investing predominantly in Mid-Cap companies.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "category type objective investment objective what is scheme about"
+    },
+    {
+      "id": "hdfc-mid-cap:nav",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "nav",
+      "text": "The NAV of HDFC Mid Cap Fund Direct Growth was ₹229.697 as on 13-Nov-2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "nav net asset value price unit price"
+    },
+    {
+      "id": "hdfc-mid-cap:aum",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "aum",
+      "text": "The fund size (AUM) of HDFC Mid Cap Fund Direct Growth is ₹1,00,687.07 crore.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "aum fund size assets under management corpus size"
+    },
+    {
+      "id": "hdfc-mid-cap:scheme_details",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "scheme_details",
+      "text": "HDFC Mid Cap Fund Direct Growth (Direct plan, Growth option) was launched on 01-Jan-2013. Its ISIN is INF179K01XQ0 and its registrar (RTA) is CAMS.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "launch date inception isin registrar rta plan direct growth"
+    },
+    {
+      "id": "hdfc-mid-cap:stamp_duty",
+      "scheme_id": "hdfc-mid-cap",
+      "scheme_name": "HDFC Mid Cap Fund Direct Growth",
+      "topic": "stamp_duty",
+      "text": "Stamp duty of 0.005% (from July 1st, 2020) applies to purchases in HDFC Mid Cap Fund Direct Growth.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "source_name": "HDFC Mid Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "stamp duty"
+    },
+    {
+      "id": "hdfc-small-cap:expense_ratio",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "expense_ratio",
+      "text": "The expense ratio (TER) of HDFC Small Cap Fund Direct Growth is 0.79% per annum, as on 12 Nov 2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "expense ratio ter total expense ratio cost charges fee fees annual"
+    },
+    {
+      "id": "hdfc-small-cap:exit_load",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "exit_load",
+      "text": "Exit load for HDFC Small Cap Fund Direct Growth: exit load of 1% if redeemed within 1 year.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "exit load redemption charge penalty withdraw early redeem"
+    },
+    {
+      "id": "hdfc-small-cap:min_investment",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "min_investment",
+      "text": "The minimum SIP amount for HDFC Small Cap Fund Direct Growth is ₹100. The minimum first lump-sum investment is ₹100 and additional purchases start at ₹100.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "minimum sip amount min sip lumpsum lump sum minimum investment start"
+    },
+    {
+      "id": "hdfc-small-cap:riskometer",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "riskometer",
+      "text": "HDFC Small Cap Fund Direct Growth is classified as \"Very High\" risk on the riskometer.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "riskometer risk level risk classification risky risk grade"
+    },
+    {
+      "id": "hdfc-small-cap:benchmark",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "benchmark",
+      "text": "The benchmark index of HDFC Small Cap Fund Direct Growth is the BSE 250 SmallCap Total Return Index.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "benchmark index tracks compared against tri"
+    },
+    {
+      "id": "hdfc-small-cap:lock_in",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "lock_in",
+      "text": "HDFC Small Cap Fund Direct Growth has no lock-in period, as it is not an ELSS (tax-saving) scheme; exit load rules still apply on early redemption.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "lock in lock-in lockin period elss locked tax saving"
+    },
+    {
+      "id": "hdfc-small-cap:fund_manager",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "fund_manager",
+      "text": "HDFC Small Cap Fund Direct Growth is managed by Dhruv Muchhal and Chirag Setalvad.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "fund manager managed by who manages manager"
+    },
+    {
+      "id": "hdfc-small-cap:category",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "category",
+      "text": "HDFC Small Cap Fund Direct Growth is a Small Cap equity scheme of HDFC Mutual Fund. Objective: The scheme seeks to provide long-term capital appreciation /income by investing predominantly in Small-Cap companies.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "category type objective investment objective what is scheme about"
+    },
+    {
+      "id": "hdfc-small-cap:nav",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "nav",
+      "text": "The NAV of HDFC Small Cap Fund Direct Growth was ₹156.579 as on 13-Nov-2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "nav net asset value price unit price"
+    },
+    {
+      "id": "hdfc-small-cap:aum",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "aum",
+      "text": "The fund size (AUM) of HDFC Small Cap Fund Direct Growth is ₹38,960.36 crore.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "aum fund size assets under management corpus size"
+    },
+    {
+      "id": "hdfc-small-cap:scheme_details",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "scheme_details",
+      "text": "HDFC Small Cap Fund Direct Growth (Direct plan, Growth option) was launched on 01-Jan-2013. Its ISIN is INF179KA1RW5 and its registrar (RTA) is CAMS.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "launch date inception isin registrar rta plan direct growth"
+    },
+    {
+      "id": "hdfc-small-cap:stamp_duty",
+      "scheme_id": "hdfc-small-cap",
+      "scheme_name": "HDFC Small Cap Fund Direct Growth",
+      "topic": "stamp_duty",
+      "text": "Stamp duty of 0.005% (from July 1st, 2020) applies to purchases in HDFC Small Cap Fund Direct Growth.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "source_name": "HDFC Small Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "stamp duty"
+    },
+    {
+      "id": "hdfc-large-cap:expense_ratio",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "expense_ratio",
+      "text": "The expense ratio (TER) of HDFC Large Cap Fund Direct Growth is 1.00% per annum, as on 12 Nov 2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "expense ratio ter total expense ratio cost charges fee fees annual"
+    },
+    {
+      "id": "hdfc-large-cap:exit_load",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "exit_load",
+      "text": "Exit load for HDFC Large Cap Fund Direct Growth: exit load of 1% if redeemed within 1 year.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "exit load redemption charge penalty withdraw early redeem"
+    },
+    {
+      "id": "hdfc-large-cap:min_investment",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "min_investment",
+      "text": "The minimum SIP amount for HDFC Large Cap Fund Direct Growth is ₹100. The minimum first lump-sum investment is ₹100 and additional purchases start at ₹100.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "minimum sip amount min sip lumpsum lump sum minimum investment start"
+    },
+    {
+      "id": "hdfc-large-cap:riskometer",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "riskometer",
+      "text": "HDFC Large Cap Fund Direct Growth is classified as \"Very High\" risk on the riskometer.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "riskometer risk level risk classification risky risk grade"
+    },
+    {
+      "id": "hdfc-large-cap:benchmark",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "benchmark",
+      "text": "The benchmark index of HDFC Large Cap Fund Direct Growth is the NIFTY 100 Total Return Index.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "benchmark index tracks compared against tri"
+    },
+    {
+      "id": "hdfc-large-cap:lock_in",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "lock_in",
+      "text": "HDFC Large Cap Fund Direct Growth has no lock-in period, as it is not an ELSS (tax-saving) scheme; exit load rules still apply on early redemption.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "lock in lock-in lockin period elss locked tax saving"
+    },
+    {
+      "id": "hdfc-large-cap:fund_manager",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "fund_manager",
+      "text": "HDFC Large Cap Fund Direct Growth is managed by Rahul Baijal and Dhruv Muchhal.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "fund manager managed by who manages manager"
+    },
+    {
+      "id": "hdfc-large-cap:category",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "category",
+      "text": "HDFC Large Cap Fund Direct Growth is a Large Cap equity scheme of HDFC Mutual Fund. Objective: The scheme seeks to provide long-term capital appreciation/income by investing predominantly in Large-Cap companies.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "category type objective investment objective what is scheme about"
+    },
+    {
+      "id": "hdfc-large-cap:nav",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "nav",
+      "text": "The NAV of HDFC Large Cap Fund Direct Growth was ₹1264.562 as on 13-Nov-2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "nav net asset value price unit price"
+    },
+    {
+      "id": "hdfc-large-cap:aum",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "aum",
+      "text": "The fund size (AUM) of HDFC Large Cap Fund Direct Growth is ₹37,466.30 crore.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "aum fund size assets under management corpus size"
+    },
+    {
+      "id": "hdfc-large-cap:scheme_details",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "scheme_details",
+      "text": "HDFC Large Cap Fund Direct Growth (Direct plan, Growth option) was launched on 01-Jan-2013. Its ISIN is INF179K01YV8 and its registrar (RTA) is CAMS.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "launch date inception isin registrar rta plan direct growth"
+    },
+    {
+      "id": "hdfc-large-cap:stamp_duty",
+      "scheme_id": "hdfc-large-cap",
+      "scheme_name": "HDFC Large Cap Fund Direct Growth",
+      "topic": "stamp_duty",
+      "text": "Stamp duty of 0.005% (from July 1st, 2020) applies to purchases in HDFC Large Cap Fund Direct Growth.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+      "source_name": "HDFC Large Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "stamp duty"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:expense_ratio",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "expense_ratio",
+      "text": "The expense ratio (TER) of HDFC Silver ETF FoF Direct Growth is 0.22% per annum, as on 12 Nov 2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "expense ratio ter total expense ratio cost charges fee fees annual"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:exit_load",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "exit_load",
+      "text": "Exit load for HDFC Silver ETF FoF Direct Growth: exit load of 1%, if redeemed within 15 days.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "exit load redemption charge penalty withdraw early redeem"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:min_investment",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "min_investment",
+      "text": "The minimum SIP amount for HDFC Silver ETF FoF Direct Growth is ₹100. The minimum first lump-sum investment is ₹100 and additional purchases start at ₹100.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "minimum sip amount min sip lumpsum lump sum minimum investment start"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:riskometer",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "riskometer",
+      "text": "HDFC Silver ETF FoF Direct Growth is classified as \"Very High\" risk on the riskometer.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "riskometer risk level risk classification risky risk grade"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:benchmark",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "benchmark",
+      "text": "The benchmark index of HDFC Silver ETF FoF Direct Growth is the Domestic Price of Silver.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "benchmark index tracks compared against tri"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:lock_in",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "lock_in",
+      "text": "HDFC Silver ETF FoF Direct Growth has no lock-in period, as it is not an ELSS (tax-saving) scheme; exit load rules still apply on early redemption.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "lock in lock-in lockin period elss locked tax saving"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:fund_manager",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "fund_manager",
+      "text": "HDFC Silver ETF FoF Direct Growth is managed by Arun Agarwal and Nandita Menezes.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "fund manager managed by who manages manager"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:category",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "category",
+      "text": "HDFC Silver ETF FoF Direct Growth is a Silver commodities scheme of HDFC Mutual Fund. Objective: The scheme is seek to capital appreciation by investing in units of HDFC Silver ETF (HSETF).",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "category type objective investment objective what is scheme about"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:nav",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "nav",
+      "text": "The NAV of HDFC Silver ETF FoF Direct Growth was ₹29.1152 as on 13-Nov-2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "nav net asset value price unit price"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:aum",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "aum",
+      "text": "The fund size (AUM) of HDFC Silver ETF FoF Direct Growth is ₹3,787.89 crore.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "aum fund size assets under management corpus size"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:scheme_details",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "scheme_details",
+      "text": "HDFC Silver ETF FoF Direct Growth (Direct plan, Growth option) was launched on 28-Oct-2022. Its ISIN is INF179KC1DU7 and its registrar (RTA) is Cams.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "launch date inception isin registrar rta plan direct growth"
+    },
+    {
+      "id": "hdfc-silver-etf-fof:stamp_duty",
+      "scheme_id": "hdfc-silver-etf-fof",
+      "scheme_name": "HDFC Silver ETF FoF Direct Growth",
+      "topic": "stamp_duty",
+      "text": "Stamp duty of 0.005% (from July 1st, 2020) applies to purchases in HDFC Silver ETF FoF Direct Growth.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
+      "source_name": "HDFC Silver ETF FoF Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "stamp duty"
+    },
+    {
+      "id": "hdfc-multi-cap:expense_ratio",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "expense_ratio",
+      "text": "The expense ratio (TER) of HDFC Multi Cap Fund Direct Growth is 0.95% per annum, as on 12 Nov 2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "expense ratio ter total expense ratio cost charges fee fees annual"
+    },
+    {
+      "id": "hdfc-multi-cap:exit_load",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "exit_load",
+      "text": "Exit load for HDFC Multi Cap Fund Direct Growth: exit load of 1% if redeemed within 1 year.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "exit load redemption charge penalty withdraw early redeem"
+    },
+    {
+      "id": "hdfc-multi-cap:min_investment",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "min_investment",
+      "text": "The minimum SIP amount for HDFC Multi Cap Fund Direct Growth is ₹100. The minimum first lump-sum investment is ₹100 and additional purchases start at ₹100.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "minimum sip amount min sip lumpsum lump sum minimum investment start"
+    },
+    {
+      "id": "hdfc-multi-cap:riskometer",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "riskometer",
+      "text": "HDFC Multi Cap Fund Direct Growth is classified as \"Very High\" risk on the riskometer.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "riskometer risk level risk classification risky risk grade"
+    },
+    {
+      "id": "hdfc-multi-cap:benchmark",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "benchmark",
+      "text": "The benchmark index of HDFC Multi Cap Fund Direct Growth is the Nifty 500 Multicap 50:25:25 Total Return Index.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "benchmark index tracks compared against tri"
+    },
+    {
+      "id": "hdfc-multi-cap:lock_in",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "lock_in",
+      "text": "HDFC Multi Cap Fund Direct Growth has no lock-in period, as it is not an ELSS (tax-saving) scheme; exit load rules still apply on early redemption.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "lock in lock-in lockin period elss locked tax saving"
+    },
+    {
+      "id": "hdfc-multi-cap:fund_manager",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "fund_manager",
+      "text": "HDFC Multi Cap Fund Direct Growth is managed by Amar Kalkundrikar and Dhruv Muchhal.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "fund manager managed by who manages manager"
+    },
+    {
+      "id": "hdfc-multi-cap:category",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "category",
+      "text": "HDFC Multi Cap Fund Direct Growth is a Multi Cap equity scheme of HDFC Mutual Fund. Objective: The scheme seeks to generate long term capital appreciation by investing in equity and equity related securities of large cap, mid cap and small cap companies.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "category type objective investment objective what is scheme about"
+    },
+    {
+      "id": "hdfc-multi-cap:nav",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "nav",
+      "text": "The NAV of HDFC Multi Cap Fund Direct Growth was ₹19.998 as on 13-Nov-2026.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "nav net asset value price unit price"
+    },
+    {
+      "id": "hdfc-multi-cap:aum",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "aum",
+      "text": "The fund size (AUM) of HDFC Multi Cap Fund Direct Growth is ₹19,080.08 crore.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "aum fund size assets under management corpus size"
+    },
+    {
+      "id": "hdfc-multi-cap:scheme_details",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "scheme_details",
+      "text": "HDFC Multi Cap Fund Direct Growth (Direct plan, Growth option) was launched on 10-Dec-2021. Its ISIN is INF179KC1BS5 and its registrar (RTA) is Cams.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "launch date inception isin registrar rta plan direct growth"
+    },
+    {
+      "id": "hdfc-multi-cap:stamp_duty",
+      "scheme_id": "hdfc-multi-cap",
+      "scheme_name": "HDFC Multi Cap Fund Direct Growth",
+      "topic": "stamp_duty",
+      "text": "Stamp duty of 0.005% (from July 1st, 2020) applies to purchases in HDFC Multi Cap Fund Direct Growth.",
+      "source_url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
+      "source_name": "HDFC Multi Cap Fund Direct Growth scheme page",
+      "as_of": "16 Nov 2026",
+      "keywords": "stamp duty"
+    },
+    {
+      "id": "official:statement_download",
+      "topic": "statement",
+      "text": "You can download an HDFC Mutual Fund account statement on the official 'Download Statement' page by entering your PAN or folio number, verifying with the OTP sent to your registered contact, and choosing the period; the statement is emailed to your registered email address. Statements can be PAN-based (all folios linked to the PAN) or folio-based, and there is no fee.",
+      "source_url": "https://www.hdfcfund.com/services/consolidated-account-statement",
+      "source_name": "HDFC Mutual Fund – Download Statement",
+      "keywords": "download statement account statement how to get statement folio cas pdf email statement transaction history",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    },
+    {
+      "id": "official:cas",
+      "topic": "statement",
+      "text": "A Consolidated Account Statement (CAS) covering all your mutual fund holdings across fund houses can be requested from CAMS, the registrar for HDFC Mutual Fund. The statement is sent to your registered email address.",
+      "source_url": "https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement",
+      "source_name": "CAMS – Consolidated Account Statement",
+      "keywords": "consolidated account statement cas all funds all amcs cams registrar statement",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    },
+    {
+      "id": "official:capital_gains",
+      "topic": "capital_gains",
+      "text": "Capital gains statements for mutual fund investments can be downloaded from MF Central, the investor service platform run by the registrars CAMS and KFintech, after you log in with your PAN. Select the capital gains report option and the financial year you need.",
+      "source_url": "https://www.mfcentral.com/",
+      "source_name": "MF Central",
+      "keywords": "capital gains statement capital gain report tax statement itr realised gains download capital gains",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    },
+    {
+      "id": "official:elss_lockin",
+      "topic": "lock_in_general",
+      "text": "ELSS (Equity Linked Savings Scheme) investments have a mandatory lock-in period of 3 years from the date of each investment, so every SIP instalment is locked for 3 years from its own date. None of the five HDFC schemes covered here is an ELSS scheme.",
+      "source_url": "https://www.amfiindia.com/investor",
+      "source_name": "AMFI – Investor Corner",
+      "keywords": "elss lock in lock-in lockin period tax saving 80c three years 3 years",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    },
+    {
+      "id": "official:riskometer",
+      "topic": "riskometer_general",
+      "text": "SEBI's riskometer grades every mutual fund scheme on six levels: Low, Low to Moderate, Moderate, Moderately High, High and Very High. AMCs review the riskometer monthly based on the scheme's portfolio.",
+      "source_url": "https://investor.sebi.gov.in/",
+      "source_name": "SEBI – Investor Website",
+      "keywords": "what is riskometer riskometer levels risk categories risk grade meaning",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    },
+    {
+      "id": "official:expense_ratio_def",
+      "topic": "expense_ratio_general",
+      "text": "The expense ratio (Total Expense Ratio, TER) is the annual fee a scheme charges, as a percentage of its assets, to cover management and operating costs, and it is deducted from the scheme's NAV daily. HDFC Mutual Fund publishes the TER of all its schemes on its statutory disclosure page.",
+      "source_url": "https://www.hdfcfund.com/statutory-disclosure/total-expense-ratio-of-mutual-fund-schemes/reports",
+      "source_name": "HDFC Mutual Fund – Total Expense Ratio disclosure",
+      "keywords": "what is expense ratio meaning ter definition total expense ratio explained",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    },
+    {
+      "id": "official:exit_load_def",
+      "topic": "exit_load_general",
+      "text": "An exit load is a charge deducted from the redemption amount when units are redeemed before a period specified by the scheme. The applicable exit load is stated in each scheme's offer documents.",
+      "source_url": "https://www.amfiindia.com/investor",
+      "source_name": "AMFI – Investor Corner",
+      "keywords": "what is exit load meaning definition exit load explained",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    },
+    {
+      "id": "official:direct_regular",
+      "topic": "plans_general",
+      "text": "A Direct plan is bought directly from the fund house without a distributor, so it pays no distributor commission and has a lower expense ratio than the Regular plan of the same scheme. Both plans hold the same portfolio.",
+      "source_url": "https://www.amfiindia.com/investor",
+      "source_name": "AMFI – Investor Corner",
+      "keywords": "direct plan regular plan difference between direct and regular commission",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    },
+    {
+      "id": "official:sip_def",
+      "topic": "sip_general",
+      "text": "A Systematic Investment Plan (SIP) lets you invest a fixed amount in a mutual fund scheme at regular intervals, such as monthly. Each instalment buys units at that day's NAV.",
+      "source_url": "https://www.amfiindia.com/investor",
+      "source_name": "AMFI – Investor Corner",
+      "keywords": "what is sip systematic investment plan meaning how sip works",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    },
+    {
+      "id": "official:factsheet",
+      "topic": "factsheet",
+      "text": "HDFC Mutual Fund publishes a monthly factsheet with each scheme's objective, fund manager, portfolio holdings, risk ratios and historical performance. The latest and past factsheets are on the official factsheet page.",
+      "source_url": "https://www.hdfcfund.com/mutual-funds/factsheets",
+      "source_name": "HDFC Mutual Fund – Factsheets",
+      "keywords": "factsheet monthly factsheet portfolio holdings download factsheet",
+      "scheme_id": null,
+      "scheme_name": null,
+      "as_of": "16 Nov 2026"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "reviewed_on": "16 Nov 2026",
+  "note": "Hand-curated notes from official sources (HDFC Mutual Fund, AMFI, SEBI, CAMS, MF Central). Re-review the linked pages before changing this file and update reviewed_on.",
+  "docs": [
+    {
+      "id": "official:statement_download",
+      "topic": "statement",
+      "text": "You can download an HDFC Mutual Fund account statement on the official 'Download Statement' page by entering your PAN or folio number, verifying with the OTP sent to your registered contact, and choosing the period; the statement is emailed to your registered email address. Statements can be PAN-based (all folios linked to the PAN) or folio-based, and there is no fee.",
+      "source_url": "https://www.hdfcfund.com/services/consolidated-account-statement",
+      "source_name": "HDFC Mutual Fund – Download Statement",
+      "keywords": "download statement account statement how to get statement folio cas pdf email statement transaction history"
+    },
+    {
+      "id": "official:cas",
+      "topic": "statement",
+      "text": "A Consolidated Account Statement (CAS) covering all your mutual fund holdings across fund houses can be requested from CAMS, the registrar for HDFC Mutual Fund. The statement is sent to your registered email address.",
+      "source_url": "https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement",
+      "source_name": "CAMS – Consolidated Account Statement",
+      "keywords": "consolidated account statement cas all funds all amcs cams registrar statement"
+    },
+    {
+      "id": "official:capital_gains",
+      "topic": "capital_gains",
+      "text": "Capital gains statements for mutual fund investments can be downloaded from MF Central, the investor service platform run by the registrars CAMS and KFintech, after you log in with your PAN. Select the capital gains report option and the financial year you need.",
+      "source_url": "https://www.mfcentral.com/",
+      "source_name": "MF Central",
+      "keywords": "capital gains statement capital gain report tax statement itr realised gains download capital gains"
+    },
+    {
+      "id": "official:elss_lockin",
+      "topic": "lock_in_general",
+      "text": "ELSS (Equity Linked Savings Scheme) investments have a mandatory lock-in period of 3 years from the date of each investment, so every SIP instalment is locked for 3 years from its own date. None of the five HDFC schemes covered here is an ELSS scheme.",
+      "source_url": "https://www.amfiindia.com/investor",
+      "source_name": "AMFI – Investor Corner",
+      "keywords": "elss lock in lock-in lockin period tax saving 80c three years 3 years"
+    },
+    {
+      "id": "official:riskometer",
+      "topic": "riskometer_general",
+      "text": "SEBI's riskometer grades every mutual fund scheme on six levels: Low, Low to Moderate, Moderate, Moderately High, High and Very High. AMCs review the riskometer monthly based on the scheme's portfolio.",
+      "source_url": "https://investor.sebi.gov.in/",
+      "source_name": "SEBI – Investor Website",
+      "keywords": "what is riskometer riskometer levels risk categories risk grade meaning"
+    },
+    {
+      "id": "official:expense_ratio_def",
+      "topic": "expense_ratio_general",
+      "text": "The expense ratio (Total Expense Ratio, TER) is the annual fee a scheme charges, as a percentage of its assets, to cover management and operating costs, and it is deducted from the scheme's NAV daily. HDFC Mutual Fund publishes the TER of all its schemes on its statutory disclosure page.",
+      "source_url": "https://www.hdfcfund.com/statutory-disclosure/total-expense-ratio-of-mutual-fund-schemes/reports",
+      "source_name": "HDFC Mutual Fund – Total Expense Ratio disclosure",
+      "keywords": "what is expense ratio meaning ter definition total expense ratio explained"
+    },
+    {
+      "id": "official:exit_load_def",
+      "topic": "exit_load_general",
+      "text": "An exit load is a charge deducted from the redemption amount when units are redeemed before a period specified by the scheme. The applicable exit load is stated in each scheme's offer documents.",
+      "source_url": "https://www.amfiindia.com/investor",
+      "source_name": "AMFI – Investor Corner",
+      "keywords": "what is exit load meaning definition exit load explained"
+    },
+    {
+      "id": "official:direct_regular",
+      "topic": "plans_general",
+      "text": "A Direct plan is bought directly from the fund house without a distributor, so it pays no distributor commission and has a lower expense ratio than the Regular plan of the same scheme. Both plans hold the same portfolio.",
+      "source_url": "https://www.amfiindia.com/investor",
+      "source_name": "AMFI – Investor Corner",
+      "keywords": "direct plan regular plan difference between direct and regular commission"
+    },
+    {
+      "id": "official:sip_def",
+      "topic": "sip_general",
+      "text": "A Systematic Investment Plan (SIP) lets you invest a fixed amount in a mutual fund scheme at regular intervals, such as monthly. Each instalment buys units at that day's NAV.",
+      "source_url": "https://www.amfiindia.com/investor",
+      "source_name": "AMFI – Investor Corner",
+      "keywords": "what is sip systematic investment plan meaning how sip works"
+    },
+    {
+      "id": "official:factsheet",
+      "topic": "factsheet",
+      "text": "HDFC Mutual Fund publishes a monthly factsheet with each scheme's objective, fund manager, portfolio holdings, risk ratios and historical performance. The latest and past factsheets are on the official factsheet page.",
+      "source_url": "https://www.hdfcfund.com/mutual-funds/factsheets",
+      "source_name": "HDFC Mutual Fund – Factsheets",
+      "keywords": "factsheet monthly factsheet portfolio holdings download factsheet"
+    }
+  ]
+}
