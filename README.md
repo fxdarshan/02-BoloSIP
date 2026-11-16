@@ -22,11 +22,31 @@ Run the evaluation report for a phase:
 python -m eval.run --phase 0
 ```
 
-Optional LLM rephrasing uses [Groq](https://console.groq.com). Install the SDK and set `GROQ_API_KEY`:
+## Settings and the Groq API key
 
-```bash
-pip install groq
-```
+All local settings live in a `.env` file in the project folder. It is git-ignored, so your key never reaches GitHub.
+
+1. Copy the template (skip if `.env` already exists):
+
+   ```bash
+   copy .env.example .env
+   ```
+
+   On macOS / Linux use `cp .env.example .env`.
+
+2. Open `.env` and paste your key after `GROQ_API_KEY=`. Get a key at [console.groq.com/keys](https://console.groq.com/keys).
+
+   ```
+   GROQ_API_KEY=gsk_your_key_here
+   ```
+
+3. Install the Groq SDK (only needed for LLM rephrasing):
+
+   ```bash
+   pip install groq
+   ```
+
+The Groq key is optional. Without it, BoloSIP answers with the source text directly. A variable set in your real environment overrides the same name in `.env`. See [.env.example](.env.example) for every setting.
 
 ## Documents
 

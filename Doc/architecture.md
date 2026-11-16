@@ -119,6 +119,8 @@ flowchart TB
 │   ├── test_threads.py
 │   └── test_acceptance.py
 ├── requirements.txt                     # groq (optional)
+├── .env.example                         # settings template (committed, no real key)
+├── .env                                 # your local settings + GROQ_API_KEY (git-ignored)
 └── README.md
 ```
 
@@ -490,6 +492,8 @@ flowchart LR
 
 ## 16. Configuration
 
+Settings are read from environment variables. For local use, put them in a **`.env` file** in the project root: copy `.env.example` to `.env` and fill it in. `config.py` reads `.env` once at start-up with a small standard-library parser (no `python-dotenv` dependency). A variable already set in the real environment always wins over `.env`. `.env` is git-ignored; `.env.example` is committed and must never contain a real key (a test checks this).
+
 | Variable | Default | Purpose |
 |---|---|---|
 | `BOLOSIP_HOST` / `BOLOSIP_PORT` | `127.0.0.1` / `8000` | Server bind address |
@@ -512,7 +516,7 @@ flowchart LR
 | Oversized or abusive requests | Body, text-length and UUID limits; per-IP rate limit (GAP-09); server binds to localhost by default. |
 | Other websites calling the local API (CSRF, DNS rebinding) | `Host` and `Origin` checks, JSON-only `POST` bodies, no CORS headers (GAP-08) |
 | Another AMC's scheme answered with HDFC data | Other-AMC name check before alias matching (GAP-01) |
-| Secrets in git | `.env` git-ignored; key read from the environment only. |
+| Secrets in git | `.env` git-ignored (test checks it); `.env.example` committed with an empty key (test checks it); key value never stored in `Settings` or logged. |
 | Question text sent to a third party (Groq) | Only `answer` replies use the LLM, only after the personal-data guard, and only the question plus one public chunk are sent. `BOLOSIP_LLM=off` keeps everything local. |
 
 ## 18. Testing strategy

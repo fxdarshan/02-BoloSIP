@@ -29,7 +29,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | `data/official_docs.json`: 10 curated official notes | Done; needs one review pass |
 | `data/corpus.json` + `data/raw/` snapshots | 5 schemes only |
 | `bolosip/guards.py` | Draft, **untested** |
-| **Phase 0: Foundation** | **Done** (16 Nov 2026): config, 13 smoke tests, eval runner; gate report `eval/reports/2026-11-16-phase0-8def061.md` |
+| **Phase 0: Foundation** | **Done** (16 Nov 2026): config with `.env` loading, `.env.example`, 21 tests, eval runner; gate report `eval/reports/2026-11-16-phase0-8def061.md` |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -89,10 +89,11 @@ flowchart LR
    - Hold the fixed links: AMFI investor page, SEBI investor site, HDFC factsheet page.
 2. Create `tests/__init__.py` and one smoke test, so `python -m unittest discover tests` runs.
 3. Add `requirements.txt` listing only `groq`, marked optional in a comment.
+   - Add `.env.example` (every setting, empty `GROQ_API_KEY`) and have `config.py` load a local, git-ignored `.env` without overriding real environment variables.
 4. Confirm `.gitignore` covers `__pycache__/`, `*.sqlite3`, `.env` and `graft/`.
 5. Add a stub `README.md` with a one-paragraph description and the disclaimer.
 
-**Files:** `bolosip/__init__.py`, `bolosip/config.py`, `tests/__init__.py`, `tests/test_smoke.py`, `requirements.txt`, `README.md`
+**Files:** `bolosip/__init__.py`, `bolosip/config.py`, `tests/__init__.py`, `tests/test_smoke.py`, `tests/test_env_file.py`, `requirements.txt`, `.env.example`, `.env` (local only), `README.md`
 
 **Exit criteria**
 - [x] `python -m unittest discover tests` passes, with no third-party packages installed.
@@ -433,7 +434,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 
 1. **`README.md`** (PS §9):
    - What BoloSIP is, plus the **"Facts-only. No investment advice."** snippet
-   - Setup: Python version, optional `pip install groq`, `GROQ_API_KEY`
+   - Setup: Python version, copy `.env.example` to `.env`, add `GROQ_API_KEY`, optional `pip install groq`
    - Run: `python ingest.py`, `python server.py`, `python -m unittest discover tests`
    - Selected AMC and the 27 schemes (link to PS §3.1)
    - Architecture overview: a short version of arch §2–§3 with one diagram, linking to the full doc

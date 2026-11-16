@@ -9,11 +9,15 @@ Two kinds of settings live here:
   Phase 8), request limits, the LLM call shape, and the official links used in
   refusal / performance / privacy replies.
 
-Nothing in this module does I/O beyond reading environment variables.
+Local settings and secrets (e.g. ``GROQ_API_KEY``) go in a ``.env`` file in the
+project root. Copy ``.env.example`` to ``.env`` and fill it in. ``.env`` is
+git-ignored. It is read once at import; a variable already set in the real
+environment always wins over the file.
 """
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
@@ -22,6 +26,53 @@ from bolosip import DISCLAIMER
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
+ENV_FILE = ROOT / ".env"
+
+# ---------------------------------------------------------------------------
+# .env file loading (standard library only; no python-dotenv dependency)
+# ---------------------------------------------------------------------------
+
+_ENV_LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
+
+
+def parse_env_file(text: str) -> dict[str, str]:
+    """Parse ``KEY=VALUE`` lines. Supports comments (#), blank lines, ``export``,
+    and single- or double-quoted values. Unquoted values may end with `` # comment``."""
+    values: dict[str, str] = {}
+    for line in text.splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        m = _ENV_LINE.match(line)
+        if not m:
+            continue
+        key, raw = m.group(1), m.group(2)
+        if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "\"'":
+            value = raw[1:-1]
+        else:
+            value = re.split(r"\s+#", raw, maxsplit=1)[0].strip()
+        values[key] = value
+    return values
+
+
+def load_env_file(path: Path = ENV_FILE, environ: dict | None = None) -> list[str]:
+    """Copy variables from ``path`` into ``environ`` (default ``os.environ``)
+    without overriding ones that are already set. Returns the names loaded
+    (never the values). A missing file is not an error."""
+    environ = os.environ if environ is None else environ
+    try:
+        text = path.read_text(encoding="utf-8-sig")
+    except FileNotFoundError:
+        return []
+    loaded = []
+    for key, value in parse_env_file(text).items():
+        if key not in environ:
+            environ[key] = value
+            loaded.append(key)
+    return loaded
+
+
+if os.environ.get("BOLOSIP_SKIP_DOTENV") != "1":
+    load_env_file()
 
 # ---------------------------------------------------------------------------
 # Runtime settings (environment variables)
