@@ -34,7 +34,7 @@ from pathlib import Path
 from bolosip import registry
 from bolosip.config import HDFC_FACTSHEET_URL, OFFICIAL_DOMAINS
 from bolosip.registry import Scheme
-from bolosip.textutil import BANNED_JUDGEMENT, RETURN_FIGURE, URL, split_sentences
+from bolosip.textutil import BANNED_JUDGEMENT, RETURN_FIGURE, URL, split_sentences, utf8_output
 from bolosip.topics import OFFICIAL_TOPICS, SCHEME_TOPICS, SEBI_RISK_LEVELS, TOPIC_KEYWORDS
 
 ROOT = Path(__file__).resolve().parent
@@ -525,6 +525,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Build data/corpus.json from the 27 HDFC scheme pages.")
     ap.add_argument("--offline", action="store_true", help="use saved snapshots only (no network)")
     args = ap.parse_args(argv)
+    utf8_output()
 
     try:
         with IngestLock():

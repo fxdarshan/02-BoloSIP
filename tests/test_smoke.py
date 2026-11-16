@@ -16,6 +16,16 @@ class TestPackage(unittest.TestCase):
                 importlib.import_module(name)
 
 
+class TestConsoleEncoding(unittest.TestCase):
+    def test_symbols_print_on_legacy_windows_code_page(self):
+        import os, subprocess, sys
+        env = dict(os.environ, PYTHONIOENCODING="cp1252")
+        code = "from bolosip.textutil import utf8_output; utf8_output(); print('≥ ₹ – fine')"
+        proc = subprocess.run([sys.executable, "-c", code], cwd=config.ROOT, env=env, capture_output=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr.decode("utf-8", "replace"))
+        self.assertIn("fine", proc.stdout.decode("utf-8", "replace"))
+
+
 class TestSettingsDefaults(unittest.TestCase):
     def setUp(self):
         self.s = config.load_settings({})

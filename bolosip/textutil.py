@@ -45,3 +45,15 @@ BANNED_JUDGEMENT = re.compile(
 )
 
 URL = re.compile(r"https?://\S+", re.IGNORECASE)
+
+
+def utf8_output() -> None:
+    """Make stdout/stderr UTF-8 with replacement, so ₹, – and ≥ never crash a
+    command-line run on a Windows console or pipe using an older code page."""
+    import sys
+
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass

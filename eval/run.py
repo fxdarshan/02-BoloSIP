@@ -257,6 +257,8 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--all", action="store_true", help="evaluate every phase up to the current one")
     ap.add_argument("--no-write", action="store_true", help="print the report without saving it")
     args = ap.parse_args(argv)
+    from bolosip.textutil import utf8_output
+    utf8_output()
 
     if args.phase is not None and not 0 <= args.phase <= 9:
         ap.error("--phase must be between 0 and 9")
