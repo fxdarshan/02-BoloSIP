@@ -29,6 +29,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | `data/official_docs.json`: 10 curated official notes | Done; needs one review pass |
 | `data/corpus.json` + `data/raw/` snapshots | 5 schemes only |
 | `bolosip/guards.py` | Draft, **untested** |
+| **Phase 0: Foundation** | **Done** (16 Nov 2026): config, 13 smoke tests, eval runner; gate report `eval/reports/2026-11-16-phase0-8def061.md` |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -94,8 +95,8 @@ flowchart LR
 **Files:** `bolosip/__init__.py`, `bolosip/config.py`, `tests/__init__.py`, `tests/test_smoke.py`, `requirements.txt`, `README.md`
 
 **Exit criteria**
-- [ ] `python -m unittest discover tests` passes, with no third-party packages installed.
-- [ ] `python -c "import bolosip.config"` works with no environment variables set.
+- [x] `python -m unittest discover tests` passes, with no third-party packages installed.
+- [x] `python -c "import bolosip.config"` works with no environment variables set.
 
 **Covers:** arch §4, §16
 
