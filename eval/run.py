@@ -62,9 +62,13 @@ def phase0_checks() -> list[dict]:
                     "pass": proc.returncode == 0, "detail": last})
 
     # No third-party packages imported by the core package.
-    code = ("import sys, bolosip, bolosip.config, bolosip.guards;"
+    # Compare against the modules already loaded at interpreter start-up: site
+    # hooks (e.g. setuptools' _distutils_hack on Python <= 3.11) are not ours.
+    code = ("import sys; before=set(sys.modules);"
+            "import bolosip, bolosip.config, bolosip.guards;"
             "std=set(sys.stdlib_module_names);"
-            "bad=sorted({m.split('.')[0] for m in sys.modules} - std - {'bolosip', '__main__'});"
+            "new={m.split('.')[0] for m in set(sys.modules)-before};"
+            "bad=sorted(new - std - {'bolosip'});"
             "print(','.join(bad))")
     proc = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True)
     third_party = [m for m in proc.stdout.strip().split(",") if m]
