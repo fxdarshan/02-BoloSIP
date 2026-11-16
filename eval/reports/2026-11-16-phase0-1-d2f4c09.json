@@ -1,0 +1,121 @@
+{
+  "meta": {
+    "date": "2026-11-16T20:53:23+05:30",
+    "commit": "d2f4c09",
+    "phases": [
+      0,
+      1
+    ],
+    "python": "3.15.2",
+    "corpus_built_on": "16 Nov 2026",
+    "llm_mode": "auto",
+    "llm_provider": "groq",
+    "model": "llama-3.3-70b-versatile"
+  },
+  "checks": [
+    {
+      "phase": 0,
+      "check": "Config loads with no environment variables",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "phase": 0,
+      "check": "Unit tests pass (python -m unittest discover tests)",
+      "pass": true,
+      "detail": "OK"
+    },
+    {
+      "phase": 0,
+      "check": "Core imports only the standard library",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "phase": 1,
+      "check": "URL allow-list: exactly the 27 problem-statement URLs, nothing else",
+      "pass": true,
+      "detail": "27 fetched; stray sources: none"
+    },
+    {
+      "phase": 1,
+      "check": "Scheme coverage",
+      "pass": true,
+      "detail": "27 / 27"
+    },
+    {
+      "phase": 1,
+      "check": "Topic coverage (12 per scheme)",
+      "pass": true,
+      "detail": "324 / 324"
+    },
+    {
+      "phase": 1,
+      "check": "facts.jsonl matches the saved pages (run python -m eval.build_truth if not)",
+      "pass": true,
+      "detail": "324 cases stored, 324 expected"
+    },
+    {
+      "phase": 1,
+      "check": "Core fact agreement (135 checks, AC 1)",
+      "pass": true,
+      "detail": "135 / 135 (100.0%; need \u2265 100%)"
+    },
+    {
+      "phase": 1,
+      "check": "Extended fact agreement (189 checks)",
+      "pass": true,
+      "detail": "189 / 189 (100.0%; need \u2265 98%)"
+    },
+    {
+      "phase": 1,
+      "check": "Riskometer: data value agrees with page summary",
+      "pass": true,
+      "detail": "27 / 27 agree"
+    },
+    {
+      "phase": 1,
+      "check": "Every chunk has 1\u20133 sentences",
+      "pass": true,
+      "detail": "0 over the limit"
+    },
+    {
+      "phase": 1,
+      "check": "No return / performance figures",
+      "pass": true,
+      "detail": "0 found"
+    },
+    {
+      "phase": 1,
+      "check": "No judgement words (CMP-01)",
+      "pass": true,
+      "detail": "0 found"
+    },
+    {
+      "phase": 1,
+      "check": "Corpus passes ingest validation",
+      "pass": true,
+      "detail": "0 problems"
+    },
+    {
+      "phase": 1,
+      "check": "Atomic write keeps old corpus on failure; lock works",
+      "pass": true,
+      "detail": "OK"
+    },
+    {
+      "phase": 1,
+      "check": "Fetch resilience: network failure falls back to snapshots",
+      "pass": true,
+      "detail": "network off \u2192 27 schemes from snapshots"
+    },
+    {
+      "phase": 1,
+      "check": "Live spot check: 10 facts compared with live pages by hand",
+      "pass": true,
+      "detail": "13 / 13 match"
+    }
+  ],
+  "failures": [],
+  "passed": true
+}
