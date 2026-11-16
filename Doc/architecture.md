@@ -74,7 +74,7 @@ flowchart TB
 | Ingestion | `ingest.py` | Fetch scheme pages, parse them, build chunks, merge official notes, write `corpus.json` | **Built** (Phase 1, 27 schemes) |
 | Scheme registry | `bolosip/registry.py` | The 27 schemes: IDs, URLs (the fetch allow-list), names, groups, ISINs, aliases | **Built** (Phase 1) |
 | Topics / text helpers | `bolosip/topics.py`, `bolosip/textutil.py` | Topic list and keyword lexicon; sentence splitter, return-figure and judgement-word patterns | **Built** (Phase 1) |
-| Guards | `bolosip/guards.py` | Detect personal data, advice questions and returns questions; redact | Draft, untested |
+| Guards | `bolosip/guards.py` | Detect personal data, advice questions and returns questions; redact; ordered `check()` | **Built** (Phase 2) |
 | Scheme resolver | `bolosip/schemes.py` | Map free text to a scheme ID using aliases; detect ambiguity; use the thread's last scheme | Planned |
 | Retriever | `bolosip/retriever.py` | BM25 ranking plus topic and scheme boosts; returns a ranked list with scores | Planned |
 | Composer | `bolosip/composer.py` | Turn the top chunk into answer text, extractive by default with LLM rephrasing optional | Planned |
@@ -429,6 +429,8 @@ Messages flagged by guard 1 (personal data) are **never** sent to the LLM.
 | Performance | `is_performance` | "returns", "performance", "CAGR", "XIRR", "how much did", "calculate", "if I invest" … | "capital gains statement" is excluded explicitly because it's a document request. |
 
 The guards run on the **raw** text. The redacted text is what gets stored and logged. Advice is checked before performance, so "Which fund gave better returns?" gets the advice refusal.
+
+`check(text) -> GuardResult(kind, pii)` is the single entry point that applies this order; it returns `privacy`, `refusal`, `performance` or `None` (continue to retrieval), plus the *kinds* of personal data found, never the values. Public identifiers that look like personal data are deliberately ignored: scheme ISINs (`INF…`) and toll-free `1800` numbers. Every stored fact must pass all three guards (tested), because Phase 7 runs `is_advisory()` on LLM output.
 
 ## 12. Multiple threads and concurrency
 

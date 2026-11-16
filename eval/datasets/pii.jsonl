@@ -1,0 +1,61 @@
+{"id": "PII-01", "ref": "AC6", "question": "my PAN is ABCDE1234F", "expect": {"kind": "privacy", "values": ["ABCDE1234F"]}}
+{"id": "PII-02", "ref": "AC6", "question": "abcde1234f is my pan", "expect": {"kind": "privacy", "values": ["abcde1234f"]}}
+{"id": "PII-03-a", "ref": "AC6", "question": "PAN: ABCDE 1234 F", "expect": {"kind": "privacy", "values": ["1234"]}}
+{"id": "PII-03-b", "ref": "AC6", "question": "PAN ABCDE-1234-F please check", "expect": {"kind": "privacy", "values": ["1234"]}}
+{"id": "PII-04", "ref": "AC6", "question": "aadhaar 234567890123", "expect": {"kind": "privacy", "values": ["234567890123"]}}
+{"id": "PII-05-a", "ref": "AC6", "question": "my aadhaar is 2345 6789 0123", "expect": {"kind": "privacy", "values": ["6789"]}}
+{"id": "PII-05-b", "ref": "AC6", "question": "2345-6789-0123 is linked to my folio", "expect": {"kind": "privacy", "values": ["6789"]}}
+{"id": "PII-06", "ref": "AC6", "question": "1234 5678 9012", "expect": {"kind": "privacy", "values": ["5678"]}}
+{"id": "PII-07-a", "ref": "AC6", "question": "XXXX XXXX 0123 is my masked aadhaar", "expect": {"kind": "privacy", "values": ["0123"]}}
+{"id": "PII-07-b", "ref": "AC6", "question": "aadhaar ending 4567", "expect": {"kind": "privacy", "values": ["4567"]}}
+{"id": "PII-08", "ref": "AC6", "question": "my VID is 9123 4567 8901 2345", "expect": {"kind": "privacy", "values": ["8901"]}}
+{"id": "PII-09", "ref": "AC6", "question": "call me on 9876543210", "expect": {"kind": "privacy", "values": ["9876543210"]}}
+{"id": "PII-10-a", "ref": "AC6", "question": "+91 98765 43210 is my number", "expect": {"kind": "privacy", "values": ["43210"]}}
+{"id": "PII-10-b", "ref": "AC6", "question": "mobile 098765-43210", "expect": {"kind": "privacy", "values": ["43210"]}}
+{"id": "PII-10-c", "ref": "AC6", "question": "whatsapp +919876543210", "expect": {"kind": "privacy", "values": ["9876543210"]}}
+{"id": "PII-11", "ref": "AC6", "question": "my landline is 022 6631 6333", "expect": {"kind": "privacy", "values": ["6631"]}}
+{"id": "PII-12-a", "ref": "AC6", "question": "email me at me@example.com", "expect": {"kind": "privacy", "values": ["me@example.com"]}}
+{"id": "PII-12-b", "ref": "AC6", "question": "my email is test.user+mf@gmail.co.in", "expect": {"kind": "privacy", "values": ["test.user+mf@gmail.co.in"]}}
+{"id": "PII-13", "ref": "AC6", "question": "write to me at example dot com", "expect": {"kind": "privacy", "values": ["example dot com"]}}
+{"id": "PII-14-a", "ref": "AC6", "question": "OTP is 482913", "expect": {"kind": "privacy", "values": ["482913"]}}
+{"id": "PII-14-b", "ref": "AC6", "question": "one time password 4829", "expect": {"kind": "privacy", "values": ["4829"]}}
+{"id": "PII-14-c", "ref": "AC6", "question": "my verification code is 772211", "expect": {"kind": "privacy", "values": ["772211"]}}
+{"id": "PII-16-a", "ref": "AC6", "question": "folio no 1234567/89", "expect": {"kind": "privacy", "values": ["1234567"]}}
+{"id": "PII-16-b", "ref": "AC6", "question": "folio number: 12345678", "expect": {"kind": "privacy", "values": ["12345678"]}}
+{"id": "PII-17-a", "ref": "AC6", "question": "a/c 012345678901", "expect": {"kind": "privacy", "values": ["012345678901"]}}
+{"id": "PII-17-b", "ref": "AC6", "question": "account number 50100234567890", "expect": {"kind": "privacy", "values": ["50100234567890"]}}
+{"id": "PII-18-a", "ref": "AC6", "question": "IFSC HDFC0001234", "expect": {"kind": "privacy", "values": ["HDFC0001234"]}}
+{"id": "PII-18-b", "ref": "AC6", "question": "my bank ifsc is sbin0004567", "expect": {"kind": "privacy", "values": ["sbin0004567"]}}
+{"id": "PII-19", "ref": "AC6", "question": "PAN ABCDE1234F, phone 9876543210 and mail a.b@example.org", "expect": {"kind": "privacy", "values": ["ABCDE1234F", "9876543210", "a.b@example.org"]}}
+{"id": "PII-20", "ref": "AC6", "question": "PAN ABCDE1234F, what's the mid cap exit load?", "expect": {"kind": "privacy", "values": ["ABCDE1234F"]}}
+{"id": "PII-24", "ref": "AC6", "note": "accepted safe failure: 9+ digit amount treated as an ID", "question": "if I invest 100000000", "expect": {"kind": "privacy", "values": ["100000000"]}}
+{"id": "PII-30", "ref": "AC6", "question": "my father's PAN is PQRSX6789K", "expect": {"kind": "privacy", "values": ["PQRSX6789K"]}}
+{"id": "PII-ORDER-01", "ref": "rule-order", "question": "My mobile is 9123456789, should I invest?", "expect": {"kind": "privacy", "values": ["9123456789"]}}
+{"id": "PII-ORDER-02", "ref": "rule-order", "question": "OTP 551199 - what were the 3 year returns?", "expect": {"kind": "privacy", "values": ["551199"]}}
+{"id": "PII-15", "ref": "false-privacy", "question": "Do I need an OTP to download my statement?", "expect": {"kind": null}}
+{"id": "PII-21", "ref": "false-privacy", "question": "Where do I enter my PAN?", "expect": {"kind": null}}
+{"id": "PII-22", "ref": "false-privacy", "question": "What is ISIN INF179K01XQ0?", "expect": {"kind": null}}
+{"id": "PII-23", "ref": "false-privacy", "question": "scheme code 118989 details", "expect": {"kind": null}}
+{"id": "PII-25", "ref": "false-privacy", "question": "Is ₹1,00,00,000 the maximum SIP amount?", "expect": {"kind": null}}
+{"id": "PII-26-a", "ref": "false-privacy", "question": "launched on 01-01-2013", "expect": {"kind": null}}
+{"id": "PII-26-b", "ref": "false-privacy", "question": "expense ratio of 0.73% per annum", "expect": {"kind": null}}
+{"id": "PII-NEG-01", "ref": "false-privacy", "question": "account statement for HDFC Mid Cap", "expect": {"kind": null}}
+{"id": "PII-NEG-02", "ref": "false-privacy", "question": "AUM of ₹1,00,687 crore", "expect": {"kind": null}}
+{"id": "PII-NEG-03", "ref": "false-privacy", "question": "HDFC NIFTY 50 Index Fund exit load", "expect": {"kind": null}}
+{"id": "PII-NEG-04", "ref": "false-privacy", "question": "launched 01-Jan-2013", "expect": {"kind": null}}
+{"id": "PII-NEG-05", "ref": "false-privacy", "question": "RTA code HMCOGT", "expect": {"kind": null}}
+{"id": "PII-NEG-06", "ref": "false-privacy", "question": "Nifty 500 Multicap 50:25:25 Total Return Index", "expect": {"kind": null}}
+{"id": "PII-NEG-07", "ref": "false-privacy", "question": "NAV of ₹5637.4947 as on 15 Nov 2026", "expect": {"kind": null}}
+{"id": "PII-NEG-08", "ref": "false-privacy", "question": "fund size ₹71,083.13 crore", "expect": {"kind": null}}
+{"id": "PII-NEG-09", "ref": "false-privacy", "question": "stamp duty of 0.005% since 2020 a rule", "expect": {"kind": null}}
+{"id": "PII-NEG-10", "ref": "false-privacy", "question": "exit load within 365 days", "expect": {"kind": null}}
+{"id": "PII-NEG-11", "ref": "false-privacy", "question": "What is HDFC customer care's phone number?", "expect": {"kind": null}}
+{"id": "PII-NEG-12", "ref": "false-privacy", "question": "Which email id are statements sent to?", "expect": {"kind": null}}
+{"id": "PII-NEG-13", "ref": "false-privacy", "question": "HDFC toll free 1800-3010-6767", "expect": {"kind": null}}
+{"id": "PII-NEG-14", "ref": "false-privacy", "question": "in the year 2026 what is the expense ratio", "expect": {"kind": null}}
+{"id": "PII-NEG-15", "ref": "false-privacy", "question": "minimum SIP of ₹100 and lump sum ₹5,000", "expect": {"kind": null}}
+{"id": "PII-NEG-16", "ref": "false-privacy", "question": "HDFC House, 165-166 Backbay Reclamation, Churchgate", "expect": {"kind": null}}
+{"id": "PII-X-01", "ref": "AC6", "question": "my pan number ABCDE1234F pls", "expect": {"kind": "privacy", "values": ["ABCDE1234F"]}}
+{"id": "PII-X-02", "ref": "AC6", "question": "email: someone@mail.in", "expect": {"kind": "privacy", "values": ["someone@mail.in"]}}
+{"id": "PII-X-03", "ref": "AC6", "question": "ph: 8899776655", "expect": {"kind": "privacy", "values": ["8899776655"]}}
+{"id": "PII-X-04", "ref": "AC6", "question": "my phone is 99 88 77 66 55", "expect": {"kind": "privacy", "values": ["77 66"]}}

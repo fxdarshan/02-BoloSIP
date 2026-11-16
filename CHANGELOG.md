@@ -4,6 +4,13 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (Phase 2: guards, 16 Nov 2026)
+- `bolosip/guards.py` rewritten: ordered `check()` (personal data → advice → returns); personal data now covers PAN (plain or spaced), Aadhaar (incl. masked, partial with keyword, 16-digit VID), email (incl. "at … dot"), mobile (any grouping) and landline, OTP / verification codes, IFSC (GAP-07), account and folio numbers; ISINs and toll-free numbers are never flagged; redaction keeps the sentence readable.
+- Advice check widened (opinions on costs, suitability, safety, loss, predictions, ratings, "top/highest returning", "would you invest", "overvalued") while letting factual questions through ("best way to download", "HDFC Top 100", "Multi Asset Allocation").
+- Returns check: CAGR / XIRR / yield / NAV history / 52-week / calculators / "how did it do"; excludes capital-gains statements, "Total Return Index", tax returns and returning units.
+- Question sets: `eval/datasets/advice.jsonl` (108), `performance.jsonl` (49), `pii.jsonl` (61), each with look-alike negatives; `tests/test_guards.py` (18 tests incl. per-pattern speed); 80 tests total.
+- Phase 2 evaluation gate with confusion matrix.
+
 ### Added (Phase 1: corpus for 27 schemes, 16 Nov 2026)
 - `bolosip/registry.py`: the 27 schemes with IDs, Groww URLs (the only URLs ingestion may fetch), ISINs, groups and aliases (shared aliases mark ambiguity).
 - `bolosip/topics.py`, `bolosip/textutil.py`: shared topic lexicon; sentence splitter; return-figure and judgement-word patterns.

@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "eval" / "reports"
-CURRENT_PHASE = 1
+CURRENT_PHASE = 2
 
 
 def _git_commit() -> str:
@@ -194,7 +194,91 @@ def phase1_checks() -> list[dict]:
     return results
 
 
-PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks}
+SECTIONS: list[str] = []    # extra Markdown sections (e.g. confusion matrices)
+
+
+def _load_set(name: str) -> list[dict]:
+    path = ROOT / "eval" / "datasets" / f"{name}.jsonl"
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def phase2_checks() -> list[dict]:
+    """Phase 2 gate (Doc/eval.md §5): the three guards on their own, no retrieval."""
+    sys.path.insert(0, str(ROOT))
+    from bolosip import guards
+
+    advice, perf, pii, facts = (_load_set(n) for n in ("advice", "performance", "pii", "facts"))
+    results = []
+
+    def rate(cases, predicate):
+        hits = [c for c in cases if predicate(c)]
+        return len(hits), len(cases)
+
+    def gate(name, cases, predicate, *, minimum=None, maximum=None, record_misses=True):
+        n, total = rate(cases, predicate)
+        value = n / total if total else 0.0
+        ok = (minimum is None or value >= minimum) and (maximum is None or value <= maximum)
+        bound = f"need ≥ {minimum:.0%}" if minimum is not None else f"max {maximum:.0%}"
+        results.append(_check(name, ok, f"{n} / {total} ({value:.1%}; {bound})"))
+        if record_misses and not ok:
+            for c in cases:
+                if (predicate(c) if maximum is not None else not predicate(c)):
+                    FAILURES.append({"id": c["id"], "expected": [str(c.get("expect", {}).get("kind"))],
+                                     "got": f"{guards.check(c['question']).kind}: {c['question']}"})
+
+    kind = lambda c: guards.check(c["question"]).kind  # noqa: E731
+    pii_pos = [c for c in pii if c["expect"]["kind"] == "privacy"]
+    pii_neg = [c for c in pii if c["expect"]["kind"] is None]
+    adv_pos = [c for c in advice if c["expect"]["kind"] == "refusal"]
+    adv_neg = [c for c in advice if c["expect"]["kind"] is None]
+    prf_pos = [c for c in perf if c["expect"]["kind"] == "performance"]
+    prf_neg = [c for c in perf if c["expect"]["kind"] is None]
+
+    gate("PII recall (personal data caught)", pii_pos, lambda c: bool(guards.find_pii(c["question"])), minimum=1.0)
+    gate("PII false positives (look-alikes and fact questions)", pii_neg + facts,
+         lambda c: bool(guards.find_pii(c["question"])), maximum=0.02)
+    leaks = [(c["id"], v) for c in pii_pos for v in c["expect"].get("values", [])
+             if v.lower() in guards.redact(c["question"]).lower()]
+    results.append(_check("Redaction leaves no personal-data value (hard gate)", not leaks,
+                          f"{len(leaks)} values survived" + (f": {[i for i, _ in leaks]}" if leaks else "")))
+    gate("Refusal recall (advice refused, AC 4)", adv_pos, lambda c: kind(c) == "refusal", minimum=1.0)
+    gate("False refusals (fact questions refused)", facts + adv_neg + prf_neg,
+         lambda c: guards.is_advisory(c["question"]), maximum=0.03)
+    gate("Performance recall (returns → factsheet, AC 5)", prf_pos, lambda c: kind(c) == "performance", minimum=0.97)
+    gate("Performance false positives", facts + prf_neg, lambda c: guards.is_performance(c["question"]),
+         maximum=0.02)
+    order = [c for c in pii + advice if c["ref"] == "rule-order" or c["id"].startswith("ADV-24")]
+    gate("Rule order: privacy → advice → performance", order, lambda c: kind(c) == c["expect"]["kind"],
+         minimum=1.0)
+
+    corpus = json.loads((ROOT / "data" / "corpus.json").read_text(encoding="utf-8"))
+    flagged = [c["id"] for c in corpus["chunks"] if guards.find_pii(c["text"]) or guards.is_advisory(c["text"])]
+    results.append(_check("No stored fact trips a guard (needed for Phase 7 output checks)", not flagged,
+                          f"{len(flagged)} flagged" + (f": {flagged[:5]}" if flagged else "")))
+
+    proc = subprocess.run([sys.executable, "-m", "unittest", "-q", "tests.test_guards.TestSpeed"],
+                          cwd=ROOT, capture_output=True, text=True)
+    results.append(_check("Regex speed: every pattern < 5 ms on 500-character worst cases", proc.returncode == 0,
+                          (proc.stderr.strip().splitlines() or ["?"])[-1]))
+
+    # Confusion matrix over every guard case: expected kind (rows) vs actual (columns).
+    labels = ["privacy", "refusal", "performance", None]
+    grid = {(e, a): 0 for e in labels for a in labels}
+    for c in pii + advice + perf:
+        grid[(c["expect"]["kind"], kind(c))] += 1
+    name = lambda k: k or "none"  # noqa: E731
+    SECTIONS.append("\n".join([
+        "## Phase 2 confusion matrix (expected rows × actual columns)", "",
+        "| expected \\ actual | " + " | ".join(name(a) for a in labels) + " |",
+        "|---|" + "---|" * len(labels),
+        *[f"| {name(e)} | " + " | ".join(str(grid[(e, a)]) for a in labels) + " |" for e in labels],
+        "", f"{len(pii) + len(advice) + len(perf)} guard cases; {len(facts)} fact questions also checked for "
+            "false positives.",
+    ]))
+    return results
+
+
+PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks, 2: phase2_checks}
 
 
 def run(phases: list[int]) -> dict:
@@ -246,6 +330,7 @@ def to_markdown(report: dict) -> str:
         *(["None."] if not report["failures"] else
           ["| ID | Expected to contain | Got |", "|---|---|---|",
            *[f"| {f['id']} | {', '.join(f['expected'])} | {f['got']} |" for f in report["failures"]]]),
+        *(["", *SECTIONS] if SECTIONS else []),
     ]
     return "\n".join(lines).rstrip() + "\n"
 

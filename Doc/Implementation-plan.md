@@ -25,9 +25,9 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | Item | State |
 |---|---|
 | Problem statement v2.2, architecture v1.2, edge cases v1.2, eval v1.1 | Done |
-| `bolosip/guards.py` | Draft, **untested** |
 | **Phase 0: Foundation** | **Done** (16 Nov 2026): config with `.env` loading, `.env.example`, 21 tests, eval runner; gate report `eval/reports/2026-11-16-phase0-8def061.md` |
 | **Phase 1: Ingestion (fetch, parse, chunk)** | **Done** (16 Nov 2026): 334 chunks (27 × 12 + 10 official notes), all 27 pages live; 61 tests; gate report in `eval/reports/` |
+| **Phase 2: Guards** | **Done** (16 Nov 2026): ordered `check()`; 218 guard cases (advice 108, returns 49, personal data 61); 80 tests; gate 10/10 |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -221,11 +221,20 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 4. `redact()` must replace every detected value and leave the rest of the sentence readable.
 5. Confirm public scheme identifiers are *not* treated as personal data: ISINs (e.g. `INF179K01XQ0`), scheme codes and RTA codes must pass through unredacted.
 
-**Files:** `bolosip/guards.py`, `tests/test_guards.py`
+**Files:** `bolosip/guards.py`, `tests/test_guards.py`, `eval/datasets/advice.jsonl`, `eval/datasets/performance.jsonl`, `eval/datasets/pii.jsonl`, `eval/run.py` (Phase 2 gate)
+
+**What was built:** `check(text) -> GuardResult(kind, pii)` applies the rules in order (personal data → advice → returns) so later phases can't get the order wrong; `find_pii`, `redact`, `is_advisory`, `is_performance` stay available for tests and Phase 7 output checks.
+
+**Findings while building:**
+- The draft had 14 gaps (review in the commit history), e.g. no IFSC / landline / masked Aadhaar, "best" blocking "best way to download", "Total Return Index" counted as a returns question, "how is exit load calculated?" counted as performance.
+- "Allocation" blocked every question about *HDFC Multi Asset Allocation Fund*, and two scheme objectives ("dynamic allocation", "guaranteed by GoI") tripped the advice check: fixed, and a test now requires every stored fact to pass the guards.
+- Redaction of "my aadhaar is 2345 6789 0123" left "6789 0123" behind: fixed; a hard gate now checks that no personal-data value survives redaction.
+- The email pattern took 20 ms on "a.a.a…" (quadratic): anchored to token starts; every pattern is now < 5 ms.
+- 24 unseen phrasings found 8 misses (e.g. "would you put your own money…", "how did it fare", "99 88 77 66 55"): fixed and kept as cases. **Regex guards generalise to similar wording, not to every wording**; the Phase 3 held-out set measures this, and refusing stays the safe failure.
 
 **Exit criteria**
-- [ ] All cases in `test_guards.py` pass, with at least 60 cases in total.
-- [ ] No regex takes more than 5 ms on a 500-character input (no catastrophic backtracking).
+- [x] All cases in `test_guards.py` pass, with at least 60 cases in total (218).
+- [x] No regex takes more than 5 ms on a 500-character input (no catastrophic backtracking).
 
 **Covers:** AC 4, 5, 6 (detection side); arch §11; PS §4.2 rules 1–3, §7
 

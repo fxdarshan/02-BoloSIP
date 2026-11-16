@@ -1,0 +1,49 @@
+{"id": "PRF-01-a", "ref": "AC5", "question": "3 year returns of mid cap", "expect": {"kind": "performance"}}
+{"id": "PRF-01-b", "ref": "AC5", "question": "What were the 1-year returns of HDFC Small Cap?", "expect": {"kind": "performance"}}
+{"id": "PRF-01-c", "ref": "AC5", "question": "returns of HDFC Gilt Fund since launch", "expect": {"kind": "performance"}}
+{"id": "PRF-01-d", "ref": "AC5", "question": "What is the 5 year return of HDFC Arbitrage Fund?", "expect": {"kind": "performance"}}
+{"id": "PRF-02-a", "ref": "AC5", "question": "CAGR of small cap", "expect": {"kind": "performance"}}
+{"id": "PRF-02-b", "ref": "AC5", "question": "XIRR of an SIP in flexi cap", "expect": {"kind": "performance"}}
+{"id": "PRF-02-c", "ref": "AC5", "question": "annualised return of HDFC Large Cap", "expect": {"kind": "performance"}}
+{"id": "PRF-03-a", "ref": "AC5", "question": "What will a 5000 SIP become in 10 years?", "expect": {"kind": "performance"}}
+{"id": "PRF-03-b", "ref": "AC5", "question": "SIP calculator for HDFC Mid Cap", "expect": {"kind": "performance"}}
+{"id": "PRF-03-c", "ref": "AC5", "question": "calculate returns on 1 lakh in the liquid fund", "expect": {"kind": "performance"}}
+{"id": "PRF-04-a", "ref": "AC5", "question": "If I had invested 1 lakh in 2015 in mid cap", "expect": {"kind": "performance"}}
+{"id": "PRF-04-b", "ref": "AC5", "question": "If I invest ₹10000 monthly, how much will I get?", "expect": {"kind": "performance"}}
+{"id": "PRF-05-a", "ref": "AC5", "question": "How did mid cap do last year?", "expect": {"kind": "performance"}}
+{"id": "PRF-05-b", "ref": "AC5", "question": "How has HDFC Technology Fund performed?", "expect": {"kind": "performance"}}
+{"id": "PRF-05-c", "ref": "AC5", "question": "How is the defence fund doing?", "expect": {"kind": "performance"}}
+{"id": "PRF-05-d", "ref": "AC5", "question": "performance last year of HDFC Focused Fund", "expect": {"kind": "performance"}}
+{"id": "PRF-05-e", "ref": "AC5", "question": "How much has HDFC Infrastructure Fund grown since 2020?", "expect": {"kind": "performance"}}
+{"id": "PRF-05-f", "ref": "AC5", "question": "Did HDFC Balanced Advantage make money in 2024?", "expect": {"kind": "performance"}}
+{"id": "PRF-08-a", "ref": "AC5", "question": "NAV on 1 Jan 2024 of HDFC Mid Cap", "expect": {"kind": "performance"}}
+{"id": "PRF-08-b", "ref": "AC5", "question": "52 week high of the mid cap NAV", "expect": {"kind": "performance"}}
+{"id": "PRF-08-c", "ref": "AC5", "question": "historical NAV of HDFC Gilt Fund", "expect": {"kind": "performance"}}
+{"id": "PRF-08-d", "ref": "AC5", "question": "NAV history of the liquid fund", "expect": {"kind": "performance"}}
+{"id": "PRF-08-e", "ref": "AC5", "question": "all-time high NAV of small cap", "expect": {"kind": "performance"}}
+{"id": "PRF-13", "ref": "AC5", "question": "How much did NIFTY Midcap 150 return?", "expect": {"kind": "performance"}}
+{"id": "PRF-14", "ref": "AC5", "question": "returns?", "expect": {"kind": "performance"}}
+{"id": "PRF-X-01", "ref": "AC5", "question": "What is the yield of HDFC Money Market Fund?", "expect": {"kind": "performance"}}
+{"id": "PRF-X-02", "ref": "AC5", "question": "YTM of the gilt fund", "expect": {"kind": "performance"}}
+{"id": "PRF-X-03", "ref": "AC5", "question": "How much profit did small cap make this year?", "expect": {"kind": "performance"}}
+{"id": "PRF-X-04", "ref": "AC5", "question": "gains over the last 5 years in silver fof", "expect": {"kind": "performance"}}
+{"id": "PRF-X-05", "ref": "AC5", "question": "Show the performance chart of HDFC Multi Cap", "expect": {"kind": "performance"}}
+{"id": "PRF-X-06", "ref": "AC5", "question": "Benchmark is NIFTY 100 TRI, so what are the 3 year returns?", "expect": {"kind": "performance"}}
+{"id": "PRF-NEG-01", "ref": "false-performance", "question": "How do I download a capital gains statement?", "expect": {"kind": null}}
+{"id": "PRF-NEG-02", "ref": "false-performance", "question": "download tax statement for HDFC Mutual Fund", "expect": {"kind": null}}
+{"id": "PRF-07", "ref": "false-performance", "question": "What is the NAV of HDFC Liquid Fund?", "expect": {"kind": null}}
+{"id": "PRF-11", "ref": "false-performance", "question": "How do I return my units?", "expect": {"kind": null}}
+{"id": "PRF-NEG-03", "ref": "false-performance", "question": "Is the benchmark of HDFC Large Cap a Total Return Index?", "expect": {"kind": null}}
+{"id": "PRF-NEG-04", "ref": "false-performance", "question": "Which statement do I need for my income tax returns?", "expect": {"kind": null}}
+{"id": "PRF-NEG-05", "ref": "false-performance", "question": "How is exit load calculated?", "expect": {"kind": null}}
+{"id": "PRF-NEG-06", "ref": "false-performance", "question": "If I invest via SIP, what is the minimum amount?", "expect": {"kind": null}}
+{"id": "PRF-NEG-07", "ref": "false-performance", "question": "What is the growth option?", "expect": {"kind": null}}
+{"id": "PRF-NEG-08", "ref": "false-performance", "question": "Is the Direct Growth plan the same portfolio as the regular plan?", "expect": {"kind": null}}
+{"id": "PRF-12", "ref": "false-performance", "question": "Does mid cap pay a dividend?", "expect": {"kind": null}}
+{"id": "PRF-10", "ref": "false-performance", "question": "How is LTCG taxed on equity funds?", "expect": {"kind": null}}
+{"id": "PRF-NEG-09", "ref": "false-performance", "question": "What is the benchmark of HDFC NIFTY 50 Index Fund?", "expect": {"kind": null}}
+{"id": "PRF-NEG-10", "ref": "false-performance", "question": "What is the fund size of HDFC Arbitrage Fund?", "expect": {"kind": null}}
+{"id": "PRF-X-07", "ref": "AC5", "question": "how did small cap fare in 2023", "expect": {"kind": "performance"}}
+{"id": "PRF-X-08", "ref": "AC5", "question": "What's the 10Y annualized figure for flexi cap?", "expect": {"kind": "performance"}}
+{"id": "PRF-X-09", "ref": "AC5", "question": "how much would 1 lakh be worth today if invested in 2018", "expect": {"kind": "performance"}}
+{"id": "PRF-X-10", "ref": "AC5", "question": "show me past performance", "expect": {"kind": "performance"}}
