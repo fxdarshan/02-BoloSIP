@@ -4,6 +4,18 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (Phase 1: corpus for 27 schemes, 16 Nov 2026)
+- `bolosip/registry.py`: the 27 schemes with IDs, Groww URLs (the only URLs ingestion may fetch), ISINs, groups and aliases (shared aliases mark ambiguity).
+- `bolosip/topics.py`, `bolosip/textutil.py`: shared topic lexicon; sentence splitter; return-figure and judgement-word patterns.
+- `ingest.py` rewritten: URL allow-list, identity check (slug + ISIN), riskometer from the scheme's own data cross-checked with the page summary (GAP-03), templates for Nil / graded / 15%-rule exit loads, blocked lump-sum, Groww placeholder benchmark; full validation; atomic write and lock (GAP-04); `--offline`; exit codes 0/1/2.
+- `data/corpus.json`: 334 chunks (27 × 12 + 10 official notes), all 27 pages fetched live; `data/raw/` 27 snapshots + `fetched.json`.
+- `data/official_docs.json`: every note re-checked against its source; 7 re-pointed to the page that states the fact.
+- Tests: `tests/test_ingest.py` (40 tests) with frozen fixtures; 61 tests in total.
+- Evaluation: `eval/build_truth.py` (independent parser) → `eval/datasets/facts.jsonl` (324 cases); Phase 1 gate in `eval/run.py`; live spot check record.
+
+### Fixed
+- CI evaluation gate failed on Python 3.10 / 3.11 because a start-up site hook (`_distutils_hack`) was blamed on BoloSIP.
+
 ### Added (Phase 0: foundation, 16 Nov 2026)
 - `bolosip/config.py`: settings from `.env` and environment variables with safe defaults and clear errors; retrieval constants; request limits; Groq call settings; official links; other-AMC names; UI text.
 - `.env.example` settings template; local `.env` (git-ignored) holds `GROQ_API_KEY`.

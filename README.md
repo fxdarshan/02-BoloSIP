@@ -4,7 +4,13 @@
 
 BoloSIP is a small retrieval-based FAQ assistant that answers factual questions about 27 HDFC Mutual Fund schemes: expense ratio, exit load, minimum SIP, riskometer, benchmark, and how to download statements. Every answer is at most 3 sentences, cites exactly one source, and shows when that source was last updated. It refuses advice and opinion questions, and never asks for or stores personal details.
 
-**Status:** under construction. Phase 0 (foundation) is done; see the [implementation plan](Doc/Implementation-plan.md).
+**Status:** under construction. Phases 0 (foundation) and 1 (data for all 27 schemes) are done; see the [implementation plan](Doc/Implementation-plan.md).
+
+Refresh the scheme data (fetches only the 27 Groww scheme pages; falls back to saved copies if offline):
+
+```bash
+python ingest.py
+```
 
 ## Quick start
 

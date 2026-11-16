@@ -71,7 +71,9 @@ flowchart TB
 
 | Component | File | Responsibility | Status |
 |---|---|---|---|
-| Ingestion | `ingest.py` | Fetch scheme pages, parse them, build chunks, merge official notes, write `corpus.json` | Built for 5 schemes; extend to 27 |
+| Ingestion | `ingest.py` | Fetch scheme pages, parse them, build chunks, merge official notes, write `corpus.json` | **Built** (Phase 1, 27 schemes) |
+| Scheme registry | `bolosip/registry.py` | The 27 schemes: IDs, URLs (the fetch allow-list), names, groups, ISINs, aliases | **Built** (Phase 1) |
+| Topics / text helpers | `bolosip/topics.py`, `bolosip/textutil.py` | Topic list and keyword lexicon; sentence splitter, return-figure and judgement-word patterns | **Built** (Phase 1) |
 | Guards | `bolosip/guards.py` | Detect personal data, advice questions and returns questions; redact | Draft, untested |
 | Scheme resolver | `bolosip/schemes.py` | Map free text to a scheme ID using aliases; detect ambiguity; use the thread's last scheme | Planned |
 | Retriever | `bolosip/retriever.py` | BM25 ranking plus topic and scheme boosts; returns a ranked list with scores | Planned |
@@ -103,6 +105,9 @@ Files marked *(Phase N)* don't exist yet; they are created in that phase of the 
 │   ├── __init__.py                      # version, disclaimer
 │   ├── __main__.py                      # CLI: python -m bolosip "…"   (Phase 4)
 │   ├── config.py                        # settings (.env + env vars), constants
+│   ├── registry.py                      # the 27 schemes, URLs, ISINs, aliases
+│   ├── topics.py                        # topic names + keyword lexicon
+│   ├── textutil.py                      # sentence splitter, content-rule patterns
 │   ├── guards.py                        # draft; finished in Phase 2
 │   ├── schemes.py                       # (Phase 3)
 │   ├── retriever.py                     # (Phase 3)
@@ -115,13 +120,15 @@ Files marked *(Phase N)* don't exist yet; they are created in that phase of the 
 │   ├── official_docs.json               # hand-curated official notes (in git)
 │   ├── corpus.json                      # generated, committed for review
 │   ├── raw/<scheme-id>.html             # last good page snapshot per scheme
+│   ├── raw/fetched.json                 # when each snapshot was fetched (footer date in offline runs)
 │   └── bolosip.sqlite3                  # runtime threads (git-ignored) (Phase 5)
 ├── web/
 │   └── index.html                       # (Phase 6)
 ├── tests/
 │   ├── test_smoke.py                    # settings and imports
 │   ├── test_env_file.py                 # .env loading
-│   ├── test_ingest.py                   # (Phase 1)
+│   ├── test_ingest.py                   # registry, templates, validation, atomic write
+│   ├── fixtures/                        # 3 trimmed, frozen scheme pages for exact-value tests
 │   ├── test_guards.py                   # (Phase 2)
 │   ├── test_retrieval.py                # (Phase 3)
 │   ├── test_format.py, test_pipeline.py # (Phase 4)
@@ -130,7 +137,9 @@ Files marked *(Phase N)* don't exist yet; they are created in that phase of the 
 │   ├── test_acceptance.py, paraphrases.json  # (Phase 8)
 ├── eval/
 │   ├── run.py                           # evaluation runner (python -m eval.run)
-│   ├── metrics.py, build_truth.py       # (Phase 1–3)
+│   ├── build_truth.py                   # independent parser → datasets/facts.jsonl
+│   ├── metrics.py                       # (Phase 3)
+│   ├── manual/                          # recorded manual checks (e.g. live spot check)
 │   ├── datasets/*.jsonl                 # question sets (Phase 1 onwards)
 │   └── reports/                         # one report per gate run (committed)
 ├── scripts/
@@ -583,6 +592,7 @@ python -m unittest discover tests
 
 - **Groww as the source of scheme facts.** This is required by the brief but is an aggregator, not the AMC. Mitigations: scheme facts are cross-checkable against HDFC's TER disclosure and factsheet, which are linked in general answers. A future version could take scheme facts straight from HDFC documents.
 - **Freshness.** Answers are only as current as the last ingestion run. NAV and TER change often, and the footer date makes this visible.
+- **Groww data quirks.** For HDFC Multi Asset Allocation, Groww's page shows a Groww label ("Groww Equity Hybrid") instead of an official benchmark, so BoloSIP points to the HDFC factsheet instead of naming one. Groww's `nfo_risk` field is stale and is never used.
 - **Lexical retrieval.** Paraphrases with no shared words (e.g. "what does it cost me yearly") depend on the keyword synonyms. Missed questions get `not_found` rather than a wrong answer.
 - **Regex guards.** These can miss unusual phrasings. They are tuned toward refusing, since a wrong refusal is safer than wrong advice.
 - **English only.** Questions in Hindi or other languages are not supported.

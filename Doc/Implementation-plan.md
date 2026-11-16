@@ -25,11 +25,9 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | Item | State |
 |---|---|
 | Problem statement v2.2, architecture v1.2, edge cases v1.2, eval v1.1 | Done |
-| `ingest.py`: fetch with urllib → curl → snapshot, parse, 12 chunks per scheme | Works for **5 of 27** schemes |
-| `data/official_docs.json`: 10 curated official notes | Done; needs one review pass |
-| `data/corpus.json` + `data/raw/` snapshots | 5 schemes only |
 | `bolosip/guards.py` | Draft, **untested** |
 | **Phase 0: Foundation** | **Done** (16 Nov 2026): config with `.env` loading, `.env.example`, 21 tests, eval runner; gate report `eval/reports/2026-11-16-phase0-8def061.md` |
+| **Phase 1: Corpus for 27 schemes** | **Done** (16 Nov 2026): 334 chunks (27 × 12 + 10 official notes), all 27 pages live; 61 tests; gate report in `eval/reports/` |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -145,7 +143,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 
 **Tasks**
 
-1. **Scheme registry.** Replace the 5-entry `SCHEMES` dict in `ingest.py` with the 27 entries in the table above, using exactly those URLs and IDs. Each entry has `url`, `group` (Equity / Hybrid / Debt / FoF), `category` and `aliases`.
+1. **Scheme registry.** Replace the 5-entry `SCHEMES` dict in `ingest.py` with the 27 entries in the table above (built in `bolosip/registry.py`, so the Phase 3 resolver and the evaluation share it; `ingest.py` imports it), using exactly those URLs and IDs. Each entry has `url`, `group` (Equity / Hybrid / Debt / FoF), `category` and `aliases`.
    - **URL allow-list check:** before fetching, `ingest.py` asserts the registry holds exactly these 27 URLs (no more, no fewer, no duplicates), and that `fetch()` is only ever called with a registry URL. Any other URL stops the run with exit code `2`.
    - IDs are slugs of the **current** name, e.g. `hdfc-flexi-cap` for the `hdfc-equity-fund` URL (arch §5.1).
    - Aliases cover short forms, spacing variants ("midcap", "mid-cap"), `&`/"and", and former names ("hdfc equity fund").
@@ -164,7 +162,14 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 8. **Review `official_docs.json`.** Re-open each linked official page, confirm the text still matches, and update `reviewed_on`.
 9. Run ingestion, read through the `corpus.json` diff by hand, and commit the 27 snapshots in `data/raw/`.
 
-**Files:** `ingest.py`, `data/official_docs.json`, `data/corpus.json`, `data/raw/*.html` (27), `tests/test_ingest.py`
+**Files:** `ingest.py`, `bolosip/registry.py`, `bolosip/topics.py`, `bolosip/textutil.py`, `data/official_docs.json`, `data/corpus.json`, `data/raw/*.html` (27) + `data/raw/fetched.json`, `tests/test_ingest.py`, `tests/fixtures/*.html`, `eval/build_truth.py`, `eval/datasets/facts.jsonl`, `eval/manual/phase1_spotcheck.json`
+
+**Findings while building (handled in the templates):**
+- *HDFC Multi Asset Allocation*: Groww's benchmark field is `GROWWEH` / "Groww Equity Hybrid", a Groww label, not an official index. The benchmark fact says the page doesn't state one and cites the HDFC factsheet.
+- *HDFC Defence*: the fund house has blocked one-time (lump-sum) purchases; SIP from ₹100 is allowed. The fact says so.
+- *Riskometer*: the page's `nfo_risk` field is a stale launch-time value (e.g. Mid Cap says "Moderately High", actual "Very High"); the fact uses `return_stats` for the scheme's own code, cross-checked with the page summary.
+- *Exit loads*: 5 debt funds are "Nil", Liquid has a 6-step graded load, 3 hybrids use "for units in excess of 15%…"; each has its own template.
+- *Official notes*: 7 of 10 were re-pointed to the page that actually states the fact (e.g. AMFI Direct Plan and Expense Ratio articles, SEBI riskometer page, HDFC glossary and Request Statement page); unsupported details were removed.
 
 **Tests (`test_ingest.py`, offline, built from snapshots)**
 - The registry's URL set equals the 27 URLs listed in `Doc/problem_statement.md` §3.1 (the test reads both, so the two can't drift apart); a registry with an extra or missing URL fails.
@@ -175,11 +180,11 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 - No chunk contains `%` next to "return", "CAGR" or "1Y/3Y/5Y".
 
 **Exit criteria**
-- [ ] `python ingest.py` exits `0` (or `1` with a clear snapshot warning), and the registry has 27 schemes.
-- [ ] The set of URLs fetched in the run equals the 27 URLs in the table above, and every scheme chunk's `source_url` is one of them.
-- [ ] Chunk count is between 330 and 340.
-- [ ] Spot-check 10 random scheme facts against the live pages; all match.
-- [ ] `test_ingest.py` passes.
+- [x] `python ingest.py` exits `0` (or `1` with a clear snapshot warning), and the registry has 27 schemes.
+- [x] The set of URLs fetched in the run equals the 27 URLs in the table above, and every scheme chunk's `source_url` is one of them (the Multi Asset benchmark fact cites the HDFC factsheet, see findings).
+- [x] Chunk count is between 330 and 340 (334).
+- [x] Spot-check 10 random scheme facts against the live pages; all match (13 / 13, `eval/manual/phase1_spotcheck.json`).
+- [x] `test_ingest.py` passes.
 
 **Covers:** AC 1 (data side), AC 3 (source URLs); arch §5.1, §5.2, §15; PS §3.1, §3.2, §8
 

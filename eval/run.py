@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "eval" / "reports"
-CURRENT_PHASE = 0
+CURRENT_PHASE = 1
 
 
 def _git_commit() -> str:
@@ -78,7 +78,123 @@ def phase0_checks() -> list[dict]:
     return results
 
 
-PHASE_CHECKS = {0: phase0_checks}
+FAILURES: list[dict] = []   # individual failing cases, shown in the report
+
+
+def _check(name: str, ok: bool, detail: str) -> dict:
+    return {"check": name, "pass": bool(ok), "detail": detail}
+
+
+def phase1_checks() -> list[dict]:
+    """Phase 1 gate (Doc/eval.md §5): corpus complete, correct, and sourced only from the 27 URLs."""
+    import re
+    from unittest import mock
+
+    sys.path.insert(0, str(ROOT))
+    import ingest
+    from bolosip import registry
+    from bolosip.config import HDFC_FACTSHEET_URL
+    from bolosip.textutil import BANNED_JUDGEMENT, RETURN_FIGURE, split_sentences
+    from bolosip.topics import SCHEME_TOPICS
+    from eval import build_truth
+
+    results = []
+    corpus = json.loads((ROOT / "data" / "corpus.json").read_text(encoding="utf-8"))
+    chunks = {c["id"]: c for c in corpus["chunks"]}
+    scheme_chunks = [c for c in corpus["chunks"] if c["scheme_id"]]
+
+    # URL allow-list: registry == problem statement §3.1; corpus cites nothing else.
+    ps = (ROOT / "Doc" / "problem_statement.md").read_text(encoding="utf-8")
+    ps_urls = set(re.findall(r"https://groww\.in/mutual-funds/[a-z0-9-]+", ps.split("### 3.1", 1)[1].split("### 3.2", 1)[0]))
+    src_urls = {v["url"] for v in corpus.get("sources", {}).values()}
+    stray = sorted({c["source_url"] for c in scheme_chunks} - set(registry.ALLOWED_URLS) - {HDFC_FACTSHEET_URL})
+    ok = ps_urls == set(registry.ALLOWED_URLS) == src_urls and not stray and len(ps_urls) == 27
+    results.append(_check("URL allow-list: exactly the 27 problem-statement URLs, nothing else",
+                          ok, f"{len(src_urls)} fetched; stray sources: {stray or 'none'}"))
+
+    # Coverage.
+    schemes = {c["scheme_id"] for c in scheme_chunks}
+    results.append(_check("Scheme coverage", len(schemes) == 27, f"{len(schemes)} / 27"))
+    pairs = {(c["scheme_id"], c["topic"]) for c in scheme_chunks}
+    results.append(_check("Topic coverage (12 per scheme)", len(pairs) == 27 * len(SCHEME_TOPICS),
+                          f"{len(pairs)} / {27 * len(SCHEME_TOPICS)}"))
+
+    # Dataset is in sync with the saved pages.
+    fresh = build_truth.build()
+    stored = build_truth.load() if build_truth.DATASET.exists() else []
+    results.append(_check("facts.jsonl matches the saved pages (run python -m eval.build_truth if not)",
+                          fresh == stored, f"{len(stored)} cases stored, {len(fresh)} expected"))
+
+    # Fact agreement: corpus chunk vs independent truth.
+    def agree(case: dict) -> bool:
+        e = case["expect"]
+        c = chunks.get(f"{e['scheme_id']}:{e['topic']}")
+        if not c:
+            return False
+        text = c["text"].casefold()
+        return all(v.casefold() in text for v in e["contains"]) and c["source_url"] == e["source_url"]
+
+    for ref, label, threshold in (("AC1", "Core fact agreement (135 checks, AC 1)", 1.0),
+                                  ("AC1-extended", "Extended fact agreement (189 checks)", 0.98)):
+        cases = [c for c in fresh if c["ref"] == ref]
+        bad = [c for c in cases if not agree(c)]
+        for c in bad:
+            got = chunks.get(f"{c['expect']['scheme_id']}:{c['expect']['topic']}", {}).get("text", "(missing)")
+            FAILURES.append({"id": c["id"], "expected": c["expect"]["contains"], "got": got})
+        rate = 1 - len(bad) / len(cases) if cases else 0
+        results.append(_check(label, rate >= threshold,
+                              f"{len(cases) - len(bad)} / {len(cases)} ({rate:.1%}; need ≥ {threshold:.0%})"))
+
+    # Riskometer cross-check on every saved page (GAP-03).
+    mismatched = []
+    for s in registry.SCHEMES:
+        d = build_truth.page_data(ingest.RAW / f"{s.id}.html")
+        code = str(d["scheme_code"])
+        own = next(x["risk"] for x in d["return_stats"] if str(x.get("scheme_code")) == code)
+        m = re.search(r"Risk is ([A-Za-z ]+?)\.?\s*$", d.get("meta_desc") or "")
+        if not m or m.group(1).strip().lower() != own.lower():
+            mismatched.append(s.id)
+    results.append(_check("Riskometer: data value agrees with page summary", not mismatched,
+                          f"{27 - len(mismatched)} / 27 agree" + (f"; {mismatched}" if mismatched else "")))
+
+    # Format and content rules.
+    over = [c["id"] for c in corpus["chunks"] if not 1 <= len(split_sentences(c["text"])) <= 3]
+    results.append(_check("Every chunk has 1–3 sentences", not over, f"{len(over)} over the limit"))
+    figs = [c["id"] for c in corpus["chunks"] if RETURN_FIGURE.search(c["text"])]
+    results.append(_check("No return / performance figures", not figs, f"{len(figs)} found"))
+    words = [c["id"] for c in corpus["chunks"] if BANNED_JUDGEMENT.search(c["text"])]
+    results.append(_check("No judgement words (CMP-01)", not words, f"{len(words)} found"))
+    results.append(_check("Corpus passes ingest validation", not ingest.validate_corpus(corpus),
+                          f"{len(ingest.validate_corpus(corpus))} problems"))
+
+    # Atomic write (GAP-04) and fetch resilience, via the real code paths.
+    proc = subprocess.run([sys.executable, "-m", "unittest", "-q", "tests.test_ingest.TestAtomicWriteAndLock"],
+                          cwd=ROOT, capture_output=True, text=True)
+    results.append(_check("Atomic write keeps old corpus on failure; lock works", proc.returncode == 0,
+                          (proc.stderr.strip().splitlines() or ["?"])[-1]))
+    with mock.patch.object(ingest, "fetch", side_effect=OSError("network down")):
+        try:
+            built, _, _ = ingest.build(offline=False, log=lambda *a: None)
+            origins = {v["origin"] for v in built["sources"].values()}
+            ok, detail = origins == {"snapshot"}, f"network off → {len(built['sources'])} schemes from snapshots"
+        except ingest.IngestError as e:
+            ok, detail = False, str(e)[:200]
+    results.append(_check("Fetch resilience: network failure falls back to snapshots", ok, detail))
+
+    # Manual live spot check recorded in eval/manual/phase1_spotcheck.json.
+    manual = ROOT / "eval" / "manual" / "phase1_spotcheck.json"
+    if manual.exists():
+        items = json.loads(manual.read_text(encoding="utf-8"))["checks"]
+        good = sum(1 for i in items if i.get("match"))
+        results.append(_check("Live spot check: 10 facts compared with live pages by hand",
+                              len(items) >= 10 and good == len(items), f"{good} / {len(items)} match"))
+    else:
+        results.append(_check("Live spot check: 10 facts compared with live pages by hand", False,
+                              "eval/manual/phase1_spotcheck.json missing"))
+    return results
+
+
+PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks}
 
 
 def run(phases: list[int]) -> dict:
@@ -97,12 +213,12 @@ def run(phases: list[int]) -> dict:
             "model": s.model,
         },
         "checks": [],
-        "metrics": [],   # filled from Phase 1 onwards
         "failures": [],
     }
     for ph in phases:
         for r in PHASE_CHECKS.get(ph, lambda: [])():
             report["checks"].append({"phase": ph, **r})
+    report["failures"] = FAILURES
     report["passed"] = all(c["pass"] for c in report["checks"])
     return report
 
@@ -125,9 +241,11 @@ def to_markdown(report: dict) -> str:
         *[f"| {c['phase']} | {c['check']} | {'PASS' if c['pass'] else 'FAIL'} | {c['detail']} |"
           for c in report["checks"]],
         "",
-        "## Metrics",
+        "## Failing cases",
         "",
-        "No metrics yet (datasets start in Phase 1)." if not report["metrics"] else "",
+        *(["None."] if not report["failures"] else
+          ["| ID | Expected to contain | Got |", "|---|---|---|",
+           *[f"| {f['id']} | {', '.join(f['expected'])} | {f['got']} |" for f in report["failures"]]]),
     ]
     return "\n".join(lines).rstrip() + "\n"
 

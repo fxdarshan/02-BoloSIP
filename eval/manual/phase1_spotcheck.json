@@ -1,0 +1,24 @@
+{
+  "phase": 1,
+  "date": "16 Nov 2026",
+  "method": "Each corpus fact compared by hand with the visible text of the live Groww scheme page in a browser (signed out), not with the page's embedded data.",
+  "checks": [
+    {"scheme": "hdfc-mid-cap", "topic": "expense_ratio", "corpus": "0.73%", "live_page": "Expense ratio 0.73%", "match": true},
+    {"scheme": "hdfc-mid-cap", "topic": "exit_load", "corpus": "1% if redeemed within 1 year", "live_page": "Exit load of 1% if redeemed within 1 year.", "match": true},
+    {"scheme": "hdfc-mid-cap", "topic": "riskometer", "corpus": "Very High", "live_page": "Very High Risk", "match": true},
+    {"scheme": "hdfc-mid-cap", "topic": "aum", "corpus": "₹1,00,687.07 crore", "live_page": "Fund size (AUM) ₹1,00,687.07 Cr", "match": true},
+    {"scheme": "hdfc-mid-cap", "topic": "benchmark", "corpus": "NIFTY Midcap 150 Total Return Index", "live_page": "Fund benchmark NIFTY Midcap 150 Total Return Index", "match": true},
+    {"scheme": "hdfc-liquid", "topic": "expense_ratio", "corpus": "0.20%", "live_page": "Expense ratio 0.20%", "match": true},
+    {"scheme": "hdfc-liquid", "topic": "exit_load", "corpus": "0.0070% within 1 day ... 0.0045% within 6 days (6 tiers)", "live_page": "Exit load of 0.0070% if redeemed within 1 day, ... 0.0045% if redeemed within 6 days.", "match": true},
+    {"scheme": "hdfc-liquid", "topic": "riskometer", "corpus": "Moderate", "live_page": "Moderate Risk", "match": true},
+    {"scheme": "hdfc-equity-savings", "topic": "riskometer", "corpus": "High", "live_page": "High Risk", "match": true},
+    {"scheme": "hdfc-equity-savings", "topic": "exit_load", "corpus": "units in excess of 15% of the investment: 1% within 1 month", "live_page": "For units in excess of 15% of the investment,1% will be charged for redemption within 1 month.", "match": true},
+    {"scheme": "hdfc-gilt", "topic": "exit_load", "corpus": "no exit load", "live_page": "Exit load Nil", "match": true},
+    {"scheme": "hdfc-gilt", "topic": "benchmark", "corpus": "NIFTY All Duration G-Sec Index", "live_page": "Fund benchmark NIFTY All Duration G-Sec Index", "match": true},
+    {"scheme": "hdfc-defence", "topic": "min_investment", "corpus": "minimum SIP ₹100", "live_page": "Min. for SIP ₹100", "match": true}
+  ],
+  "notes": [
+    "hdfc-multi-asset-allocation: the live page shows 'Fund benchmark Groww Equity Hybrid', a Groww label rather than an official index. The corpus deliberately does not present it as a fact and points to the HDFC factsheet instead. Expense ratio 1.01% matches.",
+    "hdfc-defence: 'one-time investments blocked by the fund house' comes from the page's own data (blocked_reason: 'The fund house has blocked one-time investments in this fund.'). It is not visible to a signed-out visitor, so it is not counted above."
+  ]
+}

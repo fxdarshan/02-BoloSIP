@@ -1,69 +1,66 @@
-"""Build the BoloSIP corpus.
+"""Build the BoloSIP corpus (data/corpus.json).
 
-Fetches the five HDFC scheme pages listed in the problem statement, extracts the
-structured scheme data embedded in each page, and turns it into small, single-fact
-chunks. Curated process/education notes from official sources (HDFC MF, AMFI, SEBI,
-CAMS, MF Central) are merged in from data/official_docs.json.
+Fetches exactly the 27 Groww HDFC scheme pages in bolosip/registry.py (no other
+URL), reads the structured data embedded in each page, and turns it into small
+single-fact chunks (12 per scheme). Hand-curated official notes from
+data/official_docs.json are merged in. Nothing is written unless every check
+passes. See Doc/architecture.md §15 and Doc/Implementation-plan.md Phase 1.
 
-Run:  python ingest.py            (re-fetch and rebuild data/corpus.json)
+Usage:
+    python ingest.py             fetch live (falls back to saved snapshots)
+    python ingest.py --offline   use saved snapshots only (no network)
+
+Exit codes:
+    0  corpus written, every page fetched live
+    1  corpus written, at least one page came from a saved snapshot
+    2  corpus NOT written (registry problem, missing page, failed check, or
+       another run holds the lock); the previous corpus.json is unchanged
 """
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import json
+import os
 import re
 import shutil
 import ssl
 import subprocess
 import sys
+import time
 import urllib.request
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+from bolosip import registry
+from bolosip.config import HDFC_FACTSHEET_URL, OFFICIAL_DOMAINS
+from bolosip.registry import Scheme
+from bolosip.textutil import BANNED_JUDGEMENT, RETURN_FIGURE, URL, split_sentences
+from bolosip.topics import OFFICIAL_TOPICS, SCHEME_TOPICS, SEBI_RISK_LEVELS, TOPIC_KEYWORDS
+
+ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
-RAW = DATA / "raw"  # last successfully fetched page per scheme (offline fallback)
+RAW = DATA / "raw"                       # last good page per scheme
+FETCH_LOG = RAW / "fetched.json"         # when each snapshot was fetched
+CORPUS = DATA / "corpus.json"
+OFFICIAL_DOCS = DATA / "official_docs.json"
+LOCK = DATA / ".ingest.lock"
+LOCK_STALE_SECONDS = 30 * 60
 
-SCHEMES = {
-    "hdfc-mid-cap": {
-        "url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
-        "aliases": ["mid cap", "midcap", "mid-cap", "mid cap opportunities"],
-    },
-    "hdfc-small-cap": {
-        "url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
-        "aliases": ["small cap", "smallcap", "small-cap"],
-    },
-    "hdfc-large-cap": {
-        "url": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
-        "aliases": ["large cap", "largecap", "large-cap", "top 100"],
-    },
-    "hdfc-silver-etf-fof": {
-        "url": "https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth",
-        "aliases": ["silver", "silver etf", "silver fof", "silver etf fof"],
-    },
-    "hdfc-multi-cap": {
-        "url": "https://groww.in/mutual-funds/hdfc-multi-cap-fund-direct-growth",
-        "aliases": ["multi cap", "multicap", "multi-cap"],
-    },
-}
+IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
+GROUP_NAMES = {"Equity": "Equity", "Hybrid": "Hybrid", "Debt": "Debt", "FoF": "Fund of Funds"}
 
-FACTSHEET_URL = "https://www.hdfcfund.com/mutual-funds/factsheets"
 
-# Extra words attached to each chunk so lexical retrieval matches how people ask.
-TOPIC_KEYWORDS = {
-    "expense_ratio": "expense ratio ter total expense ratio cost charges fee fees annual",
-    "exit_load": "exit load redemption charge penalty withdraw early redeem",
-    "min_investment": "minimum sip amount min sip lumpsum lump sum minimum investment start",
-    "riskometer": "riskometer risk level risk classification risky risk grade",
-    "benchmark": "benchmark index tracks compared against tri",
-    "lock_in": "lock in lock-in lockin period elss locked tax saving",
-    "fund_manager": "fund manager managed by who manages manager",
-    "category": "category type objective investment objective what is scheme about",
-    "nav": "nav net asset value price unit price",
-    "aum": "aum fund size assets under management corpus size",
-    "scheme_details": "launch date inception isin registrar rta plan direct growth",
-    "stamp_duty": "stamp duty",
-}
+class IngestError(Exception):
+    """A problem that stops the corpus being written."""
 
+
+def today() -> str:
+    return dt.datetime.now(IST).strftime("%d %b %Y")
+
+
+# ---------------------------------------------------------------------------
+# Fetching: only registry URLs, urllib first, then curl
+# ---------------------------------------------------------------------------
 
 def _ssl_context() -> ssl.SSLContext:
     # Certificates are still fully verified. Python 3.13+ also enables
@@ -81,7 +78,7 @@ def _fetch_urllib(url: str) -> str:
 
 
 def _fetch_curl(url: str) -> str:
-    # Some sites reject Python's TLS client fingerprint but accept curl.
+    # Groww rejects Python's TLS client fingerprint (403) but accepts curl.
     exe = shutil.which("curl")
     if not exe:
         raise RuntimeError("curl not available")
@@ -91,6 +88,9 @@ def _fetch_curl(url: str) -> str:
 
 
 def fetch(url: str) -> str:
+    """Fetch one page. Refuses any URL that isn't one of the 27 registry URLs."""
+    if url not in registry.ALLOWED_URLS:
+        raise IngestError(f"refusing to fetch a URL outside the registry: {url}")
     try:
         return _fetch_urllib(url)
     except Exception as first:
@@ -100,146 +100,454 @@ def fetch(url: str) -> str:
             raise first
 
 
-def parse_scheme(html: str) -> dict:
+# ---------------------------------------------------------------------------
+# Parsing the page's embedded data
+# ---------------------------------------------------------------------------
+
+def parse_page(html: str) -> dict:
     m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html, re.S)
     if not m:
-        raise ValueError("embedded scheme data not found")
-    data = json.loads(m.group(1))["props"]["pageProps"]["mfServerSideData"]
-    risk = re.search(r'"risk":"([^"]+)"', html)
-    data["_riskometer"] = risk.group(1) if risk else None
-    return data
+        raise IngestError("embedded page data (__NEXT_DATA__) not found")
+    try:
+        return json.loads(m.group(1))["props"]["pageProps"]["mfServerSideData"]
+    except (ValueError, KeyError, TypeError) as e:
+        raise IngestError(f"embedded page data has an unexpected shape: {e}") from None
 
+
+def riskometer(d: dict) -> str:
+    """The scheme's own riskometer level (GAP-03).
+
+    Read from ``return_stats`` for this scheme's code (never the first "risk" in
+    the page, which can belong to a peer fund) and cross-checked against the
+    "Risk is …" sentence in ``meta_desc``.
+    """
+    code = str(d.get("scheme_code") or "")
+    stats = [s for s in d.get("return_stats") or [] if str(s.get("scheme_code")) == code]
+    level = (stats[0].get("risk") if stats else None) or ""
+    level = " ".join(str(level).split())
+    if level not in SEBI_RISK_LEVELS:
+        raise IngestError(f"riskometer {level!r} is not one of SEBI's 6 levels")
+    m = re.search(r"Risk is ([A-Za-z ]+?)\.?\s*$", d.get("meta_desc") or "")
+    if m and m.group(1).strip().lower() != level.lower():
+        raise IngestError(f"riskometer mismatch: data says {level!r}, page summary says {m.group(1)!r}")
+    return level
+
+
+def check_identity(s: Scheme, d: dict) -> None:
+    if d.get("search_id") != s.slug:
+        raise IngestError(f"page is for {d.get('search_id')!r}, expected {s.slug!r} (redirect?)")
+    if d.get("isin") != s.isin:
+        raise IngestError(f"ISIN {d.get('isin')!r} does not match registry {s.isin!r}")
+    if d.get("closed_scheme"):
+        raise IngestError("scheme is marked closed on its page")
+
+
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
 
 def inr(n) -> str:
-    """Indian digit grouping: 100687.07 -> 1,00,687.07"""
+    """Indian digit grouping: 100687.07 -> 1,00,687.07 ; 100 -> 100"""
     whole, _, frac = f"{float(n):.2f}".partition(".")
     if len(whole) > 3:
         head, tail = whole[:-3], whole[-3:]
         head = re.sub(r"(\d)(?=(\d\d)+$)", r"\1,", head)
         whole = f"{head},{tail}"
-    return f"{whole}.{frac}" if frac != "00" else whole
+    return whole if frac == "00" else f"{whole}.{frac}"
 
 
-def iso_to_human(s: str | None) -> str | None:
-    if not s:
+def human_date(value: str | None) -> str | None:
+    """'2026-11-12T00:00:00' or '13-Nov-2026' -> '12 Nov 2026'."""
+    if not value:
         return None
-    try:
-        return dt.datetime.fromisoformat(s.replace("Z", "")).strftime("%d %b %Y")
-    except ValueError:
-        return s
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d", "%d-%b-%Y"):
+        try:
+            return dt.datetime.strptime(value.split(".")[0].rstrip("Z"), fmt).strftime("%d %b %Y")
+        except ValueError:
+            continue
+    return value
 
 
-def scheme_chunks(sid: str, url: str, d: dict, fetched: str) -> list[dict]:
-    name = d["scheme_name"]
+def clean(value) -> str:
+    return " ".join(str(value or "").split())
+
+
+def join_names(names: list[str]) -> str:
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def exit_load_text(label: str, raw: str | None) -> str:
+    e = clean(raw).rstrip(". ")
+    e = re.sub(r",(?=\S)", ", ", e)
+    e = re.sub(r"\b(Days|Day|Months|Month|Years|Year)\b", lambda m: m.group(1).lower(), e)
+    if e.lower() in ("", "nil", "none", "0", "0%", "no exit load", "na", "n/a"):
+        return f"There is no exit load for {label}."
+    m = re.match(r"(?i)exit load\s+of\s+(.+)", e)
+    if m:
+        return f"{label} has an exit load of {m.group(1)}."
+    # e.g. "Exit Load for units in excess of 15% of the investment,1% will be charged for ..."
+    m = re.match(r"(?i)exit load\s+for\s+(units[^,]+),\s*(.+)", e)
+    if m:
+        return f"For {label}, an exit load applies to {m.group(1)}: {m.group(2)}."
+    return f"Exit load for {label}: {e}."
+
+
+def is_placeholder_benchmark(name: str, code: str) -> bool:
+    """Groww internal labels (e.g. 'Groww Equity Hybrid' / 'GROWWEH') are not official benchmarks."""
+    return not name or name.lower().startswith("groww") or code.upper().startswith("GROWW")
+
+
+# ---------------------------------------------------------------------------
+# Chunks: 12 single-fact chunks per scheme
+# ---------------------------------------------------------------------------
+
+def scheme_chunks(s: Scheme, d: dict, as_of: str, factsheet_as_of: str) -> list[dict]:
+    label = s.label
     chunks: list[dict] = []
 
-    def add(topic: str, text: str):
+    def add(topic: str, text: str, *, url: str = s.url, source_name: str | None = None,
+            date: str = as_of):
         chunks.append({
-            "id": f"{sid}:{topic}",
-            "scheme_id": sid,
-            "scheme_name": name,
+            "id": f"{s.id}:{topic}",
+            "scheme_id": s.id,
+            "scheme_name": label,
             "topic": topic,
             "text": text,
+            "keywords": TOPIC_KEYWORDS[topic],
             "source_url": url,
-            "source_name": f"{name} scheme page",
-            "as_of": fetched,
-            "keywords": TOPIC_KEYWORDS.get(topic, ""),
+            "source_name": source_name or f"{s.name} – Groww scheme page",
+            "as_of": date,
         })
 
-    er_date = iso_to_human((d.get("historic_fund_expense") or [{}])[0].get("as_on_date"))
-    add("expense_ratio",
-        f"The expense ratio (TER) of {name} is {float(d['expense_ratio']):.2f}% per annum"
-        + (f", as on {er_date}." if er_date else "."))
+    # expense_ratio
+    try:
+        er = float(d.get("expense_ratio"))
+    except (TypeError, ValueError):
+        raise IngestError(f"expense ratio missing or not a number: {d.get('expense_ratio')!r}") from None
+    if not 0 < er <= 3:
+        raise IngestError(f"expense ratio {er}% is outside 0–3%")
+    er_date = human_date((d.get("historic_fund_expense") or [{}])[0].get("as_on_date"))
+    add("expense_ratio", f"The expense ratio (TER) of {label} is {er:.2f}% per annum"
+                         + (f", as on {er_date}." if er_date else "."))
 
-    exit_load = (d.get("exit_load") or "Nil").strip().rstrip(".")
-    add("exit_load", f"Exit load for {name}: {exit_load[0].lower() + exit_load[1:]}.")
+    # exit_load
+    add("exit_load", exit_load_text(label, d.get("exit_load")))
 
-    add("min_investment",
-        f"The minimum SIP amount for {name} is ₹{inr(d['min_sip_investment'])}. "
-        f"The minimum first lump-sum investment is ₹{inr(d['min_investment_amount'])} and "
-        f"additional purchases start at ₹{inr(d['mini_additional_investment'])}.")
+    # min_investment
+    sip, lump, extra = d.get("min_sip_investment"), d.get("min_investment_amount"), d.get("mini_additional_investment")
+    parts = []
+    if d.get("sip_allowed") is False:
+        parts.append(f"SIP investments in {label} are currently not accepted.")
+    else:
+        if not isinstance(sip, (int, float)) or sip <= 0 or sip != int(sip):
+            raise IngestError(f"minimum SIP {sip!r} is not a positive whole number")
+        parts.append(f"The minimum SIP amount for {label} is ₹{inr(sip)}.")
+    if d.get("lumpsum_allowed") is False:
+        parts.append("One-time (lump-sum) investments in this scheme are currently blocked by the fund house.")
+    else:
+        if not isinstance(lump, (int, float)) or lump <= 0:
+            raise IngestError(f"minimum lump-sum {lump!r} is not positive")
+        more = f" and additional purchases start at ₹{inr(extra)}" if isinstance(extra, (int, float)) and extra > 0 else ""
+        parts.append(f"The minimum first lump-sum investment is ₹{inr(lump)}{more}.")
+    add("min_investment", " ".join(parts))
 
-    if d.get("_riskometer"):
-        add("riskometer", f"{name} is classified as \"{d['_riskometer']}\" risk on the riskometer.")
+    # riskometer
+    add("riskometer", f'{label} is classified as "{riskometer(d)}" risk on the riskometer.')
 
-    add("benchmark", f"The benchmark index of {name} is the {d['benchmark_name']}.")
+    # benchmark (Groww placeholder labels are not presented as facts)
+    bm, bm_code = clean(d.get("benchmark_name")), clean(d.get("benchmark"))
+    if is_placeholder_benchmark(bm, bm_code):
+        add("benchmark",
+            f"The scheme page for {label} does not state an official benchmark index. "
+            "HDFC Mutual Fund's monthly factsheet lists the benchmark of each scheme.",
+            url=HDFC_FACTSHEET_URL, source_name="HDFC Mutual Fund – Factsheets", date=factsheet_as_of)
+    else:
+        add("benchmark", f"The benchmark index of {label} is the {bm}.")
 
+    # lock_in
     li = d.get("lock_in") or {}
     if any(li.get(k) for k in ("years", "months", "days")):
-        parts = [f"{li[k]} {k}" for k in ("years", "months", "days") if li.get(k)]
-        add("lock_in", f"{name} has a lock-in period of {' '.join(parts)}.")
+        span = " ".join(f"{li[k]} {k}" for k in ("years", "months", "days") if li.get(k))
+        add("lock_in", f"{label} has a lock-in period of {span}.")
     else:
-        add("lock_in", f"{name} has no lock-in period, as it is not an ELSS (tax-saving) scheme; "
-                       f"exit load rules still apply on early redemption.")
+        add("lock_in", f"{label} has no lock-in period, as it is not an ELSS (tax-saving) scheme; "
+                       "exit load rules still apply on early redemption.")
 
-    managers = [m["person_name"] for m in d.get("fund_manager_details") or [] if m.get("person_name")]
-    managers = list(dict.fromkeys(managers)) or [d.get("fund_manager")]
-    managers = [m for m in managers if m]
-    who = managers[0] if len(managers) == 1 else ", ".join(managers[:-1]) + " and " + managers[-1]
-    add("fund_manager", f"{name} is managed by {who}.")
+    # fund_manager (current list; the single 'fund_manager' field can be stale)
+    names = list(dict.fromkeys(clean(m.get("person_name")) for m in d.get("fund_manager_details") or []
+                               if clean(m.get("person_name"))))
+    if not names and clean(d.get("fund_manager")):
+        names = [clean(d.get("fund_manager"))]
+    if not names:
+        raise IngestError("no fund manager listed")
+    add("fund_manager", f"{label} is managed by {join_names(names)}.")
 
-    add("category",
-        f"{name} is a {d['sub_category']} {d['category'].lower()} scheme of {d['fund_house']}. "
-        f"Objective: {d['description'].strip()}")
+    # category (+ first sentence of the stated objective)
+    objective = split_sentences(clean(d.get("description")))
+    text = f"{label} is classified as {s.category} in the {GROUP_NAMES[s.group]} group of HDFC Mutual Fund schemes."
+    if objective:
+        text += f" Its stated objective: {objective[0]}"
+        if not text.endswith((".", "!", "?")):
+            text += "."
+    add("category", text)
 
-    add("nav", f"The NAV of {name} was ₹{d['nav']} as on {d['nav_date']}.")
+    # nav
+    nav, nav_date = d.get("nav"), human_date(d.get("nav_date"))
+    if not isinstance(nav, (int, float)) or nav <= 0 or not nav_date:
+        raise IngestError(f"NAV {nav!r} / date {d.get('nav_date')!r} missing")
+    add("nav", f"The NAV of {label} was ₹{nav} as on {nav_date}.")
 
-    add("aum", f"The fund size (AUM) of {name} is ₹{inr(d['aum'])} crore.")
+    # aum
+    aum = d.get("aum")
+    if not isinstance(aum, (int, float)) or aum <= 0:
+        raise IngestError(f"AUM {aum!r} missing")
+    add("aum", f"The fund size (AUM) of {label} is ₹{inr(aum)} crore.")
 
-    launch = d.get("launch_date")
+    # scheme_details
+    launch = human_date(d.get("launch_date"))
+    rta = clean(d.get("registrar_agent")).upper() or "not stated"
     add("scheme_details",
-        f"{name} ({d.get('plan_type', 'Direct')} plan, {d.get('scheme_type', 'Growth')} option) was launched on {launch}. "
-        f"Its ISIN is {d['isin']} and its registrar (RTA) is {d.get('registrar_agent', 'CAMS')}.")
+        f"The Direct Plan (Growth option) of {s.name} was launched on {launch}. "
+        f"Its ISIN is {s.isin}, and its registrar and transfer agent (RTA) is {rta}.")
 
-    if d.get("stamp_duty"):
-        add("stamp_duty", f"Stamp duty of {d['stamp_duty']} applies to purchases in {name}.")
+    # stamp_duty
+    stamp = clean(d.get("stamp_duty"))
+    if not stamp:
+        raise IngestError("stamp duty missing")
+    add("stamp_duty", f"Stamp duty of {stamp} applies to purchases in {label}.")
 
     return chunks
 
 
-def main() -> int:
-    DATA.mkdir(exist_ok=True)
-    fetched = dt.date.today().strftime("%d %b %Y")
+# ---------------------------------------------------------------------------
+# Validation (architecture §15)
+# ---------------------------------------------------------------------------
+
+def _allowed_source(url: str) -> bool:
+    if url in registry.ALLOWED_URLS:
+        return True
+    host = re.sub(r"^https://", "", url).split("/", 1)[0].lower()
+    return url.startswith("https://") and any(host == d or host.endswith("." + d) for d in OFFICIAL_DOMAINS)
+
+
+def validate_corpus(corpus: dict) -> list[str]:
+    """Every problem that should stop the corpus being written."""
+    problems: list[str] = []
+    chunks = corpus.get("chunks") or []
+    seen_ids: set[str] = set()
+    topics_by_scheme: dict[str, set[str]] = {}
+
+    for c in chunks:
+        cid = c.get("id", "?")
+        if cid in seen_ids:
+            problems.append(f"{cid}: duplicate chunk id")
+        seen_ids.add(cid)
+        text = c.get("text") or ""
+        n = len(split_sentences(text))
+        if not 1 <= n <= 3:
+            problems.append(f"{cid}: {n} sentences (must be 1–3)")
+        if not c.get("source_url"):
+            problems.append(f"{cid}: missing source_url")
+        elif not _allowed_source(c["source_url"]):
+            problems.append(f"{cid}: source {c['source_url']} is not an allowed source")
+        if not c.get("as_of"):
+            problems.append(f"{cid}: missing as_of")
+        if URL.search(text):
+            problems.append(f"{cid}: URL inside chunk text")
+        if RETURN_FIGURE.search(text):
+            problems.append(f"{cid}: contains a return / performance figure")
+        if BANNED_JUDGEMENT.search(text):
+            problems.append(f"{cid}: contains a judgement word ({BANNED_JUDGEMENT.search(text).group(0)!r})")
+        if c.get("scheme_id"):
+            topics_by_scheme.setdefault(c["scheme_id"], set()).add(c.get("topic"))
+            if c.get("source_url") not in (registry.BY_ID[c["scheme_id"]].url, HDFC_FACTSHEET_URL):
+                problems.append(f"{cid}: scheme fact cites {c.get('source_url')}, not its own scheme page")
+        elif c.get("topic") not in OFFICIAL_TOPICS:
+            problems.append(f"{cid}: unknown official topic {c.get('topic')!r}")
+
+    for s in registry.SCHEMES:
+        missing = set(SCHEME_TOPICS) - topics_by_scheme.get(s.id, set())
+        if missing:
+            problems.append(f"{s.id}: missing topics {', '.join(sorted(missing))}")
+    extra = set(topics_by_scheme) - set(registry.BY_ID)
+    if extra:
+        problems.append(f"chunks for unknown schemes: {', '.join(sorted(extra))}")
+    if set(corpus.get("schemes") or {}) != set(registry.BY_ID):
+        problems.append("corpus scheme list does not match the registry")
+    return problems
+
+
+# ---------------------------------------------------------------------------
+# Atomic write and lock (GAP-04)
+# ---------------------------------------------------------------------------
+
+def write_atomic(path: Path, text: str) -> None:
+    """Write ``text`` to ``path`` so readers never see a half-written file."""
+    tmp = path.with_name(path.name + ".tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+
+
+class IngestLock:
+    """Stops two ingestion runs at once. A lock older than 30 minutes is stale."""
+
+    def __init__(self, path: Path = LOCK):
+        self.path = path
+        self.held = False
+
+    def __enter__(self):
+        for _ in range(2):
+            try:
+                fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                with os.fdopen(fd, "w") as f:
+                    f.write(f"pid={os.getpid()} started={dt.datetime.now(IST).isoformat()}\n")
+                self.held = True
+                return self
+            except FileExistsError:
+                age = time.time() - self.path.stat().st_mtime
+                if age > LOCK_STALE_SECONDS:
+                    self.path.unlink(missing_ok=True)
+                    continue
+                raise IngestError(f"another ingestion run is in progress ({self.path.name} exists; "
+                                  "delete it if no run is active)") from None
+        raise IngestError("could not acquire the ingestion lock")
+
+    def __exit__(self, *exc):
+        if self.held:
+            self.path.unlink(missing_ok=True)
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Main build
+# ---------------------------------------------------------------------------
+
+def load_official_docs() -> tuple[list[dict], str]:
+    data = json.loads(OFFICIAL_DOCS.read_text(encoding="utf-8"))
+    reviewed = data["reviewed_on"]
+    docs = [{**doc, "scheme_id": None, "scheme_name": None, "as_of": reviewed} for doc in data["docs"]]
+    return docs, reviewed
+
+
+def load_fetch_log() -> dict:
+    try:
+        return json.loads(FETCH_LOG.read_text(encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        return {}
+
+
+def build(offline: bool = False, log=print) -> tuple[dict, dict[str, str], dict]:
+    """Build the corpus in memory. Returns (corpus, new_snapshots, fetch_log).
+
+    Raises IngestError for any problem; nothing is written here.
+    """
+    problems = registry.check_registry()
+    if problems:
+        raise IngestError("registry problems: " + "; ".join(problems))
+
+    official, reviewed_on = load_official_docs()
+    fetch_log = load_fetch_log()
+    new_snapshots: dict[str, str] = {}
+    sources: dict[str, dict] = {}
     chunks: list[dict] = []
-    schemes_meta = {}
-    for sid, cfg in SCHEMES.items():
-        print(f"fetching {cfg['url']}")
-        snapshot = RAW / f"{sid}.html"
-        try:
-            html = fetch(cfg["url"])
-            d = parse_scheme(html)
-            RAW.mkdir(exist_ok=True)
-            snapshot.write_text(html, encoding="utf-8")
-            as_of = fetched
-        except Exception as e:
-            if not snapshot.exists():
-                print(f"  FAILED: {e}", file=sys.stderr)
+    errors: list[str] = []
+    fetched_now = today()
+
+    for s in registry.SCHEMES:
+        html, origin = None, None
+        if not offline:
+            try:
+                html, origin = fetch(s.url), "live"
+            except IngestError:
+                raise
+            except Exception as e:
+                log(f"  {s.id}: live fetch failed ({e}); trying saved snapshot")
+        if html is not None:
+            try:
+                d = parse_page(html)
+                check_identity(s, d)
+            except IngestError as e:
+                log(f"  {s.id}: live page unusable ({e}); trying saved snapshot")
+                html = None
+        if html is None:
+            snap = RAW / f"{s.id}.html"
+            if not snap.exists():
+                errors.append(f"{s.id}: no live page and no saved snapshot")
                 continue
-            print(f"  live fetch failed ({e}); using saved snapshot {snapshot.name}", file=sys.stderr)
-            d = parse_scheme(snapshot.read_text(encoding="utf-8"))
-            as_of = dt.date.fromtimestamp(snapshot.stat().st_mtime).strftime("%d %b %Y")
-        chunks += scheme_chunks(sid, cfg["url"], d, as_of)
-        schemes_meta[sid] = {
-            "name": d["scheme_name"],
-            "url": cfg["url"],
-            "aliases": cfg["aliases"],
-            "factsheet_url": FACTSHEET_URL,
-        }
+            html, origin = snap.read_text(encoding="utf-8"), "snapshot"
+        try:
+            d = parse_page(html)
+            check_identity(s, d)
+            as_of = fetched_now if origin == "live" else (fetch_log.get(s.id, {}).get("fetched_on"))
+            if not as_of:
+                raise IngestError("snapshot has no recorded fetch date in data/raw/fetched.json")
+            chunks += scheme_chunks(s, d, as_of, reviewed_on)
+        except IngestError as e:
+            errors.append(f"{s.id}: {e}")
+            continue
+        if origin == "live":
+            new_snapshots[s.id] = html
+            fetch_log[s.id] = {"url": s.url, "fetched_on": fetched_now}
+        sources[s.id] = {"url": s.url, "origin": origin, "fetched_on": as_of}
+        log(f"  {s.id}: ok ({origin}, {as_of})")
 
-    official = json.loads((DATA / "official_docs.json").read_text(encoding="utf-8"))
-    for doc in official["docs"]:
-        doc = {**doc, "scheme_id": None, "scheme_name": None, "as_of": official["reviewed_on"]}
-        chunks.append(doc)
+    if errors:
+        raise IngestError("; ".join(errors))
 
-    out = {
-        "built_on": fetched,
-        "factsheet_url": FACTSHEET_URL,
-        "schemes": schemes_meta,
+    chunks += official
+    corpus = {
+        "built_on": fetched_now,
+        "factsheet_url": HDFC_FACTSHEET_URL,
+        "official_reviewed_on": reviewed_on,
+        "schemes": {
+            s.id: {"name": s.name, "label": s.label, "url": s.url, "group": s.group,
+                   "category": s.category, "isin": s.isin, "aliases": list(s.aliases),
+                   "factsheet_url": HDFC_FACTSHEET_URL}
+            for s in registry.SCHEMES
+        },
+        "sources": sources,
         "chunks": chunks,
     }
-    (DATA / "corpus.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"wrote {len(chunks)} chunks for {len(schemes_meta)} schemes -> data/corpus.json")
-    return 0 if len(schemes_meta) == len(SCHEMES) else 1
+    problems = validate_corpus(corpus)
+    if problems:
+        raise IngestError("validation failed:\n    " + "\n    ".join(problems))
+    return corpus, new_snapshots, fetch_log
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="Build data/corpus.json from the 27 HDFC scheme pages.")
+    ap.add_argument("--offline", action="store_true", help="use saved snapshots only (no network)")
+    args = ap.parse_args(argv)
+
+    try:
+        with IngestLock():
+            print(f"Building corpus ({'offline, snapshots only' if args.offline else 'live'}) "
+                  f"for {len(registry.SCHEMES)} schemes")
+            corpus, new_snapshots, fetch_log = build(offline=args.offline)
+            RAW.mkdir(parents=True, exist_ok=True)
+            for sid, html in new_snapshots.items():
+                write_atomic(RAW / f"{sid}.html", html)
+            if new_snapshots:
+                write_atomic(FETCH_LOG, json.dumps(dict(sorted(fetch_log.items())), indent=2) + "\n")
+            write_atomic(CORPUS, json.dumps(corpus, ensure_ascii=False, indent=2) + "\n")
+    except IngestError as e:
+        print(f"NOT WRITTEN: {e}", file=sys.stderr)
+        return 2
+
+    from_snapshot = [sid for sid, src in corpus["sources"].items() if src["origin"] == "snapshot"]
+    print(f"Wrote {len(corpus['chunks'])} chunks for {len(corpus['schemes'])} schemes -> data/corpus.json")
+    if from_snapshot:
+        print(f"WARNING: {len(from_snapshot)} scheme(s) used saved snapshots: {', '.join(from_snapshot)}",
+              file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
