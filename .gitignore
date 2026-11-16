@@ -20,3 +20,8 @@ graft/.cache/
 # Ingestion temp files (atomic write + lock, GAP-04)
 data/corpus.json.tmp
 data/.ingest.lock
+
+# Python packaging output
+*.egg-info/
+build/
+dist/
