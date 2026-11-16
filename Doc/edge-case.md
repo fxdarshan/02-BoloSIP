@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.0 · 16 Nov 2026 · Based on [architecture.md](architecture.md) v1.0 and [Implementation-plan.md](Implementation-plan.md) v1.0
+Version 1.1 · 16 Nov 2026 · Based on [architecture.md](architecture.md) v1.1 and [Implementation-plan.md](Implementation-plan.md) v1.0
 
 ---
 
@@ -20,7 +20,7 @@ This is the catalogue of unusual, tricky and failure-mode inputs BoloSIP must ha
 | Owner | Module that must handle it (see arch §3) |
 | Ph | Phase that builds and tests it (see Implementation plan §3) |
 
-Cases marked **⚠ GAP** are not yet covered by the architecture as written. Section 16 lists them together with the change each one needs.
+Cases marked **⚠ GAP** were found while writing this document; section 16 lists them and where each fix now lives in the architecture.
 
 **Order of checks (from arch §6):** personal data → advice → performance → scheme resolution → retrieval threshold → answer. Many edge cases come down to "which rule fires first", so the order matters.
 
@@ -338,19 +338,19 @@ Rule 3: no figures, factsheet link only.
 
 ## 16. Gaps found while writing this document
 
-These cases are not handled by the architecture as written. Each needs a small design change, to be made in `architecture.md` before or during the phase shown.
+These cases were not handled by architecture v1.0. **All 9 have been added to [architecture.md](architecture.md) v1.1** and to the matching phases of [Implementation-plan.md](Implementation-plan.md) v1.1; the "Where in arch" column shows where.
 
-| Gap | Cases | Problem | Proposed change | Phase |
-|---|---|---|---|---|
-| **GAP-01** | SCH-16 | "SBI Small Cap" contains the alias "small cap" and would be answered as **HDFC** Small Cap: a confident wrong answer | Add a list of other AMC names (SBI, Axis, ICICI, Nippon, Kotak, Mirae, Parag Parikh, UTI, Aditya Birla, DSP, Tata, Quant, Motilal, Franklin, Edelweiss, Canara Robeco, Bandhan, Invesco, …). If any appears, reply `not_found` ("only HDFC Mutual Fund schemes are covered") | 3 |
-| **GAP-02** | IN-20–22, RET-10 | No reply kind for greetings, "what can you do?" or empty-meaning messages | Add a `help` kind: short welcome plus the 3 examples; no fact, so no link and no footer (like `clarify`) | 4 |
-| **GAP-03** | ING-07 | The riskometer regex takes the first `"risk":"…"` in the page, which may belong to another fund | Read from a fixed JSON path, cross-check with `meta_desc`, and fail validation on mismatch | 1 |
-| **GAP-04** | ING-11 | `corpus.json` is written in place; an interrupted run can leave it broken | Write to a temp file, validate, then rename atomically | 1 |
-| **GAP-05** | SCH-15 | Questions about Regular plan or IDCW options could get the Direct Growth value without saying so | Detect "regular" / "IDCW" / "dividend"; answer with an explicit "this is for the Direct Growth plan" or `not_found` | 4 |
-| **GAP-06** | LLM-09 | The number check would reject correct rephrasing that formats numbers differently | Normalise numbers (remove commas and ₹/Rs, map number words) before comparing | 7 |
-| **GAP-07** | PII-18 | IFSC codes are not detected | Add an IFSC pattern (`[A-Z]{4}0[A-Z0-9]{6}`) | 2 |
-| **GAP-08** | SEC-04, SEC-05 | Any web page the user visits could call the local API | Check `Origin` and `Host` headers; require JSON content type | 5 |
-| **GAP-09** | SEC-06 | No rate limiting | Simple in-memory per-IP limit | 5 |
+| Gap | Cases | Problem | Change made | Phase | Where in arch |
+|---|---|---|---|---|---|
+| **GAP-01** | SCH-16 | "SBI Small Cap" contains the alias "small cap" and would be answered as **HDFC** Small Cap: a confident wrong answer | Add a list of other AMC names (SBI, Axis, ICICI, Nippon, Kotak, Mirae, Parag Parikh, UTI, Aditya Birla, DSP, Tata, Quant, Motilal, Franklin, Edelweiss, Canara Robeco, Bandhan, Invesco, …). If any appears, reply `not_found` ("only HDFC Mutual Fund schemes are covered") | 3 | §7 step 0, §17, D9 |
+| **GAP-02** | IN-20–22, RET-10 | No reply kind for greetings, "what can you do?" or empty-meaning messages | Add a `help` kind: short welcome plus the 3 examples; no fact, so no link and no footer (like `clarify`) | 4 | §6, §6.2, §10.1, D10 |
+| **GAP-03** | ING-07 | The riskometer regex takes the first `"risk":"…"` in the page, which may belong to another fund | Read from a fixed JSON path, cross-check with `meta_desc`, and fail validation on mismatch | 1 | §15 |
+| **GAP-04** | ING-11 | `corpus.json` is written in place; an interrupted run can leave it broken | Write to a temp file, validate, then rename atomically | 1 | §15 |
+| **GAP-05** | SCH-15 | Questions about Regular plan or IDCW options could get the Direct Growth value without saying so | Detect "regular" / "IDCW" / "dividend"; answer with an explicit "this is for the Direct Growth plan" or `not_found` | 4 | §7 |
+| **GAP-06** | LLM-09 | The number check would reject correct rephrasing that formats numbers differently | Normalise numbers (remove commas and ₹/Rs, map number words) before comparing | 7 | §9.2 |
+| **GAP-07** | PII-18 | IFSC codes are not detected | Add an IFSC pattern (`[A-Z]{4}0[A-Z0-9]{6}`) | 2 | §11 |
+| **GAP-08** | SEC-04, SEC-05 | Any web page the user visits could call the local API | Check `Origin` and `Host` headers; require JSON content type | 5 | §13, §17, D11 |
+| **GAP-09** | SEC-06 | No rate limiting | Simple in-memory per-IP limit | 5 | §13, §16, §17 |
 
 ## 17. Test coverage map
 

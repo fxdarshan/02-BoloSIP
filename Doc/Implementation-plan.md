@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.0 · 16 Nov 2026 · Builds what [architecture.md](architecture.md) v1.0 describes, to meet [problem_statement.md](problem_statement.md) v2.1
+Version 1.1 · 16 Nov 2026 · Builds what [architecture.md](architecture.md) v1.1 describes, to meet [problem_statement.md](problem_statement.md) v2.1
 
 ---
 
@@ -24,7 +24,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 
 | Item | State |
 |---|---|
-| Problem statement v2.1 and architecture v1.0 | Done |
+| Problem statement v2.1, architecture v1.1, edge cases v1.0 | Done |
 | `ingest.py`: fetch with urllib → curl → snapshot, parse, 12 chunks per scheme | Works for **5 of 27** schemes |
 | `data/official_docs.json`: 10 curated official notes | Done; needs one review pass |
 | `data/corpus.json` + `data/raw/` snapshots | 5 schemes only |
@@ -120,14 +120,18 @@ flowchart LR
    - riskometer is one of SEBI's 6 levels
    - no chunk text contains return, CAGR or performance figures
 5. **Exit codes:** `0` all live, `1` some from snapshots, `2` some scheme missing. Old `corpus.json` stays on any failure.
-6. **Review `official_docs.json`.** Re-open each linked official page, confirm the text still matches, and update `reviewed_on`.
-7. Run ingestion, read through the `corpus.json` diff by hand, and commit the 27 snapshots in `data/raw/`.
+6. **Riskometer from a fixed path (GAP-03).** Replace the first-match `"risk"` regex with a read from the scheme's own JSON object, cross-checked against `meta_desc`; fail on mismatch. Also check the parsed `search_id` and `isin` match the registry.
+7. **Atomic write and lock (GAP-04).** Write `corpus.json.tmp`, validate, then `os.replace`; use `data/.ingest.lock` to stop two runs at once.
+8. **Review `official_docs.json`.** Re-open each linked official page, confirm the text still matches, and update `reviewed_on`.
+9. Run ingestion, read through the `corpus.json` diff by hand, and commit the 27 snapshots in `data/raw/`.
 
 **Files:** `ingest.py`, `data/official_docs.json`, `data/corpus.json`, `data/raw/*.html` (27), `tests/test_ingest.py`
 
 **Tests (`test_ingest.py`, offline, built from snapshots)**
 - Parser extracts the right fields from 3 sample snapshots: one equity, one debt, one FoF.
 - Validation rejects a corpus with a missing topic, a 4-sentence chunk, or a riskometer outside SEBI's 6 levels.
+- A snapshot whose first `"risk"` value belongs to a peer fund still yields the scheme's own riskometer (GAP-03).
+- An exception raised mid-write leaves the previous `corpus.json` byte-for-byte unchanged (GAP-04).
 - No chunk contains `%` next to "return", "CAGR" or "1Y/3Y/5Y".
 
 **Exit criteria**
@@ -148,7 +152,7 @@ flowchart LR
 
 1. Review the draft `bolosip/guards.py` against arch §11.
 2. Write `tests/test_guards.py` with a table of cases for each guard:
-   - **Personal data, must match:** a sample PAN (`ABCDE1234F`), a 12-digit Aadhaar with and without spaces, an email address, `+91 98xxxxxxxx` / `98xxx xxxxx`, "OTP is 482913", "folio no 1234567/89", a 14-digit account number.
+   - **Personal data, must match:** a sample PAN (`ABCDE1234F`), a 12-digit Aadhaar with and without spaces, an email address, `+91 98xxxxxxxx` / `98xxx xxxxx`, "OTP is 482913", "folio no 1234567/89", a 14-digit account number, an IFSC code such as `HDFC0001234` (GAP-07).
    - **Personal data, must not match:** "account statement", "₹1,00,687 crore", "NIFTY 50", "0.73%", "launched 01-Jan-2013", ISIN `INF179K01XQ0`.
    - **Advice, must match (at least 15):** "should I invest", "which is better", "mid cap vs small cap", "is it safe", "best HDFC fund", "recommend a fund", "will NAV go up", "good for retirement", "how much should I invest", "compare…".
    - **Advice, must not match:** "BSE Sensex index fund", "what is the benchmark", "exit load on liquid fund", "minimum SIP".
@@ -179,6 +183,7 @@ flowchart LR
    - `resolve(text, last_scheme, topic) -> Resolution`: returns `one(scheme_id)`, `ambiguous([ids])`, `multiple([ids])` or `none`.
    - Longest alias match first, so "large and mid cap" doesn't also match "large cap" and "mid cap".
    - Fall back to the thread's `last_scheme` only for scheme-specific topics.
+   - **Other fund house check (GAP-01):** before alias matching, if the message names another AMC (list in `config.py`) and not HDFC, return `other_amc` so the pipeline replies `not_found`.
 2. **`bolosip/retriever.py`** (arch §8):
    - Tokeniser plus a short stop-word list.
    - BM25 index built once from `text + keywords`.
@@ -188,7 +193,8 @@ flowchart LR
    - Topic detection for each of the 12 scheme topics and 9 official topics.
    - Each row of the confusable-groups table (arch §7) has a test: "HDFC Equity" → ambiguous, "HDFC Equity Fund" → Flexi Cap, "large cap index" → ambiguous (NIFTY 50 / Sensex), "multi" → ambiguous.
    - Follow-up: `resolve("what about its exit load", last_scheme="hdfc-mid-cap")` → mid cap.
-   - Out-of-corpus: "expense ratio of SBI Bluechip", "Axis Small Cap exit load" → below threshold.
+   - Out-of-corpus: "expense ratio of SBI Bluechip" → below threshold.
+   - Other AMC with a matching alias (GAP-01): "SBI Small Cap exit load", "Axis Midcap TER", "Nippon India Multi Cap" → `other_amc`, never an HDFC scheme.
 4. **First pass at thresholds:** set `MIN_SCORE` and `MIN_LEXICAL` so every test above passes. Final tuning happens in Phase 8.
 
 **Files:** `bolosip/schemes.py`, `bolosip/retriever.py`, `bolosip/config.py`, `tests/test_retrieval.py`
@@ -209,16 +215,18 @@ flowchart LR
 
 **Tasks**
 
-1. **`Reply` dataclass:** `kind`, `text`, `source{url,name}`, `footer`, `scheme_id`, `candidates` (arch §6.2), with a `to_dict()` for JSON.
+1. **`Reply` dataclass:** `kind`, `text`, `source{url,name}`, `footer`, `scheme_id`, `candidates` (arch §6.2), with a `to_dict()` for JSON. Kinds include `help` (GAP-02).
 2. **`bolosip/formatter.py`** (arch §10):
    - Strip URLs from the body; split sentences without breaking decimals or `₹`; keep at most 3.
    - Attach the source and the `Last updated from sources: <as_of>` footer.
    - `validate(reply)`: 1–3 sentences, exactly one URL across body + source, footer present.
 3. **`bolosip/composer.py`:** extractive mode returns the top chunk's text unchanged. Leave a clear hook for the LLM (Phase 7).
-4. **Fixed replies** for `refusal`, `performance`, `privacy`, `clarify` and `not_found`, using the wording in PS §4.2 and the links and dates in arch §10.1.
+4. **Fixed replies** for `refusal`, `performance`, `privacy`, `clarify`, `help` and `not_found`, using the wording in PS §4.2 and the links and dates in arch §10.1.
    - `performance` links the scheme's factsheet if one is resolved, otherwise the general HDFC factsheet page.
    - `clarify` lists at most 5 candidate scheme names. If no scheme was named at all, it asks the user to name one, giving 3 examples.
    - ELSS questions: the answer includes "none of the covered schemes is ELSS" (PS §3.1).
+   - `help` (GAP-02): greetings, "what can you do?" and messages with no meaningful words get the welcome text plus the 3 examples; no link, no footer. Checked after the three guards.
+   - Plan variants (GAP-05): "regular", "IDCW", "dividend" or "payout" with a variant-specific topic (`expense_ratio`, `nav`, `aum`, `scheme_details`) → `not_found` saying only Direct Growth is covered; with a shared topic → normal answer prefixed "For the Direct Growth plan: ".
 5. **`bolosip/pipeline.py`:** `handle(text, ctx) -> (Reply, new_ctx)`, running rules 1–6 in order (arch §6). `ctx` holds only `last_scheme`.
 6. **CLI for M1:** `python -m bolosip "<question>"` prints the reply.
 7. **`tests/test_format.py`:** sentence-splitting edge cases ("0.73%", "₹1,00,687.07", "Rs. 100", "e.g."), single-URL enforcement, footer present, `validate()` passes for every chunk in the corpus.
@@ -228,7 +236,7 @@ flowchart LR
 
 **Exit criteria**
 - [ ] `validate()` passes for **every** chunk in `corpus.json` used as an answer.
-- [ ] Each of the 6 reply kinds is produced by at least one test and has the right link.
+- [ ] Each of the 7 reply kinds is produced by at least one test and has the right link (none for `clarify` and `help`).
 - [ ] M1 demo works for the 3 UI example questions plus one refusal and one returns question.
 
 **Covers:** AC 2, 3, 4, 5, 8; arch §6, §9.1, §10; PS §4
@@ -250,12 +258,15 @@ flowchart LR
    - Input limits: body ≤ 4 KB, text 1–500 characters, UUID check on thread IDs → `400` otherwise. Unknown thread → `404`.
    - Bind to `127.0.0.1` by default.
    - Request logs show method, path, status and time only, never message text (arch §17).
+   - **Origin checks (GAP-08):** `Host` must be localhost / `127.0.0.1` / the configured host (else `403`); a foreign `Origin` on `POST`/`DELETE` → `403`; `POST` without `Content-Type: application/json` → `415`; no CORS headers.
+   - **Rate limit (GAP-09):** per-IP token bucket, 30 messages and 120 requests per minute by default (`BOLOSIP_RATE_MSG`, `BOLOSIP_RATE_ALL`); over the limit → `429` with `Retry-After`.
 3. The user message is **always** redacted before it reaches `store.py`. Write a test that inspects the database file directly.
 4. **`tests/test_threads.py`** (integration, server on a random port):
    - Two threads interleaved: A asks about Mid Cap, B about Liquid; then both ask "what is its exit load?" → each gets its own scheme.
    - 20 parallel requests across 5 threads: no errors, and each thread's history is correct and in order.
    - A message containing a PAN → privacy reply; the database holds `[redacted]` and no PAN anywhere.
    - Deleting a thread removes its messages.
+   - `test_api.py`: wrong `Host` → `403`; `Origin: https://evil.example` on POST → `403`; `text/plain` POST → `415`; 31st message in a minute → `429`.
 
 **Files:** `bolosip/store.py`, `server.py`, `tests/test_threads.py`, `tests/test_api.py`
 
@@ -316,7 +327,7 @@ flowchart LR
    - `rephrase(question, chunk_text) -> str | None`; returns `None` on **any** exception, refusal, or `NOT_IN_SOURCE`.
 2. **System prompt** (arch §9.2): answer only from the given text, ≤ 3 sentences, no new facts, numbers, opinions, advice, comparisons or URLs; reply `NOT_IN_SOURCE` if the text doesn't answer.
 3. **Output checks** in `composer.py` (arch §9.2):
-   - every number in the output also appears in the chunk text
+   - every number in the output also appears in the chunk text, after normalising (GAP-06): remove ₹/Rs/INR and thousands separators, drop trailing decimal zeros, map number words one to twelve to digits, parse dates
    - no URL in the output
    - `is_advisory(output)` is false
    - `formatter.validate()` passes
@@ -325,6 +336,7 @@ flowchart LR
 4. Only `answer` replies go through the LLM. Personal-data, refusal, performance, clarify and not-found replies never do.
 5. **Tests:**
    - A stub LLM returns crafted outputs: an extra number, a URL, "you should invest", 5 sentences, an exception. Every case must fall back to extractive.
+   - Reformatted but equal numbers are **accepted** (GAP-06): "₹100687.07" for "₹1,00,687.07", "one year" for "1 year", "0.730%" for "0.73%".
    - An optional live test, `@skipUnless(credentials)`, rephrases 10 real questions, checks they pass the output checks, and logs the fallback rate.
 6. `/api/health` shows `llm_enabled`.
 
@@ -431,6 +443,8 @@ flowchart LR
 | R6 | LLM adds a number or opinion | Low | High | Number-subset check, advice check, validator; extractive fallback | 7 |
 | R7 | Personal data written to the DB or logs by mistake | Low | High | Redact at the API boundary; test that scans the DB file; body-free logging | 5 |
 | R8 | Facts go stale between ingestion runs | High | Low | Footer shows the date; scheduled ingestion in future work | 1, 9 |
+| R9 | Another AMC's scheme answered with HDFC data ("SBI Small Cap") | Medium | High | Other-AMC name check before alias matching (GAP-01) | 3 |
+| R10 | A web page in the user's browser calls the local API | Low | Medium | Host/Origin checks, JSON-only POST, rate limit (GAP-08, GAP-09) | 5 |
 
 ## 6. Working agreements
 

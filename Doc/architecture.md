@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.0 · 16 Nov 2026 · Implements [problem_statement.md](problem_statement.md) v2.1
+Version 1.1 · 16 Nov 2026 · Implements [problem_statement.md](problem_statement.md) v2.1 · v1.1 adds the 9 design-gap fixes from [edge-case.md](edge-case.md) §16 (marked **GAP-xx** below)
 
 ---
 
@@ -182,7 +182,7 @@ CREATE TABLE messages (
   thread_id   TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
   role        TEXT NOT NULL CHECK (role IN ('user','assistant')),
   text        TEXT NOT NULL,             -- user text is ALWAYS redacted before insert
-  kind        TEXT,                      -- answer | refusal | performance | privacy | clarify | not_found
+  kind        TEXT,                      -- answer | refusal | performance | privacy | clarify | help | not_found
   source_url  TEXT,
   source_name TEXT,
   as_of       TEXT,
@@ -203,7 +203,9 @@ flowchart TD
     C -- yes --> C1[refusal + AMFI/SEBI link]
     C -- no --> D{3. Returns / performance?}
     D -- yes --> D1[factsheet link only<br/>no figures]
-    D -- no --> E[Resolve scheme<br/>message → thread context]
+    D -- no --> HP{Greeting / help /<br/>no meaningful words?}
+    HP -- yes --> HP1[help reply<br/>welcome + 3 examples]
+    HP -- no --> E[Resolve scheme<br/>other-AMC check → message → thread context]
     E --> F[Retrieve top chunks]
     F --> G{4. Needs a scheme but<br/>none or several match?}
     G -- yes --> G1[clarifying question<br/>lists candidate schemes]
@@ -258,12 +260,15 @@ The pipeline's single output type. The API serialises it directly to JSON.
 }
 ```
 
-`kind` is one of `answer | refusal | performance | privacy | clarify | not_found`. Every kind except `clarify` carries exactly one `source` and a `footer`. The `clarify` kind carries `candidates`, a list of scheme names, and no link, because no fact is being stated.
+`kind` is one of `answer | refusal | performance | privacy | clarify | help | not_found`. Every kind except `clarify` and `help` carries exactly one `source` and a `footer`. The `clarify` kind carries `candidates`, a list of scheme names, and no link, because no fact is being stated.
+
+**`help` kind (GAP-02).** Greetings ("hi", "thanks"), questions about BoloSIP itself ("what can you do?") and messages with no meaningful words after stop-word removal ("???", "what is the") get a short welcome plus the 3 example questions. Like `clarify`, it states no fact, so it has no link and no footer. It is detected after the three guards, so "hi, should I invest?" is still refused.
 
 ## 7. Scheme resolution
 
-Users write "mid cap", "HDFC equity", "the sensex one", or "its exit load" as a follow-up. Resolution works in three steps:
+Users write "mid cap", "HDFC equity", "the sensex one", or "its exit load" as a follow-up. Resolution works in these steps:
 
+0. **Other fund house check (GAP-01).** Before matching aliases, look for another AMC's name in the message, e.g. SBI, Axis, ICICI Prudential, Nippon, Kotak, Mirae, Parag Parikh / PPFAS, UTI, Aditya Birla Sun Life, DSP, Tata, Quant, Motilal Oswal, Franklin Templeton, Edelweiss, Canara Robeco, Bandhan, Invesco, HSBC, WhiteOak, Mahindra Manulife, Baroda BNP Paribas, Sundaram, LIC, Union, PGIM, 360 ONE, Navi, Bajaj Finserv, Helios, Samco, JM, ITI, Shriram, Quantum, NJ. If one is found and "HDFC" is not, reply `not_found`: "BoloSIP only covers HDFC Mutual Fund schemes." Without this, "SBI Small Cap exit load" would match the alias "small cap" and be answered with **HDFC** Small Cap data. The list lives in `config.py` and is matched on whole words after normalisation.
 1. **Alias match on the message.** Lowercase the text, normalise `&`→`and` and hyphens→spaces, then find every alias that appears. Longest match wins, so "large and mid cap" beats "large cap" and "mid cap".
 2. **Count distinct schemes matched:**
    - **one:** use it.
@@ -273,6 +278,11 @@ Users write "mid cap", "HDFC equity", "the sensex one", or "its exit load" as a 
 3. **Thread context.** If the topic is scheme-specific (e.g. `exit_load`) and the thread has a `last_scheme`, use it. If not, clarify.
 
 General topics (`statement`, `capital_gains`, ELSS rules, definitions) never need a scheme.
+
+**Plan and option variants (GAP-05).** The corpus holds only the **Direct plan, Growth option** of each scheme. If the message mentions "regular", "IDCW", "dividend" or "payout" together with a scheme-specific topic:
+
+- for topics that differ between variants (`expense_ratio`, `nav`, `aum`, `scheme_details`), reply `not_found` saying only the Direct Growth plan is covered, with the scheme page link;
+- for topics shared by all variants of the scheme (`exit_load`, `min_investment`, `riskometer`, `benchmark`, `lock_in`, `fund_manager`, `category`, `stamp_duty`), answer normally, and the formatter prefixes "For the Direct Growth plan: " so the plan is never left implicit.
 
 **Known confusable groups** (each must have a test):
 
@@ -344,14 +354,14 @@ This mode is enabled when Anthropic credentials are available and `BOLOSIP_LLM=o
 **Output checks.** If any check fails, the system falls back to extractive mode:
 
 - `stop_reason` is not `refusal`, and the text is not `NOT_IN_SOURCE`.
-- Every number in the output also appears in the chunk text, so the model cannot invent figures.
+- Every number in the output also appears in the chunk text, so the model cannot invent figures. Numbers are **normalised before comparing (GAP-06)**: remove `₹`, `Rs`/`Rs.`, `INR` and thousands separators (both `1,00,687` and `100,687` become `100687`); drop trailing zeros after the decimal point (`0.730` → `0.73`); map the number words one to twelve to digits ("one year" = "1 year"); and accept `%` with or without a space. Dates are compared after parsing, so "12 Nov 2026" equals "12-Nov-2026".
 - The output contains no URL and no advice words (it is run through `is_advisory`).
 
 Messages flagged by guard 1 (personal data) are **never** sent to the LLM.
 
 ## 10. Formatting and validation
 
-`formatter.py` is the last step for every non-clarify reply.
+`formatter.py` is the last step for every reply except `clarify` and `help`.
 
 1. Remove any URLs from the body text.
 2. Split into sentences using `(?<=[.!?])\s+(?=[A-Z₹"])`. This does not split inside decimals such as "0.73%". Keep the first 3 sentences.
@@ -369,6 +379,7 @@ Messages flagged by guard 1 (personal data) are **never** sent to the LLM.
 | `privacy` | SEBI investor site | `official_docs.reviewed_on` |
 | `not_found` | Closest official page (top general chunk, else AMFI) | That chunk's date |
 | `clarify` | none | none |
+| `help` | none | none |
 
 ## 11. Guards
 
@@ -376,7 +387,7 @@ Messages flagged by guard 1 (personal data) are **never** sent to the LLM.
 
 | Guard | Function | Approach | Main false-positive risks and mitigation |
 |---|---|---|---|
-| Personal data | `find_pii`, `redact` | Regex for PAN, Aadhaar, email, Indian mobile, OTP-with-digits, account/folio numbers, 9–18 digit runs | "account statement" must not match: account/folio rule requires a digit. AUM figures like "1,00,687" don't match because commas break digit runs. |
+| Personal data | `find_pii`, `redact` | Regex for PAN, Aadhaar, email, Indian mobile, OTP-with-digits, account/folio numbers, IFSC codes (`[A-Z]{4}0[A-Z0-9]{6}`, GAP-07), 9–18 digit runs | "account statement" must not match: account/folio rule requires a digit. AUM figures like "1,00,687" don't match because commas break digit runs. |
 | Advice | `is_advisory` | Regex list: "should I", "which is better", "vs", "best", "recommend", "safe to invest", "will it grow", … | "best" in "BSE Sensex" doesn't match because of word boundaries. Comparison words ("vs", "compare") are refused on purpose, since comparisons are out of scope. |
 | Performance | `is_performance` | "returns", "performance", "CAGR", "XIRR", "how much did", "calculate", "if I invest" … | "capital gains statement" is excluded explicitly because it's a document request. |
 
@@ -407,6 +418,14 @@ All responses are JSON, and errors look like `{"error": "<message>"}`.
 | `DELETE` | `/api/threads/{id}` | — | `204` |
 
 **Input limits:** request body ≤ 4 KB, `text` ≤ 500 characters, and a thread ID must be a valid UUID. Everything else gets a `400`.
+
+**Request origin checks (GAP-08).** The server listens on localhost, but any web page open in the user's browser can still send requests to it. Every request must pass:
+
+- **`Host` header** is `127.0.0.1:<port>`, `localhost:<port>`, or the configured `BOLOSIP_HOST`; otherwise `403`. This blocks DNS-rebinding attacks.
+- **`Origin` header**, when present, matches the server's own origin; otherwise `403` for `POST` and `DELETE`.
+- **`POST` bodies** have `Content-Type: application/json`; otherwise `415`. A plain HTML form can't send that type without a CORS preflight, and the server sends no CORS headers, so the browser blocks it.
+
+**Rate limiting (GAP-09).** An in-memory token bucket per client IP: by default 30 messages per minute and 120 requests per minute overall (`BOLOSIP_RATE_MSG`, `BOLOSIP_RATE_ALL`). Over the limit gets `429` with a `Retry-After` header. Counters reset on restart, which is enough for a single-node local app.
 
 ## 14. User interface
 
@@ -451,11 +470,14 @@ flowchart LR
     D --> F[save snapshot]
     F --> G[build 12 chunks]
     H[official_docs.json] --> I[merge]
-    G --> I --> J[validate] --> K[(corpus.json)]
+    G --> I --> J[validate] --> T[write .tmp] --> K[(corpus.json<br/>atomic rename)]
 ```
 
 - **Why fetching has fallbacks:** Groww returns `403` to Python's HTTP client but serves the page to `curl`. Python 3.13+ also rejects some certificate chains under `VERIFY_X509_STRICT`, so only that one flag is relaxed; certificates are still verified. If both live fetches fail, the last good snapshot is used, and its file date becomes `as_of`, so the footer stays honest.
 - **Parsing:** read the page's embedded `__NEXT_DATA__` JSON (`props.pageProps.mfServerSideData`), not the visible HTML. It is structured and much more stable.
+- **Identity check:** the parsed `search_id` and `isin` must match the registry entry, so a redirect to a different scheme is caught.
+- **Riskometer (GAP-03):** don't search the raw page for the first `"risk":"…"`, because the peer-comparison funds on the same page carry the same field. Read the value from a fixed path inside the scheme's own JSON object, and cross-check it with the sentence in `meta_desc` ("… Risk is Very High"). If the two disagree, or the value isn't one of SEBI's 6 levels, validation fails for that scheme.
+- **Atomic write (GAP-04):** write the new corpus to `corpus.json.tmp`, validate it, then replace `corpus.json` with an atomic rename (`os.replace`). An interrupted run can never leave a half-written file. A lock file (`data/.ingest.lock`) stops two runs at once.
 - **Validation before writing.** If any check fails, the script exits non-zero and leaves the old `corpus.json` in place:
   - every scheme in the registry has all required topics, and every chunk has ≤ 3 sentences and a URL
   - expense ratio is between 0 and 3%, minimum SIP is a positive integer, and riskometer is one of SEBI's 6 levels
@@ -472,6 +494,7 @@ flowchart LR
 | `BOLOSIP_CORPUS` | `data/corpus.json` | Corpus path |
 | `BOLOSIP_LLM` | `auto` | `auto` (on if credentials found) · `on` · `off` |
 | `BOLOSIP_MODEL` | `claude-opus-5-5` | Model used for rephrasing |
+| `BOLOSIP_RATE_MSG` / `BOLOSIP_RATE_ALL` | `30` / `120` | Per-IP limits per minute: messages / all requests (GAP-09) |
 | `ANTHROPIC_API_KEY` | — | Read by the SDK; never logged or committed |
 
 ## 17. Security and privacy
@@ -483,7 +506,9 @@ flowchart LR
 | Prompt injection via the question ("ignore rules and recommend…") | Guards run first. The LLM sees only one trusted chunk, and its output is checked for numbers, URLs and advice words. Citations never come from the model. |
 | Injected content in fetched pages | Only structured fields are taken from the embedded JSON, and every field becomes plain text in a template. Snapshots are data only. |
 | XSS in the chat UI | `textContent` rendering only; links are built from the corpus, never from user text. |
-| Oversized or abusive requests | Body, text-length and UUID limits; server binds to localhost by default. |
+| Oversized or abusive requests | Body, text-length and UUID limits; per-IP rate limit (GAP-09); server binds to localhost by default. |
+| Other websites calling the local API (CSRF, DNS rebinding) | `Host` and `Origin` checks, JSON-only `POST` bodies, no CORS headers (GAP-08) |
+| Another AMC's scheme answered with HDFC data | Other-AMC name check before alias matching (GAP-01) |
 | Secrets in git | `.env` git-ignored; key read from the environment only. |
 
 ## 18. Testing strategy
@@ -544,6 +569,9 @@ python -m unittest discover tests
 | D6 | Citation and footer added in code | Ask the model to cite | Guarantees exactly one valid link every time |
 | D7 | SQLite for threads | In-memory dict, JSON files | Survives restarts, safe concurrent access, still zero install |
 | D8 | Commit `corpus.json` to git | Build at deploy time only | Every data change is reviewable as a diff |
+| D9 | Reject other-AMC names before alias matching (GAP-01) | Require "HDFC" in every question | Users rarely type "HDFC"; a name list keeps short questions working and stops wrong-AMC answers |
+| D10 | `help` reply kind with no link (GAP-02) | Treat greetings as `not_found` | A greeting states no fact, so a citation would be meaningless |
+| D11 | Origin and Host checks instead of auth tokens (GAP-08) | Login or API key | Keeps "no login" (PS §7) while stopping other sites from using the local API |
 
 ## 22. Future work
 
