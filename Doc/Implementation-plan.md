@@ -27,7 +27,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | Problem statement v2.2, architecture v1.2, edge cases v1.2, eval v1.1 | Done |
 | `bolosip/guards.py` | Draft, **untested** |
 | **Phase 0: Foundation** | **Done** (16 Nov 2026): config with `.env` loading, `.env.example`, 21 tests, eval runner; gate report `eval/reports/2026-11-16-phase0-8def061.md` |
-| **Phase 1: Corpus for 27 schemes** | **Done** (16 Nov 2026): 334 chunks (27 × 12 + 10 official notes), all 27 pages live; 61 tests; gate report in `eval/reports/` |
+| **Phase 1: Ingestion (fetch, parse, chunk)** | **Done** (16 Nov 2026): 334 chunks (27 × 12 + 10 official notes), all 27 pages live; 61 tests; gate report in `eval/reports/` |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -35,7 +35,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | Phase | Name | Main output | Depends on | Est. effort |
 |---|---|---|---|---|
 | 0 | Foundation | Package skeleton, config, test runner | — | 0.5 day |
-| 1 | Corpus for 27 schemes | Validated `corpus.json` with scheme registry and aliases | 0 | 1.5 days |
+| 1 | Ingestion: fetch, parse, chunk | Validated `corpus.json` (27 schemes × 12 fact chunks) with scheme registry and aliases | 0 | 1.5 days |
 | 2 | Guards | Tested personal-data, advice and returns checks | 0 | 1 day |
 | 3 | Scheme resolution and retrieval | `schemes.py`, `retriever.py` with tuned thresholds | 1 | 1.5 days |
 | 4 | Answer pipeline (extractive) | `composer.py`, `formatter.py`, `pipeline.py` returning `Reply` | 2, 3 | 1.5 days |
@@ -48,7 +48,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 
 ```mermaid
 flowchart LR
-    P0[0 Foundation] --> P1[1 Corpus 27]
+    P0[0 Foundation] --> P1[1 Ingestion: parse + chunk]
     P0 --> P2[2 Guards]
     P1 --> P3[3 Resolution + Retrieval]
     P2 --> P4[4 Answer pipeline]
@@ -101,9 +101,22 @@ flowchart LR
 
 ---
 
-## Phase 1: Corpus for all 27 schemes
+## Phase 1: Ingestion — fetch, parse and chunk the 27 schemes
 
 **Goal:** `data/corpus.json` holds a validated scheme registry and about 335 single-fact chunks for all 27 schemes, each with its source URL and date.
+
+**Ingestion pipeline built in this phase** (arch §5.2, §15)
+
+| Step | Function in `ingest.py` | What it does |
+|---|---|---|
+| 1. Fetch | `fetch()` | Downloads one of the 27 allowed URLs (urllib → curl); anything else is refused |
+| 2. **Parse** | `parse_page()` | Extracts the structured data embedded in the page (`__NEXT_DATA__` → `props.pageProps.mfServerSideData`); never scrapes visible HTML |
+| 3. Parse checks | `check_identity()`, `riskometer()` | Page is the right scheme (slug + ISIN, not closed); riskometer from the scheme's own data, cross-checked (GAP-03) |
+| 4. **Chunk** | `scheme_chunks()` | One chunk per fact: 12 topics per scheme (`bolosip/topics.py`), each ≤ 3 sentences with `source_url`, `source_name`, `as_of` and topic keywords. The 10 official notes are added as ready-made chunks |
+| 5. Validate | `validate_corpus()` | Rejects the whole corpus on any problem (missing topic, > 3 sentences, foreign source, return figure, judgement word) |
+| 6. Write | `write_atomic()` + `IngestLock` | Atomic write and single-run lock (GAP-04); snapshots and `fetched.json` saved only when the corpus is written |
+
+**Chunking strategy:** fact-level chunks written from templates, not fixed-size text windows. Each chunk answers exactly one question type for one scheme, so the retriever returns a complete fact and its citation is exact (arch D2).
 
 **Source URLs: these 27, and no others**
 
