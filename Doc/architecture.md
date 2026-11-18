@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.2 · 16 Nov 2026 · Implements [problem_statement.md](problem_statement.md) v2.2 · v1.2: the optional LLM is **Groq** · v1.1 added the 9 design-gap fixes from [edge-case.md](edge-case.md) §16 (marked **GAP-xx** below)
+Version 1.3 · 18 Nov 2026 · Implements [problem_statement.md](problem_statement.md) v2.2 · v1.3: retrieval uses local embeddings (nomic) with a BM25 fallback, decided in [retrieval-research.md](retrieval-research.md) · v1.2: the optional LLM is **Groq** · v1.1 added the 9 design-gap fixes from [edge-case.md](edge-case.md) §16 (marked **GAP-xx** below)
 
 ---
 
@@ -18,7 +18,7 @@ These principles drive the design. When two pull in different directions, the fi
 | P2 | **Accuracy over intelligence** | The source text is the answer. An LLM may only rephrase it, and the system works fully without one. |
 | P3 | **One fact, one source** | The corpus is split into single-fact chunks, each carrying its own source URL and date. The citation comes from the chunk, never from the model. |
 | P4 | **Code enforces the rules** | Sentence limit, single link and footer are added or checked in code after composition, not left to a prompt. |
-| P5 | **Small and inspectable** | Python standard library plus one optional dependency (`groq`). The corpus is one JSON file you can read, diff and review in git. |
+| P5 | **Small and inspectable** | The core runs on the Python standard library. Two optional extras: `embed` (fastembed + numpy, for better retrieval) and `llm` (groq). Without them BoloSIP still works (BM25, extractive answers). The corpus is one JSON file you can read, diff and review in git. |
 
 ## 2. System context
 
@@ -76,7 +76,8 @@ flowchart TB
 | Topics / text helpers | `bolosip/topics.py`, `bolosip/textutil.py` | Topic list and keyword lexicon; sentence splitter, return-figure and judgement-word patterns | **Built** (Phase 1) |
 | Guards | `bolosip/guards.py` | Detect personal data, advice questions and returns questions; redact; ordered `check()` | **Built** (Phase 2) |
 | Scheme resolver | `bolosip/schemes.py` | Map free text to a scheme ID using aliases; detect ambiguity; use the thread's last scheme | Planned |
-| Retriever | `bolosip/retriever.py` | BM25 ranking plus topic and scheme boosts; returns a ranked list with scores | Planned |
+| Retriever | `bolosip/retriever.py` | Dense search (nomic embeddings, numpy) over the resolved scheme's facts + official notes; BM25 fallback; returns ranked hits with scores | Planned |
+| Embedder | `bolosip/embedder.py` | Loads the local embedding model (fastembed), adds task prefixes, checks the vectors match the corpus | Planned (Phase 3) |
 | Composer | `bolosip/composer.py` | Turn the top chunk into answer text, extractive by default with LLM rephrasing optional | Planned |
 | LLM client | `bolosip/llm.py` | Thin wrapper around the Groq SDK; returns `None` on any failure | Planned |
 | Formatter | `bolosip/formatter.py` | Enforce ≤ 3 sentences, strip stray URLs, attach one citation and the footer | Planned |
@@ -110,7 +111,8 @@ Files marked *(Phase N)* don't exist yet; they are created in that phase of the 
 │   ├── textutil.py                      # sentence splitter, content-rule patterns
 │   ├── guards.py                        # draft; finished in Phase 2
 │   ├── schemes.py                       # (Phase 3)
-│   ├── retriever.py                     # (Phase 3)
+│   ├── retriever.py                     # dense search + BM25 fallback (Phase 3)
+│   ├── embedder.py                      # local embedding model wrapper (Phase 3)
 │   ├── composer.py                      # (Phase 4)
 │   ├── formatter.py                     # (Phase 4)
 │   ├── pipeline.py                      # (Phase 4)
@@ -121,6 +123,7 @@ Files marked *(Phase N)* don't exist yet; they are created in that phase of the 
 │   ├── corpus.json                      # generated, committed for review
 │   ├── raw/<scheme-id>.html             # last good page snapshot per scheme
 │   ├── raw/fetched.json                 # when each snapshot was fetched (footer date in offline runs)
+│   ├── embeddings.npy / embeddings.json # 334 × 768 vectors + model/hash metadata (Phase 3)
 │   └── bolosip.sqlite3                  # runtime threads (git-ignored) (Phase 5)
 ├── web/
 │   └── index.html                       # (Phase 6)
@@ -329,35 +332,59 @@ General topics (`statement`, `capital_gains`, ELSS rules, definitions) never nee
 
 ## 8. Retrieval
 
-### 8.1 Method
+Decided by measurement: see [retrieval-research.md](retrieval-research.md). On 72 questions in real user wording, local embeddings found the right fact **93%** of the time vs **69%** for BM25, and rejected all 14 out-of-scope questions.
 
-The corpus is small (about 335 chunks) and each chunk holds one short fact, so a lexical ranker works well. It is also deterministic and easy to debug, and needs no embedding model or vector database.
+### 8.1 Two jobs: which scheme, then which fact
 
-```
-score(chunk) = BM25(query, chunk.text + chunk.keywords)
-             + W_SCHEME  × [chunk.scheme_id == resolved scheme]
-             + W_TOPIC   × [chunk.topic   == detected topic]
-             − W_OTHER   × [chunk.scheme_id is another scheme]
-```
+Chunks for different schemes are 50–70% identical (same template, different values), so similarity search cannot reliably tell schemes apart. Retrieval is therefore split:
+
+1. **Which scheme?** The alias resolver (§7) decides: one scheme, a clarifying question, another fund house (`not_found`), or none.
+2. **Which fact?** Dense search among the **candidates**: the resolved scheme's 12 facts + the 10 official notes. With no scheme, all 334 chunks are searched, and a scheme-specific top hit becomes a clarifying question. The retriever never returns another scheme's fact.
+
+### 8.2 Chunks and embedded text
+
+- **Chunking:** one chunk per fact, written from templates at ingestion (Phase 1): 1–2 sentences, median 19 words, max 70. No splitting or overlap: each chunk already answers exactly one question, and all fit far below the model's input limit.
+- **Embedded text:** `search_document: {text} {keywords}`, where `keywords` is the topic's synonym list from `bolosip/topics.py`. Questions are embedded as `search_query: {question}`. These task prefixes are required by the model, and fastembed does **not** add them itself (measured: 93% with them vs 90% without).
+- **Not embedded:** scheme ID, topic, source URL and dates. These are metadata used for filtering, citation and the footer.
+
+### 8.3 Embedding model and runtime
+
+| Setting | Value |
+|---|---|
+| Model | `nomic-ai/nomic-embed-text-v1.5` (Apache 2.0), 768 dimensions, 548 MB |
+| Runtime | `fastembed` (ONNX, CPU, no PyTorch); optional extra `pip install .[embed]` |
+| Model cache | `.cache/models/` in the project (git-ignored); downloaded once from Hugging Face |
+| Cost | About 41 s to embed the corpus once at ingestion; about 30 ms per question |
+| Where it runs | Locally. Groq has no embeddings endpoint, and questions never leave the laptop for retrieval |
+| Python | fastembed / onnxruntime support Python 3.10–3.13 (no 3.15 build yet). Recommended: run BoloSIP in a `uv` Python 3.12 environment |
+
+### 8.4 Vector store: a numpy matrix, not a database
+
+The 334 vectors (768 float32 each, about 1 MB) are written by ingestion to **`data/embeddings.npy`**, plus **`data/embeddings.json`** recording the model ID, prefixes, dimensions, chunk-ID order and a SHA-256 hash of `corpus.json`. Search is an exact cosine product over the candidate rows (0.03 ms for all 334). A vector database (Chroma, FAISS, Qdrant, sqlite-vec…) would add dependencies and change nothing at this size; sqlite-vec is the upgrade path if the corpus ever reaches tens of thousands of chunks. Exact search also keeps results identical across runs.
+
+### 8.5 Fallback: BM25
+
+If fastembed or the cached model isn't available (Python 3.15, offline first run, `BOLOSIP_RETRIEVER=bm25`), or the vectors don't match the corpus hash, BoloSIP uses BM25 over `text + keywords` with the same scheme filter. It never fails to start because of embeddings. `/api/health` reports which retriever is active. BM25 scores 96% on template wording but 69% on user wording, so the embedding path is the default whenever possible.
 
 - **Tokeniser:** lowercase, split on non-alphanumerics, drop a short stop-word list. Numbers are kept.
-- **BM25 settings:** `k1 = 1.5`, `b = 0.75`, with the index built once at start-up.
-- **Topic detection:** a keyword lexicon per topic (the same words used for `keywords` at ingest time) gives at most one detected topic.
-- **Starting weights:** `W_SCHEME = 3.0`, `W_TOPIC = 3.0`, `W_OTHER = 5.0`. These are tuned on the acceptance test set and set in `config.py`.
+- **BM25 settings:** `k1 = 1.5`, `b = 0.75`.
 
-### 8.2 Confidence threshold
+### 8.6 Confidence threshold
 
-The answer path is used only if the top score is at least `MIN_SCORE` **and** either the topic was detected or the top chunk's BM25 part alone clears `MIN_LEXICAL`. Otherwise the reply is `not_found`. Both thresholds are tuned so that every in-scope test question passes and every out-of-corpus test question (e.g. "expense ratio of SBI Bluechip") is refused.
+The answer path is used only if the top candidate's score is at least `MIN_SCORE`: cosine **0.74** for embeddings (all 14 out-of-scope probe questions scored ≤ 0.73; the 5th-percentile real question 0.76), or a BM25 threshold for the fallback. Otherwise the reply is `not_found`, never a guess. Both thresholds are re-tuned in Phase 8 on a held-out set. The margin is small, so the resolver's other-fund-house and non-fund-HDFC checks (GAP-01, SCH-17) remain the first defence.
 
-### 8.3 Why not embeddings
+### 8.7 Options considered
 
 | Option | Verdict |
 |---|---|
-| BM25 + boosts (chosen) | No dependencies, deterministic, explainable; handles a fixed vocabulary well |
-| Sentence embeddings + vector DB | Adds a model download and a dependency; little gain on short, keyword-heavy questions |
+| **Local embeddings (nomic) + scheme filter, BM25 fallback (chosen)** | Best on user wording (93%), 100% out-of-scope rejection, offline, no extra service |
+| BM25 only (previous plan) | No dependencies, but misses about 1 in 3 questions in real wording |
+| Hybrid BM25 + embeddings (reciprocal-rank fusion) | Rejected: general questions 100% → 83%, out-of-scope rejection 100% → 79% |
+| Smaller models (bge-small 83%, bge-base 90%) | Kept as documented alternatives for low-resource machines |
+| Hosted embedding API | Rejected: Groq has none; another provider would add a key and send questions off the laptop |
 | LLM-only (no retrieval) | Rejected: cannot guarantee citations or freshness, and risks hallucination |
 
-The `Retriever` interface (`search(query, scheme_id, topic) -> list[Hit]`) is kept narrow, so an embedding retriever could be swapped in later without touching the pipeline.
+The `Retriever` interface (`search(query, scheme_id) -> list[Hit]`) is the same for both backends, so the pipeline doesn't know which one is active.
 
 ## 9. Answer composition
 
@@ -436,7 +463,7 @@ The guards run on the **raw** text. The redacted text is what gets stored and lo
 
 - **Isolation:** all conversation state is keyed by `thread_id`: message history and `last_scheme`. The pipeline gets the context for one thread only and keeps no global state between requests.
 - **Server:** `http.server.ThreadingHTTPServer` handles each request on its own thread.
-- **Read-only shared data:** the corpus and BM25 index are loaded once at start-up and never changed, so threads can read them safely without locks.
+- **Read-only shared data:** the corpus, the embedding matrix (or BM25 index) and the embedding model are loaded once at start-up and never changed, so threads can read them safely without locks.
 - **SQLite:** each request opens its own connection (`check_same_thread=False` is not needed). WAL mode is on (`PRAGMA journal_mode=WAL`) so reads don't block writes. A user message and its reply are written in one transaction.
 - **LLM calls:** the Groq client is created once and shared between threads. Its HTTP client supports concurrent use.
 - **Ordering:** the UI disables the send button for a thread while a request is in flight, so messages within one thread arrive in order. Different threads can still run at the same time.
@@ -535,6 +562,9 @@ Settings are read from environment variables. For local use, put them in a **`.e
 | `BOLOSIP_CORPUS` | `data/corpus.json` | Corpus path |
 | `BOLOSIP_LLM` | `auto` | `auto` (on if credentials found) · `on` · `off` |
 | `BOLOSIP_MODEL` | `llama-3.3-70b-versatile` | Groq model used for rephrasing |
+| `BOLOSIP_RETRIEVER` | `auto` | `auto` (embeddings if available, else BM25) · `embed` (require embeddings) · `bm25` |
+| `BOLOSIP_EMBED_MODEL` | `nomic-ai/nomic-embed-text-v1.5` | Local embedding model (must match `data/embeddings.json`) |
+| `BOLOSIP_MODEL_CACHE` | `.cache/models` | Where the embedding model is downloaded |
 | `BOLOSIP_RATE_MSG` / `BOLOSIP_RATE_ALL` | `30` / `120` | Per-IP limits per minute: messages / all requests (GAP-09) |
 | `GROQ_API_KEY` | — | Groq API key, read by the SDK; never logged or committed |
 
@@ -595,7 +625,8 @@ python -m unittest discover tests
 - **Groww as the source of scheme facts.** This is required by the brief but is an aggregator, not the AMC. Mitigations: scheme facts are cross-checkable against HDFC's TER disclosure and factsheet, which are linked in general answers. A future version could take scheme facts straight from HDFC documents.
 - **Freshness.** Answers are only as current as the last ingestion run. NAV and TER change often, and the footer date makes this visible.
 - **Groww data quirks.** For HDFC Multi Asset Allocation, Groww's page shows a Groww label ("Groww Equity Hybrid") instead of an official benchmark, so BoloSIP points to the HDFC factsheet instead of naming one. Groww's `nfo_risk` field is stale and is never used.
-- **Lexical retrieval.** Paraphrases with no shared words (e.g. "what does it cost me yearly") depend on the keyword synonyms. Missed questions get `not_found` rather than a wrong answer.
+- **Retrieval accuracy.** Embeddings find the right fact for about 93% of real-user wording (BM25 fallback: 69%). Misses are mostly neighbouring topics (e.g. "management fee" vs fund manager); keyword synonyms close them, and a miss below the threshold becomes `not_found` rather than a wrong answer.
+- **Embedding runtime.** The embedding extra needs Python 3.10–3.13 and a one-time 548 MB model download; elsewhere BoloSIP falls back to BM25.
 - **Regex guards.** These can miss unusual phrasings. They are tuned toward refusing, since a wrong refusal is safer than wrong advice.
 - **English only.** Questions in Hindi or other languages are not supported.
 - **Single-node.** SQLite and an in-process index suit one server, not a horizontally scaled deployment.
@@ -606,7 +637,7 @@ python -m unittest discover tests
 |---|---|---|---|
 | D1 | Python standard library server, no web framework | FastAPI, Flask | Zero install for the core app; the API is tiny |
 | D2 | One fact per chunk, written at ingest time | Chunking raw page text | Makes citations exact and the extractive answer already correct |
-| D3 | BM25 + boosts | Embeddings + vector DB | Small fixed corpus; deterministic and explainable (section 8.3) |
+| D3 | Local embeddings (nomic, fastembed) + scheme filter; BM25 fallback; numpy matrix instead of a vector DB | BM25 only; hybrid RRF; hosted embeddings; Chroma / FAISS / Qdrant | Measured in [retrieval-research.md](retrieval-research.md): 93% vs 69% on user wording, 100% out-of-scope rejection; a 1 MB matrix needs no database (§8) |
 | D4 | LLM optional and rephrase-only | LLM generates the answer | Accuracy over intelligence; works offline and in tests |
 | D5 | Guards before retrieval | Classify with the LLM | Deterministic, free, and personal data never leaves the process |
 | D6 | Citation and footer added in code | Ask the model to cite | Guarantees exactly one valid link every time |
@@ -621,6 +652,6 @@ python -m unittest discover tests
 
 - Take scheme facts directly from HDFC Mutual Fund documents (SID/KIM, TER disclosure, factsheet PDF) and use Groww only as a cross-check.
 - Run ingestion on a schedule, with an alert when a fact changes by more than a threshold.
-- An optional embedding retriever behind the same `Retriever` interface, compared against the acceptance set.
+- Re-run the retrieval research when the corpus or model landscape changes; move to sqlite-vec only if the corpus grows to tens of thousands of chunks.
 - Answers in Hindi built from the same extractive chunks.
 - An admin view listing `not_found` questions, to grow keyword synonyms and the official notes.

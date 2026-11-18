@@ -71,3 +71,4 @@ The Groq key is optional. Without it, BoloSIP answers with the source text direc
 | [Implementation plan](Doc/Implementation-plan.md) | Phases 0–9 with tasks and exit criteria |
 | [Edge cases](Doc/edge-case.md) | 234 corner cases and expected behaviour |
 | [Evaluation](Doc/eval.md) | Datasets, metrics and pass thresholds per phase |
+| [Retrieval research](Doc/retrieval-research.md) | Chunking, embedding model and vector store chosen by measurement for Phase 3 |

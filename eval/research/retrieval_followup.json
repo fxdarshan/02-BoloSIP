@@ -1,0 +1,263 @@
+{
+  "nomic-ai/nomic-embed-text-v1.5 | text+keywords": {
+    "probe_filter": 0.9027777777777778,
+    "facts_filter": 1.0,
+    "general": 1.0,
+    "oos_rejected": 1.0,
+    "load_s": 1.63,
+    "embed_corpus_s": 40.77,
+    "query_ms": 29.4,
+    "dims": 768,
+    "model_mb": 548.0,
+    "probe_failures": [
+      {
+        "q": "TER for flexi cap?",
+        "expected": "expense_ratio",
+        "got": "scheme_details"
+      },
+      {
+        "q": "management fee of HDFC Small Cap",
+        "expected": "expense_ratio",
+        "got": "fund_manager"
+      },
+      {
+        "q": "least I can put in every month into HDFC Housing Opportunities",
+        "expected": "min_investment",
+        "got": "scheme_details"
+      },
+      {
+        "q": "how long is my money stuck in HDFC Equity Savings Fund",
+        "expected": "lock_in",
+        "got": "exit_load"
+      },
+      {
+        "q": "is there a minimum holding period for HDFC Arbitrage Fund",
+        "expected": "lock_in",
+        "got": "min_investment"
+      },
+      {
+        "q": "how to get a statement of my investments",
+        "expected": "statement",
+        "got": "capital_gains"
+      },
+      {
+        "q": "how long are tax saving funds locked",
+        "expected": "lock_in_general",
+        "got": "lock_in"
+      }
+    ]
+  },
+  "nomic-ai/nomic-embed-text-v1.5-Q | text+keywords": {
+    "probe_filter": 0.8055555555555556,
+    "facts_filter": 0.9722222222222222,
+    "general": 1.0,
+    "oos_rejected": 1.0,
+    "load_s": 12.38,
+    "embed_corpus_s": 24.9,
+    "query_ms": 17.0,
+    "dims": 768,
+    "model_mb": 685.3,
+    "probe_failures": [
+      {
+        "q": "how much does HDFC Mid Cap charge every year",
+        "expected": "expense_ratio",
+        "got": "nav"
+      },
+      {
+        "q": "annual fee of the HDFC liquid fund",
+        "expected": "expense_ratio",
+        "got": "min_investment"
+      },
+      {
+        "q": "TER for flexi cap?",
+        "expected": "expense_ratio",
+        "got": "fund_manager"
+      },
+      {
+        "q": "management fee of HDFC Small Cap",
+        "expected": "expense_ratio",
+        "got": "min_investment"
+      },
+      {
+        "q": "least I can put in every month into HDFC Housing Opportunities",
+        "expected": "min_investment",
+        "got": "category"
+      },
+      {
+        "q": "how risky is HDFC Small Cap Fund",
+        "expected": "riskometer",
+        "got": "min_investment"
+      },
+      {
+        "q": "risk label of HDFC Silver ETF FoF",
+        "expected": "riskometer",
+        "got": "nav"
+      },
+      {
+        "q": "how long is my money stuck in HDFC Equity Savings Fund",
+        "expected": "lock_in",
+        "got": "nav"
+      },
+      {
+        "q": "is there a minimum holding period for HDFC Arbitrage Fund",
+        "expected": "lock_in",
+        "got": "min_investment"
+      },
+      {
+        "q": "who runs HDFC Large Cap Fund",
+        "expected": "fund_manager",
+        "got": "nav"
+      },
+      {
+        "q": "who takes the investment decisions for HDFC Defence Fund",
+        "expected": "fund_manager",
+        "got": "scheme_details"
+      },
+      {
+        "q": "how many crores are invested in HDFC Flexi Cap",
+        "expected": "aum",
+        "got": "nav"
+      },
+      {
+        "q": "who is the registrar for HDFC Focused Fund",
+        "expected": "scheme_details",
+        "got": "fund_manager"
+      },
+      {
+        "q": "how long are tax saving funds locked",
+        "expected": "lock_in_general",
+        "got": "lock_in"
+      }
+    ]
+  },
+  "BAAI/bge-base-en-v1.5 | enriched": {
+    "probe_filter": 0.8888888888888888,
+    "facts_filter": 0.9845679012345679,
+    "general": 0.9565217391304348,
+    "oos_rejected": 1.0,
+    "load_s": 1.37,
+    "embed_corpus_s": 28.28,
+    "query_ms": 24.0,
+    "dims": 768,
+    "model_mb": 218.5,
+    "probe_failures": [
+      {
+        "q": "how much does HDFC Mid Cap charge every year",
+        "expected": "expense_ratio",
+        "got": "nav"
+      },
+      {
+        "q": "annual fee of the HDFC liquid fund",
+        "expected": "expense_ratio",
+        "got": "nav"
+      },
+      {
+        "q": "management fee of HDFC Small Cap",
+        "expected": "expense_ratio",
+        "got": "min_investment"
+      },
+      {
+        "q": "can I take my money out of HDFC Overnight Fund anytime without a fee",
+        "expected": "exit_load",
+        "got": "lock_in"
+      },
+      {
+        "q": "how many crores are invested in HDFC Flexi Cap",
+        "expected": "aum",
+        "got": "nav"
+      },
+      {
+        "q": "how to get a statement of my investments",
+        "expected": "statement",
+        "got": "capital_gains"
+      },
+      {
+        "q": "how long are tax saving funds locked",
+        "expected": "lock_in_general",
+        "got": "lock_in"
+      },
+      {
+        "q": "combined statement across all fund houses",
+        "expected": "statement",
+        "got": "capital_gains"
+      }
+    ]
+  },
+  "BAAI/bge-small-en-v1.5 | enriched": {
+    "probe_filter": 0.8333333333333334,
+    "facts_filter": 0.9783950617283951,
+    "general": 1.0,
+    "oos_rejected": 0.9285714285714286,
+    "load_s": 0.58,
+    "embed_corpus_s": 9.32,
+    "query_ms": 7.1,
+    "dims": 384,
+    "model_mb": 67.2,
+    "probe_failures": [
+      {
+        "q": "how much does HDFC Mid Cap charge every year",
+        "expected": "expense_ratio",
+        "got": "nav"
+      },
+      {
+        "q": "TER for flexi cap?",
+        "expected": "expense_ratio",
+        "got": "nav"
+      },
+      {
+        "q": "management fee of HDFC Small Cap",
+        "expected": "expense_ratio",
+        "got": "min_investment"
+      },
+      {
+        "q": "what do I pay if I redeem the defence fund within a month",
+        "expected": "exit_load",
+        "got": "stamp_duty"
+      },
+      {
+        "q": "what does the HDFC Nifty 50 index fund track",
+        "expected": "benchmark",
+        "got": "scheme_details"
+      },
+      {
+        "q": "how long is my money stuck in HDFC Equity Savings Fund",
+        "expected": "lock_in",
+        "got": "exit_load"
+      },
+      {
+        "q": "is there a minimum holding period for HDFC Arbitrage Fund",
+        "expected": "lock_in",
+        "got": "min_investment"
+      },
+      {
+        "q": "tell me about HDFC Silver ETF FoF",
+        "expected": "category",
+        "got": "scheme_details"
+      },
+      {
+        "q": "total assets managed in HDFC Small Cap",
+        "expected": "aum",
+        "got": "min_investment"
+      },
+      {
+        "q": "how many crores are invested in HDFC Flexi Cap",
+        "expected": "aum",
+        "got": "nav"
+      },
+      {
+        "q": "how to get a statement of my investments",
+        "expected": "statement",
+        "got": "capital_gains"
+      },
+      {
+        "q": "how long are tax saving funds locked",
+        "expected": "lock_in_general",
+        "got": "lock_in"
+      }
+    ]
+  },
+  "nomic_prefix_check": {
+    "query_embed_vs_plain": 1.0,
+    "query_embed_vs_search_query_prefix": 0.9662901759147644
+  }
+}

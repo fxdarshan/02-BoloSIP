@@ -4,6 +4,12 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Research: retrieval for Phase 3 (18 Nov 2026)
+- `Doc/retrieval-research.md`: corpus profile and a benchmark of BM25, 5 embedding models, 3 chunk-text variants and hybrid fusion on 324 template, 23 general and 72 user-wording questions plus 14 out-of-scope questions.
+- Decision: keep fact-level chunks; embed `search_document: {text} {keywords}` with local `nomic-embed-text-v1.5` (fastembed, ONNX): 93% vs 69% (BM25) on user wording, 100% out-of-scope rejection; no vector database (1 MB numpy matrix, exact search); BM25 fallback; hybrid rejected.
+- Architecture v1.3 (§8 rewritten, P5, D3, config, limitations) and plan v1.3 (Phase 3 rewritten: embedder, embeddings file, held-out set, CI job on Python 3.12).
+- Reproducible scripts and raw results in `eval/research/`.
+
 ### Audit of Phases 0–2 (18 Nov 2026)
 Every task, test bullet and exit criterion of Phases 0–2 in the plan, and every Phase 0–2 gate in `eval.md`, re-checked against the code. Gaps fixed:
 - `ingest.validate_corpus` now also re-checks the finished corpus for riskometer level (SEBI's 6), expense ratio (0–3%) and minimum SIP (≥ ₹1), not only while parsing; 3 tests added.

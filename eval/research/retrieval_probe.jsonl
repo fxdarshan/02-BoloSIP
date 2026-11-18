@@ -1,0 +1,86 @@
+{"id": "RP-ER-1", "question": "how much does HDFC Mid Cap charge every year", "scheme": "hdfc-mid-cap", "topic": "expense_ratio"}
+{"id": "RP-ER-2", "question": "annual fee of the HDFC liquid fund", "scheme": "hdfc-liquid", "topic": "expense_ratio"}
+{"id": "RP-ER-3", "question": "what are the yearly costs for HDFC Gilt Fund", "scheme": "hdfc-gilt", "topic": "expense_ratio"}
+{"id": "RP-ER-4", "question": "TER for flexi cap?", "scheme": "hdfc-flexi-cap", "topic": "expense_ratio"}
+{"id": "RP-ER-5", "question": "management fee of HDFC Small Cap", "scheme": "hdfc-small-cap", "topic": "expense_ratio"}
+{"id": "RP-ER-6", "question": "what percentage is deducted yearly for running HDFC Technology Fund", "scheme": "hdfc-technology", "topic": "expense_ratio"}
+{"id": "RP-EL-1", "question": "is there a penalty if I withdraw early from HDFC Arbitrage", "scheme": "hdfc-arbitrage", "topic": "exit_load"}
+{"id": "RP-EL-2", "question": "what do I pay if I redeem the defence fund within a month", "scheme": "hdfc-defence", "topic": "exit_load"}
+{"id": "RP-EL-3", "question": "charges on early redemption of HDFC liquid fund", "scheme": "hdfc-liquid", "topic": "exit_load"}
+{"id": "RP-EL-4", "question": "can I take my money out of HDFC Overnight Fund anytime without a fee", "scheme": "hdfc-overnight", "topic": "exit_load"}
+{"id": "RP-EL-5", "question": "redemption fee for HDFC Focused Fund", "scheme": "hdfc-focused", "topic": "exit_load"}
+{"id": "RP-EL-6", "question": "what is deducted when I sell units of HDFC Infrastructure within 30 days", "scheme": "hdfc-infrastructure", "topic": "exit_load"}
+{"id": "RP-MI-1", "question": "smallest amount to start investing in HDFC Technology Fund", "scheme": "hdfc-technology", "topic": "min_investment"}
+{"id": "RP-MI-2", "question": "can I start with 100 rupees in HDFC Gilt Fund", "scheme": "hdfc-gilt", "topic": "min_investment"}
+{"id": "RP-MI-3", "question": "minimum amount for a one time investment in HDFC Infrastructure Fund", "scheme": "hdfc-infrastructure", "topic": "min_investment"}
+{"id": "RP-MI-4", "question": "least I can put in every month into HDFC Housing Opportunities", "scheme": "hdfc-housing-opportunities", "topic": "min_investment"}
+{"id": "RP-MI-5", "question": "monthly instalment minimum for HDFC Balanced Advantage", "scheme": "hdfc-balanced-advantage", "topic": "min_investment"}
+{"id": "RP-MI-6", "question": "can I put a lump sum into HDFC Defence Fund", "scheme": "hdfc-defence", "topic": "min_investment"}
+{"id": "RP-RK-1", "question": "how risky is HDFC Small Cap Fund", "scheme": "hdfc-small-cap", "topic": "riskometer"}
+{"id": "RP-RK-2", "question": "risk category of HDFC Money Market Fund", "scheme": "hdfc-money-market", "topic": "riskometer"}
+{"id": "RP-RK-3", "question": "what risk grade does the HDFC gilt fund carry", "scheme": "hdfc-gilt", "topic": "riskometer"}
+{"id": "RP-RK-4", "question": "is HDFC Overnight Fund labelled low risk or high risk", "scheme": "hdfc-overnight", "topic": "riskometer"}
+{"id": "RP-RK-5", "question": "risk label of HDFC Silver ETF FoF", "scheme": "hdfc-silver-etf-fof", "topic": "riskometer"}
+{"id": "RP-BM-1", "question": "which index is HDFC Focused Fund compared against", "scheme": "hdfc-focused", "topic": "benchmark"}
+{"id": "RP-BM-2", "question": "what does the HDFC Nifty 50 index fund track", "scheme": "hdfc-nifty-50-index", "topic": "benchmark"}
+{"id": "RP-BM-3", "question": "against what is HDFC Pharma and Healthcare measured", "scheme": "hdfc-pharma-and-healthcare", "topic": "benchmark"}
+{"id": "RP-BM-4", "question": "reference index for HDFC Banking and PSU Debt Fund", "scheme": "hdfc-banking-and-psu-debt", "topic": "benchmark"}
+{"id": "RP-BM-5", "question": "what market index does HDFC Multi Cap follow", "scheme": "hdfc-multi-cap", "topic": "benchmark"}
+{"id": "RP-LI-1", "question": "can I withdraw from HDFC Mid Cap anytime or is it locked", "scheme": "hdfc-mid-cap", "topic": "lock_in"}
+{"id": "RP-LI-2", "question": "how long is my money stuck in HDFC Equity Savings Fund", "scheme": "hdfc-equity-savings", "topic": "lock_in"}
+{"id": "RP-LI-3", "question": "is there a minimum holding period for HDFC Arbitrage Fund", "scheme": "hdfc-arbitrage", "topic": "lock_in"}
+{"id": "RP-LI-4", "question": "is HDFC Flexi Cap a tax saving fund with lock in", "scheme": "hdfc-flexi-cap", "topic": "lock_in"}
+{"id": "RP-FM-1", "question": "who runs HDFC Large Cap Fund", "scheme": "hdfc-large-cap", "topic": "fund_manager"}
+{"id": "RP-FM-2", "question": "name of the person managing HDFC Technology Fund", "scheme": "hdfc-technology", "topic": "fund_manager"}
+{"id": "RP-FM-3", "question": "who is in charge of the HDFC gilt fund portfolio", "scheme": "hdfc-gilt", "topic": "fund_manager"}
+{"id": "RP-FM-4", "question": "who takes the investment decisions for HDFC Defence Fund", "scheme": "hdfc-defence", "topic": "fund_manager"}
+{"id": "RP-CT-1", "question": "what kind of fund is HDFC Business Cycle", "scheme": "hdfc-business-cycle", "topic": "category"}
+{"id": "RP-CT-2", "question": "what does HDFC Defence Fund invest in", "scheme": "hdfc-defence", "topic": "category"}
+{"id": "RP-CT-3", "question": "is HDFC Multi Asset Allocation an equity or hybrid fund", "scheme": "hdfc-multi-asset-allocation", "topic": "category"}
+{"id": "RP-CT-4", "question": "what is the investment objective of HDFC Liquid Fund", "scheme": "hdfc-liquid", "topic": "category"}
+{"id": "RP-CT-5", "question": "tell me about HDFC Silver ETF FoF", "scheme": "hdfc-silver-etf-fof", "topic": "category"}
+{"id": "RP-NV-1", "question": "current unit price of HDFC Mid Cap", "scheme": "hdfc-mid-cap", "topic": "nav"}
+{"id": "RP-NV-2", "question": "today's NAV of the HDFC overnight fund", "scheme": "hdfc-overnight", "topic": "nav"}
+{"id": "RP-NV-3", "question": "what is one unit of HDFC Silver FoF worth", "scheme": "hdfc-silver-etf-fof", "topic": "nav"}
+{"id": "RP-NV-4", "question": "latest price per unit for HDFC Focused Fund", "scheme": "hdfc-focused", "topic": "nav"}
+{"id": "RP-AU-1", "question": "how big is HDFC Balanced Advantage Fund", "scheme": "hdfc-balanced-advantage", "topic": "aum"}
+{"id": "RP-AU-2", "question": "total assets managed in HDFC Small Cap", "scheme": "hdfc-small-cap", "topic": "aum"}
+{"id": "RP-AU-3", "question": "corpus of the HDFC liquid fund", "scheme": "hdfc-liquid", "topic": "aum"}
+{"id": "RP-AU-4", "question": "how many crores are invested in HDFC Flexi Cap", "scheme": "hdfc-flexi-cap", "topic": "aum"}
+{"id": "RP-SD-1", "question": "when did HDFC Technology Fund start", "scheme": "hdfc-technology", "topic": "scheme_details"}
+{"id": "RP-SD-2", "question": "ISIN code of HDFC Gilt Fund", "scheme": "hdfc-gilt", "topic": "scheme_details"}
+{"id": "RP-SD-3", "question": "who is the registrar for HDFC Focused Fund", "scheme": "hdfc-focused", "topic": "scheme_details"}
+{"id": "RP-SD-4", "question": "launch date of the HDFC defence fund", "scheme": "hdfc-defence", "topic": "scheme_details"}
+{"id": "RP-ST-1", "question": "stamp duty on purchase of HDFC Mid Cap units", "scheme": "hdfc-mid-cap", "topic": "stamp_duty"}
+{"id": "RP-ST-2", "question": "is any government duty charged when I invest in HDFC Liquid Fund", "scheme": "hdfc-liquid", "topic": "stamp_duty"}
+{"id": "RP-GN-1", "question": "how to get a statement of my investments", "scheme": null, "topic": "statement"}
+{"id": "RP-GN-2", "question": "where do I download my transaction history", "scheme": null, "topic": "statement"}
+{"id": "RP-GN-3", "question": "how do I get proof of my gains for tax filing", "scheme": null, "topic": "capital_gains"}
+{"id": "RP-GN-4", "question": "realised gains report for income tax", "scheme": null, "topic": "capital_gains"}
+{"id": "RP-GN-5", "question": "how long are tax saving funds locked", "scheme": null, "topic": "lock_in_general"}
+{"id": "RP-GN-6", "question": "what do the riskometer categories mean", "scheme": null, "topic": "riskometer_general"}
+{"id": "RP-GN-7", "question": "what is total expense ratio", "scheme": null, "topic": "expense_ratio_general"}
+{"id": "RP-GN-8", "question": "explain what an exit load is", "scheme": null, "topic": "exit_load_general"}
+{"id": "RP-GN-9", "question": "why is the direct plan cheaper than regular", "scheme": null, "topic": "plans_general"}
+{"id": "RP-GN-10", "question": "what does investing through SIP mean", "scheme": null, "topic": "sip_general"}
+{"id": "RP-GN-11", "question": "where can I see what stocks HDFC funds hold", "scheme": null, "topic": "factsheet"}
+{"id": "RP-GN-12", "question": "monthly fund report download", "scheme": null, "topic": "factsheet"}
+{"id": "RP-GN-13", "question": "combined statement across all fund houses", "scheme": null, "topic": "statement"}
+{"id": "RP-GN-14", "question": "difference between direct and regular", "scheme": null, "topic": "plans_general"}
+{"id": "RP-GN-15", "question": "what is ELSS", "scheme": null, "topic": "lock_in_general"}
+{"id": "RP-GN-16", "question": "what are the six risk levels", "scheme": null, "topic": "riskometer_general"}
+{"id": "RP-GN-17", "question": "how is TER charged to investors", "scheme": null, "topic": "expense_ratio_general"}
+{"id": "RP-NEG-1", "question": "what is the weather in Mumbai today", "scheme": null, "topic": null}
+{"id": "RP-NEG-2", "question": "bitcoin price today", "scheme": null, "topic": null}
+{"id": "RP-NEG-3", "question": "how do I open a demat account", "scheme": null, "topic": null}
+{"id": "RP-NEG-4", "question": "what is the RBI repo rate", "scheme": null, "topic": null}
+{"id": "RP-NEG-5", "question": "who is the CEO of HDFC AMC", "scheme": null, "topic": null}
+{"id": "RP-NEG-6", "question": "how do I change the bank account linked to my folio", "scheme": null, "topic": null}
+{"id": "RP-NEG-7", "question": "what is GST on brokerage", "scheme": null, "topic": null}
+{"id": "RP-NEG-8", "question": "how do I update my nominee", "scheme": null, "topic": null}
+{"id": "RP-NEG-9", "question": "what is the National Pension System", "scheme": null, "topic": null}
+{"id": "RP-NEG-10", "question": "gold price per gram", "scheme": null, "topic": null}
+{"id": "RP-NEG-11", "question": "write me a poem about the stock market", "scheme": null, "topic": null}
+{"id": "RP-NEG-12", "question": "how do I file my income tax return online", "scheme": null, "topic": null}
+{"id": "RP-NEG-13", "question": "what is a PMS", "scheme": null, "topic": null}
+{"id": "RP-NEG-14", "question": "HDFC Bank fixed deposit interest rate", "scheme": null, "topic": null}

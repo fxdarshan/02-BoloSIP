@@ -1,0 +1,51 @@
+{
+  "nomic | text+keywords | no prefixes": {
+    "probe": 0.9027777777777778,
+    "facts": 1.0,
+    "general": 1.0,
+    "oos": 1.0
+  },
+  "nomic | text+keywords | search_document/search_query": {
+    "probe": 0.9305555555555556,
+    "facts": 1.0,
+    "general": 1.0,
+    "oos": 1.0
+  },
+  "nomic | enriched | no prefixes": {
+    "probe": 0.8611111111111112,
+    "facts": 1.0,
+    "general": 0.9565217391304348,
+    "oos": 1.0
+  },
+  "nomic | enriched | search_document/search_query": {
+    "probe": 0.8333333333333334,
+    "facts": 1.0,
+    "general": 1.0,
+    "oos": 1.0
+  },
+  "bge query_embed == instruction prefix (cosine)": 0.9495239853858948,
+  "bge-base | text+keywords | no instruction": {
+    "probe": 0.8611111111111112,
+    "facts": 0.9537037037037037,
+    "general": 1.0,
+    "oos": 1.0
+  },
+  "bge-base | text+keywords | query instruction": {
+    "probe": 0.8611111111111112,
+    "facts": 0.9907407407407407,
+    "general": 0.9565217391304348,
+    "oos": 0.9285714285714286
+  },
+  "bge-base | enriched | no instruction": {
+    "probe": 0.8888888888888888,
+    "facts": 0.9845679012345679,
+    "general": 0.9565217391304348,
+    "oos": 1.0
+  },
+  "bge-base | enriched | query instruction": {
+    "probe": 0.9027777777777778,
+    "facts": 1.0,
+    "general": 0.9565217391304348,
+    "oos": 0.9285714285714286
+  }
+}
