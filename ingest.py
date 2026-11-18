@@ -360,6 +360,20 @@ def validate_corpus(corpus: dict) -> list[str]:
             problems.append(f"{cid}: contains a judgement word ({BANNED_JUDGEMENT.search(text).group(0)!r})")
         if c.get("scheme_id"):
             topics_by_scheme.setdefault(c["scheme_id"], set()).add(c.get("topic"))
+            # Value rules re-checked on the finished corpus, not only while parsing (arch §15).
+            topic = c.get("topic")
+            if topic == "riskometer":
+                m = re.search(r'"([^"]+)" risk', text)
+                if not m or m.group(1) not in SEBI_RISK_LEVELS:
+                    problems.append(f"{cid}: riskometer level is not one of SEBI's 6 levels")
+            elif topic == "expense_ratio":
+                m = re.search(r"is (\d+(?:\.\d+)?)% per annum", text)
+                if not m or not 0 < float(m.group(1)) <= 3:
+                    problems.append(f"{cid}: expense ratio missing or outside 0–3%")
+            elif topic == "min_investment" and "SIP investments in" not in text:
+                m = re.search(r"minimum SIP amount for .+? is ₹([\d,]+)\.", text)
+                if not m or int(m.group(1).replace(",", "")) < 1:
+                    problems.append(f"{cid}: minimum SIP missing or not a positive whole number")
             if c.get("source_url") not in (registry.BY_ID[c["scheme_id"]].url, HDFC_FACTSHEET_URL):
                 problems.append(f"{cid}: scheme fact cites {c.get('source_url')}, not its own scheme page")
         elif c.get("topic") not in OFFICIAL_TOPICS:

@@ -227,6 +227,28 @@ class TestValidation(unittest.TestCase):
         bad["chunks"][0]["text"] = "One. Two. Three. Four."
         self.assertTrue(any("4 sentences" in p for p in ingest.validate_corpus(bad)))
 
+    def _replace(self, chunk_id: str, old: str, new: str) -> dict:
+        bad = copy.deepcopy(self.corpus)
+        for c in bad["chunks"]:
+            if c["id"] == chunk_id:
+                self.assertIn(old, c["text"])
+                c["text"] = c["text"].replace(old, new)
+        return bad
+
+    def test_riskometer_outside_sebi_levels_rejected(self):
+        bad = self._replace("hdfc-mid-cap:riskometer", '"Very High"', '"Medium"')
+        self.assertTrue(any("SEBI's 6 levels" in p for p in ingest.validate_corpus(bad)))
+
+    def test_expense_ratio_out_of_range_rejected(self):
+        c = next(x for x in self.corpus["chunks"] if x["id"] == "hdfc-mid-cap:expense_ratio")
+        value = re.search(r"is (\d+\.\d+)% per annum", c["text"]).group(1)
+        bad = self._replace("hdfc-mid-cap:expense_ratio", f"{value}%", "12.50%")
+        self.assertTrue(any("outside 0–3%" in p for p in ingest.validate_corpus(bad)))
+
+    def test_zero_minimum_sip_rejected(self):
+        bad = self._replace("hdfc-mid-cap:min_investment", "is ₹100.", "is ₹0.")
+        self.assertTrue(any("minimum SIP" in p for p in ingest.validate_corpus(bad)))
+
     def test_return_figure_rejected(self):
         bad = copy.deepcopy(self.corpus)
         bad["chunks"][0]["text"] = "The 3Y return of this scheme is 16.2%."

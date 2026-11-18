@@ -163,7 +163,14 @@ def phase1_checks() -> list[dict]:
     figs = [c["id"] for c in corpus["chunks"] if RETURN_FIGURE.search(c["text"])]
     results.append(_check("No return / performance figures", not figs, f"{len(figs)} found"))
     words = [c["id"] for c in corpus["chunks"] if BANNED_JUDGEMENT.search(c["text"])]
-    results.append(_check("No judgement words (CMP-01)", not words, f"{len(words)} found"))
+    # "low" (eval.md §5) is allowed only as a quoted SEBI riskometer level, inside the official list of
+    # levels, or as AMFI's factual "lower expense ratio" for Direct plans; anywhere else it's judgement.
+    allowed_low = re.compile(r'"Low(?: to Moderate)?"|Low, Low to Moderate|Direct Plan has a lower expense ratio')
+    lows = [c["id"] for c in corpus["chunks"]
+            if re.search(r"\blow(?:er|est)?\b", allowed_low.sub(" ", c["text"]), re.IGNORECASE)]
+    results.append(_check("No judgement words (CMP-01), incl. 'low' outside SEBI levels",
+                          not words and not lows, f"{len(words) + len(lows)} found"
+                          + (f": {(words + lows)[:5]}" if words or lows else "")))
     results.append(_check("Corpus passes ingest validation", not ingest.validate_corpus(corpus),
                           f"{len(ingest.validate_corpus(corpus))} problems"))
 
@@ -172,14 +179,38 @@ def phase1_checks() -> list[dict]:
                           cwd=ROOT, capture_output=True, text=True)
     results.append(_check("Atomic write keeps old corpus on failure; lock works", proc.returncode == 0,
                           (proc.stderr.strip().splitlines() or ["?"])[-1]))
-    with mock.patch.object(ingest, "fetch", side_effect=OSError("network down")):
-        try:
-            built, _, _ = ingest.build(offline=False, log=lambda *a: None)
-            origins = {v["origin"] for v in built["sources"].values()}
-            ok, detail = origins == {"snapshot"}, f"network off → {len(built['sources'])} schemes from snapshots"
-        except ingest.IngestError as e:
-            ok, detail = False, str(e)[:200]
-    results.append(_check("Fetch resilience: network failure falls back to snapshots", ok, detail))
+    # Fetch resilience (eval.md §5): network off -> exit 1, snapshots used, footer dates = recorded fetch dates.
+    import tempfile
+    fetch_log = json.loads((ingest.RAW / "fetched.json").read_text(encoding="utf-8"))
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        with mock.patch.object(ingest, "fetch", side_effect=OSError("network down")), \
+             mock.patch.object(ingest, "CORPUS", tmp / "corpus.json"), \
+             mock.patch.object(ingest, "LOCK", tmp / ".ingest.lock"), \
+             mock.patch("sys.stdout"), mock.patch("sys.stderr"):
+            code = ingest.main([])
+        built = json.loads((tmp / "corpus.json").read_text(encoding="utf-8")) if (tmp / "corpus.json").exists() else {}
+    origins = {v["origin"] for v in built.get("sources", {}).values()}
+    dishonest = [c["id"] for c in built.get("chunks", [])
+                 if c["scheme_id"] and c["source_url"] != HDFC_FACTSHEET_URL
+                 and c["as_of"] != fetch_log.get(c["scheme_id"], {}).get("fetched_on")]
+    ok = code == 1 and origins == {"snapshot"} and not dishonest
+    results.append(_check("Fetch resilience: network off → exit 1, snapshots used, dates honest", ok,
+                          f"exit {code}; {len(built.get('sources', {}))} from snapshots; "
+                          f"{len(dishonest)} chunks with a wrong date"))
+
+    # Per-scheme table (eval.md §5: "Report adds a per-scheme table").
+    rows = []
+    for s in registry.SCHEMES:
+        topics = {c["topic"] for c in scheme_chunks if c["scheme_id"] == s.id}
+        cases = [c for c in fresh if c["expect"]["scheme_id"] == s.id]
+        bad_ids = [c["expect"]["topic"] for c in cases if not agree(c)]
+        src = corpus["sources"].get(s.id, {})
+        rows.append(f"| {s.id} | {len(topics)} / {len(SCHEME_TOPICS)} | {len(cases)} | "
+                    f"{', '.join(bad_ids) or '0'} | {src.get('origin', '?')}, {src.get('fetched_on', '?')} |")
+    SECTIONS.append("\n".join([
+        "## Phase 1 per-scheme table", "",
+        "| Scheme | Topics present | Values checked | Mismatches | Source |", "|---|---|---|---|---|", *rows]))
 
     # Manual live spot check recorded in eval/manual/phase1_spotcheck.json.
     manual = ROOT / "eval" / "manual" / "phase1_spotcheck.json"
@@ -207,8 +238,9 @@ def phase2_checks() -> list[dict]:
     sys.path.insert(0, str(ROOT))
     from bolosip import guards
 
-    advice, perf, pii, facts = (_load_set(n) for n in ("advice", "performance", "pii", "facts"))
+    advice, perf, pii, facts, general = (_load_set(n) for n in ("advice", "performance", "pii", "facts", "general"))
     results = []
+    misses: list[str] = []      # every miss and false positive, always listed (eval.md §5)
 
     def rate(cases, predicate):
         hits = [c for c in cases if predicate(c)]
@@ -220,9 +252,12 @@ def phase2_checks() -> list[dict]:
         ok = (minimum is None or value >= minimum) and (maximum is None or value <= maximum)
         bound = f"need ≥ {minimum:.0%}" if minimum is not None else f"max {maximum:.0%}"
         results.append(_check(name, ok, f"{n} / {total} ({value:.1%}; {bound})"))
-        if record_misses and not ok:
-            for c in cases:
-                if (predicate(c) if maximum is not None else not predicate(c)):
+        for c in cases:
+            wrong = predicate(c) if maximum is not None else not predicate(c)
+            if wrong:
+                misses.append(f"| {name} | {c['id']} | {c.get('expect', {}).get('kind')} | "
+                              f"{guards.check(c['question']).kind} | {c['question']} |")
+                if record_misses and not ok:
                     FAILURES.append({"id": c["id"], "expected": [str(c.get("expect", {}).get("kind"))],
                                      "got": f"{guards.check(c['question']).kind}: {c['question']}"})
 
@@ -235,18 +270,18 @@ def phase2_checks() -> list[dict]:
     prf_neg = [c for c in perf if c["expect"]["kind"] is None]
 
     gate("PII recall (personal data caught)", pii_pos, lambda c: bool(guards.find_pii(c["question"])), minimum=1.0)
-    gate("PII false positives (look-alikes and fact questions)", pii_neg + facts,
+    gate("PII false positives (look-alikes and fact questions)", pii_neg + facts + general,
          lambda c: bool(guards.find_pii(c["question"])), maximum=0.02)
     leaks = [(c["id"], v) for c in pii_pos for v in c["expect"].get("values", [])
              if v.lower() in guards.redact(c["question"]).lower()]
     results.append(_check("Redaction leaves no personal-data value (hard gate)", not leaks,
                           f"{len(leaks)} values survived" + (f": {[i for i, _ in leaks]}" if leaks else "")))
     gate("Refusal recall (advice refused, AC 4)", adv_pos, lambda c: kind(c) == "refusal", minimum=1.0)
-    gate("False refusals (fact questions refused)", facts + adv_neg + prf_neg,
+    gate("False refusals (fact + general questions refused)", facts + general + adv_neg + prf_neg,
          lambda c: guards.is_advisory(c["question"]), maximum=0.03)
     gate("Performance recall (returns → factsheet, AC 5)", prf_pos, lambda c: kind(c) == "performance", minimum=0.97)
-    gate("Performance false positives", facts + prf_neg, lambda c: guards.is_performance(c["question"]),
-         maximum=0.02)
+    gate("Performance false positives (fact + general questions)", facts + general + prf_neg,
+         lambda c: guards.is_performance(c["question"]), maximum=0.02)
     order = [c for c in pii + advice if c["ref"] == "rule-order" or c["id"].startswith("ADV-24")]
     gate("Rule order: privacy → advice → performance", order, lambda c: kind(c) == c["expect"]["kind"],
          minimum=1.0)
@@ -272,8 +307,11 @@ def phase2_checks() -> list[dict]:
         "| expected \\ actual | " + " | ".join(name(a) for a in labels) + " |",
         "|---|" + "---|" * len(labels),
         *[f"| {name(e)} | " + " | ".join(str(grid[(e, a)]) for a in labels) + " |" for e in labels],
-        "", f"{len(pii) + len(advice) + len(perf)} guard cases; {len(facts)} fact questions also checked for "
-            "false positives.",
+        "", f"{len(pii) + len(advice) + len(perf)} guard cases; {len(facts)} fact and {len(general)} general "
+            "questions also checked for false positives.",
+        "", "### Every miss and false positive, by ID", "",
+        *(["None."] if not misses else
+          ["| Gate | ID | Expected | Got | Question |", "|---|---|---|---|---|", *misses]),
     ]))
     return results
 

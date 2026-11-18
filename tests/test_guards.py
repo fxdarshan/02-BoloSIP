@@ -114,9 +114,18 @@ class TestCorpusAndFacts(unittest.TestCase):
                 self.assertFalse(guards.is_advisory(c["text"]))
 
     def test_fact_questions_pass_through(self):
-        for c in load("facts"):
+        for c in load("facts") + load("general"):
             with self.subTest(id=c["id"]):
                 self.assertIsNone(guards.check(c["question"]).kind)
+
+
+class TestDocumentedLimits(unittest.TestCase):
+    def test_pii_29_split_across_messages_not_joined(self):
+        # Documented limit (edge-case PII-29): each message is checked on its own.
+        self.assertIsNone(guards.check("my PAN starts ABCDE").kind)
+        self.assertIsNone(guards.check("and ends 1234F").kind)
+        self.assertEqual(guards.check("my PAN starts ABCDE and ends 1234F").kind, None)
+        self.assertEqual(guards.check("ABCDE1234F").kind, "privacy")
 
 
 class TestSpeed(unittest.TestCase):

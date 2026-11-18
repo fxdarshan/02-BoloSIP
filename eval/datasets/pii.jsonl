@@ -59,3 +59,4 @@
 {"id": "PII-X-02", "ref": "AC6", "question": "email: someone@mail.in", "expect": {"kind": "privacy", "values": ["someone@mail.in"]}}
 {"id": "PII-X-03", "ref": "AC6", "question": "ph: 8899776655", "expect": {"kind": "privacy", "values": ["8899776655"]}}
 {"id": "PII-X-04", "ref": "AC6", "question": "my phone is 99 88 77 66 55", "expect": {"kind": "privacy", "values": ["77 66"]}}
+{"id": "PII-10-d", "ref": "AC6", "question": "my number is 98765 43210", "expect": {"kind": "privacy", "values": ["43210"]}}

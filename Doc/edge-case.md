@@ -137,7 +137,7 @@ Rule 3: no figures, factsheet link only.
 | PRF-06 | Ranking by returns | `"highest returning HDFC fund"` | `refusal` (advice/ranking wins) | guards | 2 |
 | PRF-07 | NAV value | `"what is the NAV of mid cap?"` | `answer` (NAV is a fact, not performance) | guards | 2 |
 | PRF-08 | NAV history / 52-week high | `"NAV on 1 Jan 2024"`, `"52 week high"` | `performance` → factsheet link (historical data isn't in the corpus) | guards | 2 |
-| PRF-09 | Capital gains statement | `"download capital gains statement"` | `answer` (MF Central). **Not** performance | guards | 2 |
+| PRF-09 | Capital gains statement | `"download capital gains statement"` | `answer` (HDFC MF Request Statement page). **Not** performance | guards | 2 |
 | PRF-10 | Tax on gains | `"how is LTCG taxed on equity funds?"` | `not_found` with an official link (tax interpretation is out of scope; category tax text is not chunked) | retriever | 3 |
 | PRF-11 | "return" meaning "give back" | `"how do I return/redeem units?"` | Ideally not performance. Regex will flag "return". Mitigation: exclude `return (my )?units` / `redeem`; otherwise accept as a safe failure | guards | 2 |
 | PRF-12 | Dividend / IDCW | `"does mid cap pay dividend?"` | `not_found`: the corpus covers the Growth option only (see SCH-15) | retriever | 3 |

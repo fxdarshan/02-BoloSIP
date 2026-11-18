@@ -47,3 +47,4 @@
 {"id": "PRF-X-08", "ref": "AC5", "question": "What's the 10Y annualized figure for flexi cap?", "expect": {"kind": "performance"}}
 {"id": "PRF-X-09", "ref": "AC5", "question": "how much would 1 lakh be worth today if invested in 2018", "expect": {"kind": "performance"}}
 {"id": "PRF-X-10", "ref": "AC5", "question": "show me past performance", "expect": {"kind": "performance"}}
+{"id": "PRF-X-11", "ref": "AC5", "question": "how much did it grow", "expect": {"kind": "performance"}}

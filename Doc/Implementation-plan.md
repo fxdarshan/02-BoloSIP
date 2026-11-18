@@ -27,7 +27,8 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | Problem statement v2.2, architecture v1.2, edge cases v1.2, eval v1.1 | Done |
 | **Phase 0: Foundation** | **Done** (16 Nov 2026): config with `.env` loading, `.env.example`, 21 tests, eval runner; gate report `eval/reports/2026-11-16-phase0-8def061.md` |
 | **Phase 1: Ingestion (fetch, parse, chunk)** | **Done** (16 Nov 2026): 334 chunks (27 × 12 + 10 official notes), all 27 pages live; 61 tests; gate report in `eval/reports/` |
-| **Phase 2: Guards** | **Done** (16 Nov 2026): ordered `check()`; 218 guard cases (advice 108, returns 49, personal data 61); 80 tests; gate 10/10 |
+| **Phase 2: Guards** | **Done** (16 Nov 2026): ordered `check()`; 220 guard cases (advice 108, returns 50, personal data 62) + 23 general questions; 84 tests; gate 10/10 |
+| **Audit of Phases 0–2** | **Done** (18 Nov 2026): every sub-point re-checked; 9 gaps fixed (see CHANGELOG) |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -152,7 +153,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 | 26 | `hdfc-gilt` | https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth |
 | 27 | `hdfc-silver-etf-fof` | https://groww.in/mutual-funds/hdfc-silver-etf-fof-direct-growth |
 
-> The hand-curated notes in `data/official_docs.json` (HDFC MF, AMFI, SEBI, CAMS, MF Central) are **not fetched** by ingestion. They are typed in by hand, reviewed against their pages, and only cited as links (PS §3.2).
+> The hand-curated notes in `data/official_docs.json` (HDFC MF, AMFI, SEBI, CAMS) are **not fetched** by ingestion. They are typed in by hand, reviewed against their pages, and only cited as links (PS §3.2).
 
 **Tasks**
 
@@ -233,7 +234,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 - 24 unseen phrasings found 8 misses (e.g. "would you put your own money…", "how did it fare", "99 88 77 66 55"): fixed and kept as cases. **Regex guards generalise to similar wording, not to every wording**; the Phase 3 held-out set measures this, and refusing stays the safe failure.
 
 **Exit criteria**
-- [x] All cases in `test_guards.py` pass, with at least 60 cases in total (218).
+- [x] All cases in `test_guards.py` pass, with at least 60 cases in total (220).
 - [x] No regex takes more than 5 ms on a 500-character input (no catastrophic backtracking).
 
 **Covers:** AC 4, 5, 6 (detection side); arch §11; PS §4.2 rules 1–3, §7

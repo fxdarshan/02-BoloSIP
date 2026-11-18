@@ -30,7 +30,7 @@ flowchart LR
     S -.optional.-> L[Groq API]
     I[ingest.py] -->|writes| C
     I -->|fetches| G[27 Groww scheme pages]
-    O[official_docs.json<br/>hand-curated: HDFC MF, AMFI,<br/>SEBI, CAMS, MF Central] --> I
+    O[official_docs.json<br/>hand-curated: HDFC MF, AMFI,<br/>SEBI, CAMS] --> I
 ```
 
 | Actor / system | Role | Trust |

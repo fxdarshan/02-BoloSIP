@@ -4,6 +4,14 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Audit of Phases 0–2 (18 Nov 2026)
+Every task, test bullet and exit criterion of Phases 0–2 in the plan, and every Phase 0–2 gate in `eval.md`, re-checked against the code. Gaps fixed:
+- `ingest.validate_corpus` now also re-checks the finished corpus for riskometer level (SEBI's 6), expense ratio (0–3%) and minimum SIP (≥ ₹1), not only while parsing; 3 tests added.
+- Phase 1 gate: the per-scheme table (27 rows) required by `eval.md` is now in the report; fetch resilience now checks exit code 1 and that footer dates equal the recorded fetch dates; judgement scan now includes "low" outside SEBI levels and AMFI's factual "lower expense ratio".
+- `eval/datasets/general.jsonl` (23 process and definition questions) created, as the Phase 2 false-refusal check requires; Phase 2 report now always lists every miss and false positive by ID.
+- Cases added: PRF-09 (capital gains statement is not a returns question), "how much did it grow", "98765 43210"; test documenting the PII-29 limit (a PAN split across messages is not joined).
+- `.env.example` documents `BOLOSIP_SKIP_DOTENV`; stale "MF Central" references removed (capital gains now cites HDFC's Request Statement page).
+
 ### Added (Phase 2: guards, 16 Nov 2026)
 - `bolosip/guards.py` rewritten: ordered `check()` (personal data → advice → returns); personal data now covers PAN (plain or spaced), Aadhaar (incl. masked, partial with keyword, 16-digit VID), email (incl. "at … dot"), mobile (any grouping) and landline, OTP / verification codes, IFSC (GAP-07), account and folio numbers; ISINs and toll-free numbers are never flagged; redaction keeps the sentence readable.
 - Advice check widened (opinions on costs, suitability, safety, loss, predictions, ratings, "top/highest returning", "would you invest", "overvalued") while letting factual questions through ("best way to download", "HDFC Top 100", "Multi Asset Allocation").

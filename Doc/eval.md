@@ -40,7 +40,7 @@ All sets live in `eval/datasets/` as JSON Lines: one case per line, versioned in
 | **Personal data** | `pii.jsonl` | ≥ 60 | Phase 2 | PII-01–30: positives **and** look-alike negatives (ISIN, NAV, dates, amounts) |
 | **Ambiguity** | `ambiguous.jsonl` | ≥ 40 | Phase 3 | SCH-01–22, the 4 confusable groups, other-AMC names (GAP-01) |
 | **Out of corpus** | `out_of_corpus.jsonl` | ≥ 40 | Phase 3 | Other AMCs, other HDFC entities, unrelated topics; must be `not_found` |
-| **General / process** | `general.jsonl` | ≥ 20 | Phase 3 | Statements, capital gains, ELSS, riskometer and definition questions |
+| **General / process** | `general.jsonl` | ≥ 20 | Phase 2 | Statements, capital gains, ELSS, riskometer and definition questions (built early: the Phase 2 false-refusal check needs it) |
 | **Conversations** | `conversations.jsonl` | ≥ 25 | Phase 5 | Multi-turn scripts for CTX-01–11, including two interleaved threads |
 | **Help** | `help.jsonl` | ≥ 15 | Phase 4 | Greetings, "what can you do?", punctuation-only (GAP-02) |
 | **LLM stress** | `llm_stress.jsonl` | ≥ 30 | Phase 7 | Stub outputs: invented numbers, URLs, advice words, long answers, reformatted numbers (GAP-06) |
