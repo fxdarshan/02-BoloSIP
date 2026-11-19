@@ -79,6 +79,10 @@ if os.environ.get("BOLOSIP_SKIP_DOTENV") != "1":
 # ---------------------------------------------------------------------------
 
 LLM_MODES = ("auto", "on", "off")
+RETRIEVER_MODES = ("auto", "embed", "bm25")
+
+# Local embedding model chosen in Doc/retrieval-research.md (architecture §8.3).
+DEFAULT_EMBED_MODEL = "nomic-ai/nomic-embed-text-v1.5"
 
 # Default Groq model. A Groq *production* model as of Nov 2026; Groq retires
 # models over time, so check console.groq.com/docs/models before a release.
@@ -96,6 +100,10 @@ class Settings:
     rate_msg_per_min: int
     rate_all_per_min: int
     groq_key_present: bool  # only whether a key is set; the key itself is never stored here
+    retriever_mode: str = "auto"                      # auto | embed | bm25
+    embed_model: str = DEFAULT_EMBED_MODEL
+    model_cache: Path = ROOT / ".cache" / "models"
+    chroma_dir: Path = DATA_DIR / "chroma"
 
 
 def _int(env: Mapping[str, str], name: str, default: int, lo: int, hi: int) -> int:
@@ -130,6 +138,9 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
     llm_mode = (env.get("BOLOSIP_LLM") or "auto").strip().lower()
     if llm_mode not in LLM_MODES:
         raise ValueError(f"BOLOSIP_LLM must be one of {', '.join(LLM_MODES)}, got {llm_mode!r}")
+    retriever = (env.get("BOLOSIP_RETRIEVER") or "auto").strip().lower()
+    if retriever not in RETRIEVER_MODES:
+        raise ValueError(f"BOLOSIP_RETRIEVER must be one of {', '.join(RETRIEVER_MODES)}, got {retriever!r}")
 
     return Settings(
         host=(env.get("BOLOSIP_HOST") or "127.0.0.1").strip(),
@@ -141,6 +152,10 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         rate_msg_per_min=_int(env, "BOLOSIP_RATE_MSG", 30, 1, 10_000),
         rate_all_per_min=_int(env, "BOLOSIP_RATE_ALL", 120, 1, 100_000),
         groq_key_present=bool((env.get("GROQ_API_KEY") or "").strip()),
+        retriever_mode=retriever,
+        embed_model=(env.get("BOLOSIP_EMBED_MODEL") or DEFAULT_EMBED_MODEL).strip(),
+        model_cache=_path(env, "BOLOSIP_MODEL_CACHE", ROOT / ".cache" / "models"),
+        chroma_dir=_path(env, "BOLOSIP_CHROMA_DIR", DATA_DIR / "chroma"),
     )
 
 
@@ -160,12 +175,34 @@ THREAD_TITLE_CHARS = 60
 
 BM25_K1 = 1.5
 BM25_B = 0.75
-W_SCHEME = 3.0      # boost: chunk belongs to the resolved scheme
-W_TOPIC = 3.0       # boost: chunk topic equals the detected topic
-W_OTHER = 5.0       # penalty: chunk belongs to a different scheme
-MIN_SCORE = 0.0     # set in Phase 3, tuned in Phase 8
-MIN_LEXICAL = 0.0   # set in Phase 3, tuned in Phase 8
+W_SCHEME = 3.0      # (BM25 v1 design; scheme is now a hard filter, see arch §8.1)
+W_TOPIC = 3.0       # (BM25 v1 design; kept for Phase 8 tuning experiments)
+W_OTHER = 5.0       # (BM25 v1 design; other schemes are filtered out entirely)
+# Answer only if the top candidate scores at least this much; else "not_found".
+# Two levels (Phase 3 calibration on facts + general + paraphrases + out_of_corpus):
+# when a scheme is named, the search is already limited to that scheme's facts, so a
+# lower bar is safe; with no scheme named, out-of-scope questions reach cosine 0.718.
+# Dense = cosine similarity; BM25 = raw BM25 score. Re-tuned in Phase 8.
+# Dense values chosen by a decision-level sweep on the tuning sets (98.5% correct, 0
+# out-of-scope answered); the closest out-of-scope question scored 0.695.
+MIN_SCORE = 0.70            # dense, no scheme named
+MIN_SCORE_SCHEME = 0.62     # dense, scheme named
+# BM25 needs a high bar with no scheme named: lower values answered "how do I change the
+# bank account in my folio" from the statement note (shared words "account", "folio").
+MIN_LEXICAL = 15.0          # BM25, no scheme named
+MIN_LEXICAL_SCHEME = 3.0    # BM25, scheme named
 MAX_CLARIFY_CANDIDATES = 5
+# Ranking bonus for a candidate whose topic the question names outright (topics.TOPIC_PHRASES).
+# Changes only the ORDER of candidates; confidence is always judged on the raw score.
+TOPIC_BOOST = 0.05          # dense (cosine)
+TOPIC_BOOST_BM25 = 3.0      # bm25
+
+# Embeddings and the vector store (architecture §8.2-§8.4).
+EMBED_DOC_PREFIX = "search_document: "
+EMBED_QUERY_PREFIX = "search_query: "
+EMBEDDINGS_NPY = DATA_DIR / "embeddings.npy"
+EMBEDDINGS_META = DATA_DIR / "embeddings.json"
+CHROMA_COLLECTION = "bolosip_facts"
 
 # ---------------------------------------------------------------------------
 # Optional LLM rephrasing via Groq (architecture §9.2)

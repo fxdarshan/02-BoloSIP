@@ -1,0 +1,48 @@
+{"id": "OOC-01", "ref": "AC8", "question": "expense ratio of SBI Bluechip", "expect": {"kind": "not_found", "reason": "other_amc"}}
+{"id": "OOC-02", "ref": "AC8", "question": "Parag Parikh Flexi Cap exit load", "expect": {"kind": "not_found", "reason": "other_amc"}}
+{"id": "OOC-03", "ref": "AC8", "question": "Quant Small Cap NAV", "expect": {"kind": "not_found", "reason": "other_amc"}}
+{"id": "OOC-04", "ref": "AC8", "question": "UTI Nifty 50 index fund TER", "expect": {"kind": "not_found", "reason": "other_amc"}}
+{"id": "OOC-05", "ref": "AC8", "question": "DSP Midcap riskometer", "expect": {"kind": "not_found", "reason": "other_amc"}}
+{"id": "OOC-06", "ref": "AC8", "question": "Tata Digital India fund manager", "expect": {"kind": "not_found", "reason": "other_amc"}}
+{"id": "OOC-07", "ref": "AC8", "question": "Aditya Birla Sun Life Frontline Equity benchmark", "expect": {"kind": "not_found", "reason": "other_amc"}}
+{"id": "OOC-08", "ref": "AC8", "question": "Franklin India Prima fund size", "expect": {"kind": "not_found", "reason": "other_amc"}}
+{"id": "OOC-09", "ref": "AC8", "question": "HDFC Bank FD rates", "expect": {"kind": "not_found", "reason": "non_fund"}}
+{"id": "OOC-10", "ref": "AC8", "question": "HDFC Life term insurance", "expect": {"kind": "not_found", "reason": "non_fund"}}
+{"id": "OOC-11", "ref": "AC8", "question": "HDFC Ergo health insurance", "expect": {"kind": "not_found", "reason": "non_fund"}}
+{"id": "OOC-12", "ref": "AC8", "question": "HDFC credit card annual fee", "expect": {"kind": "not_found", "reason": "non_fund"}}
+{"id": "OOC-13", "ref": "AC8", "question": "HDFC Gold ETF Fund of Fund expense ratio", "expect": {"kind": "not_found", "reason": "scheme_not_covered"}}
+{"id": "OOC-14", "ref": "AC8", "question": "HDFC ELSS Tax Saver exit load", "expect": {"kind": "not_found", "reason": "scheme_not_covered"}}
+{"id": "OOC-15", "ref": "AC8", "question": "HDFC Corporate Bond Fund benchmark", "expect": {"kind": "not_found", "reason": "scheme_not_covered"}}
+{"id": "OOC-16", "ref": "AC8", "question": "HDFC Children's Fund lock in", "expect": {"kind": "not_found", "reason": "scheme_not_covered"}}
+{"id": "OOC-17", "ref": "AC8", "question": "what is the weather in Mumbai today", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-18", "ref": "AC8", "question": "bitcoin price today", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-19", "ref": "AC8", "question": "how do I open a demat account", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-20", "ref": "AC8", "question": "what is the RBI repo rate", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-21", "ref": "AC8", "question": "who is the CEO of HDFC AMC", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-22", "ref": "AC8", "question": "how do I change the bank account in my folio", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-23", "ref": "AC8", "question": "what is GST on brokerage", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-24", "ref": "AC8", "question": "how do I update my nominee", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-25", "ref": "AC8", "question": "what is the National Pension System", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-26", "ref": "AC8", "question": "gold price per gram", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-27", "ref": "AC8", "question": "write me a poem about the stock market", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-28", "ref": "AC8", "question": "how do I file my income tax return online", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-29", "ref": "AC8", "question": "what is a PMS", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-30", "ref": "AC8", "question": "HDFC Bank fixed deposit interest rate", "expect": {"kind": "not_found", "reason": "non_fund"}}
+{"id": "OOC-31", "ref": "AC8", "question": "crypto tax rules in India", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-32", "ref": "AC8", "question": "how to buy US stocks from India", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-33", "ref": "AC8", "question": "what is an IPO", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-34", "ref": "AC8", "question": "current gold ETF price", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-35", "ref": "AC8", "question": "how much is the LTCG exemption limit", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-36", "ref": "AC8", "question": "what is a smallcase", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-37", "ref": "AC8", "question": "explain options trading", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-38", "ref": "AC8", "question": "who won the cricket match yesterday", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-39", "ref": "AC8", "question": "how to apply for a home loan", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-40", "ref": "AC8", "question": "what is the price of Reliance shares", "expect": {"kind": "not_found", "reason": "unrelated"}}
+{"id": "OOC-41", "ref": "AC8", "question": "silver price today", "expect": {"kind": "not_found", "reason": "market_term"}}
+{"id": "OOC-42", "ref": "AC8", "question": "housing loan interest rate", "expect": {"kind": "not_found", "reason": "market_term"}}
+{"id": "OOC-43", "ref": "AC8", "question": "what is the money market", "expect": {"kind": "not_found", "reason": "market_term"}}
+{"id": "OOC-44", "ref": "AC8", "question": "nifty 50 today", "expect": {"kind": "not_found", "reason": "market_term"}}
+{"id": "OOC-45", "ref": "AC8", "question": "infrastructure stocks to watch", "expect": {"kind": "not_found", "reason": "market_term"}}
+{"id": "OOC-46", "ref": "AC8", "question": "gilt yields today", "expect": {"kind": "not_found", "reason": "market_term"}}
+{"id": "OOC-47", "ref": "AC8", "question": "defence sector news", "expect": {"kind": "not_found", "reason": "market_term"}}
+{"id": "OOC-48", "ref": "AC8", "question": "what is arbitrage in trading", "expect": {"kind": "not_found", "reason": "market_term"}}

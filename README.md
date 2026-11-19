@@ -4,7 +4,7 @@
 
 BoloSIP is a small retrieval-based FAQ assistant that answers factual questions about 27 HDFC Mutual Fund schemes: expense ratio, exit load, minimum SIP, riskometer, benchmark, and how to download statements. Every answer is at most 3 sentences, cites exactly one source, and shows when that source was last updated. It refuses advice and opinion questions, and never asks for or stores personal details.
 
-**Status:** under construction. Phases 0 (foundation), 1 (data for all 27 schemes) and 2 (personal-data, advice and returns checks) are done; see the [implementation plan](Doc/Implementation-plan.md).
+**Status:** under construction. Phases 0 (foundation), 1 (data for all 27 schemes), 2 (personal-data, advice and returns checks) and 3 (scheme resolution and retrieval) are done; see the [implementation plan](Doc/Implementation-plan.md).
 
 Refresh the scheme data (fetches only the 27 Groww scheme pages; falls back to saved copies if offline):
 
@@ -35,6 +35,26 @@ powershell -ExecutionPolicy Bypass -File scripts\check.ps1
 ```
 
 On macOS / Linux use `sh scripts/check.sh`. The same checks run on GitHub after every push (Python 3.10–3.13, Windows and Linux).
+
+## Better retrieval: local embeddings + ChromaDB (recommended)
+
+BoloSIP finds the right fact for about 93% of real-user questions with local embeddings, against 69% with its built-in keyword search ([retrieval research](Doc/retrieval-research.md)). The embedding packages (fastembed, ChromaDB) don't support Python 3.15 yet, so use a Python 3.12 environment. [`uv`](https://docs.astral.sh/uv/) creates one without touching your system Python:
+
+```bash
+uv venv --python 3.12 .venv
+```
+
+```bash
+uv pip install --python .venv/Scripts/python.exe -e ".[embed]"
+```
+
+On macOS / Linux the interpreter is `.venv/bin/python`. Then build the vectors and the local ChromaDB collection. The first run downloads the embedding model (about 550 MB, once) into `.cache/models/`:
+
+```bash
+.venv/Scripts/python.exe ingest.py --embed-only
+```
+
+Everything stays on your computer: the model runs locally, ChromaDB is a local folder (`data/chroma/`), and its usage telemetry is switched off. Without this step BoloSIP still works, using keyword search.
 
 ## Settings and the Groq API key
 

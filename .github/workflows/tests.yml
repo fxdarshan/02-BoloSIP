@@ -25,8 +25,46 @@ jobs:
 
       # No dependencies to install: the core is standard library only, and the
       # default test run is offline with no Groq key (Doc/Implementation-plan.md §6).
+      # Retrieval uses the BM25 fallback here; real-model tests are skipped.
       - name: Unit tests
         run: python -m unittest discover tests -v
 
       - name: Evaluation gates
+        run: python -m eval.run --all --no-write
+
+  embed:
+    # Phase 3: the dense path (local nomic embeddings + ChromaDB) with the real model.
+    name: Embeddings + ChromaDB (Python 3.12, ubuntu)
+    runs-on: ubuntu-latest
+    env:
+      BOLOSIP_RETRIEVER: embed          # fail instead of silently falling back to BM25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install the embed extra
+        run: pip install -e ".[embed]"
+
+      - name: Cache the embedding model
+        uses: actions/cache@v4
+        with:
+          path: .cache/models
+          key: models-nomic-embed-text-v1.5-fastembed-0.9
+
+      # Downloads the model on a cache miss (about 550 MB), then checks the committed
+      # vectors still match corpus.json and builds the local Chroma collection.
+      - name: Build embeddings and ChromaDB
+        run: python ingest.py --embed-only
+
+      - name: Committed vectors are up to date
+        run: git diff --exit-code -- data/embeddings.json
+
+      - name: Unit tests (real model)
+        run: python -m unittest discover tests -v
+
+      - name: Evaluation gates (dense)
         run: python -m eval.run --all --no-write

@@ -12,6 +12,12 @@ venv/
 *.db
 
 # Local tool caches
+.cache/
+.venv-research/
+
+# Local ChromaDB collection: rebuilt from data/embeddings.npy (architecture §8.4)
+data/chroma/
+
 graft/.cache/
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).

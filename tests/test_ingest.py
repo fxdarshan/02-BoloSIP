@@ -344,7 +344,7 @@ class TestOfflineBuild(unittest.TestCase):
                  mock.patch.object(ingest, "LOCK", Path(tmp) / ".lock"), \
                  mock.patch.object(ingest, "fetch", side_effect=AssertionError("network used")), \
                  mock.patch("sys.stdout"), mock.patch("sys.stderr"):
-                code = ingest.main(["--offline"])
+                code = ingest.main(["--offline", "--no-embed"])
             self.assertEqual(code, 1)
             self.assertTrue(target.exists())
 

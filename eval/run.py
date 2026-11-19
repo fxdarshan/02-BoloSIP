@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "eval" / "reports"
-CURRENT_PHASE = 2
+CURRENT_PHASE = 3
 
 
 def _git_commit() -> str:
@@ -188,7 +188,7 @@ def phase1_checks() -> list[dict]:
              mock.patch.object(ingest, "CORPUS", tmp / "corpus.json"), \
              mock.patch.object(ingest, "LOCK", tmp / ".ingest.lock"), \
              mock.patch("sys.stdout"), mock.patch("sys.stderr"):
-            code = ingest.main([])
+            code = ingest.main(["--no-embed"])
         built = json.loads((tmp / "corpus.json").read_text(encoding="utf-8")) if (tmp / "corpus.json").exists() else {}
     origins = {v["origin"] for v in built.get("sources", {}).values()}
     dishonest = [c["id"] for c in built.get("chunks", [])
@@ -316,7 +316,145 @@ def phase2_checks() -> list[dict]:
     return results
 
 
-PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks, 2: phase2_checks}
+def phase3_checks() -> list[dict]:
+    """Phase 3 gate (Doc/eval.md §5, plan Phase 3 exit criteria): resolution and retrieval."""
+    import time
+    from collections import defaultdict
+
+    sys.path.insert(0, str(ROOT))
+    from bolosip import registry
+    from bolosip.retriever import Retriever
+    from bolosip.schemes import resolve
+    from eval.retrieval_eval import decide, gold_id, is_correct, reciprocal_rank
+
+    results = []
+    try:
+        r = Retriever()
+    except RuntimeError as e:          # BOLOSIP_RETRIEVER=embed but embeddings unavailable
+        return [_check("Retriever starts", False, str(e)[:200])]
+    dense = r.store is not None
+    results.append(_check("Retriever starts (backend in use)", True,
+                          r.backend_name() + (f" — {r.reason}" if r.reason else "")))
+
+    facts = [{"id": c["id"], "question": c["question"], "expect": {"kind": "answer", **{
+        k: c["expect"][k] for k in ("scheme_id", "topic")}}} for c in _load_set("facts")]
+    general = [{"id": c["id"], "question": c["question"],
+                "expect": {"kind": "answer", "scheme_id": None, "topic": c["expect"]["topic"]}}
+               for c in _load_set("general")]
+    paraphrases, ambiguous, ooc, holdout = (_load_set(n) for n in ("paraphrases", "ambiguous", "out_of_corpus",
+                                                                    "holdout"))
+    hold_pos = [c for c in holdout if c["expect"]["kind"] == "answer"]
+    hold_neg = [c for c in holdout if c["expect"]["kind"] != "answer"]
+    decisions = {}
+
+    def d(c):
+        if c["question"] not in decisions:
+            decisions[c["question"]] = decide(r, c["question"])
+        return decisions[c["question"]]
+
+    misses: list[str] = []
+
+    def accuracy(name, cases, threshold, *, dense_only=False):
+        if dense_only and not dense:
+            results.append(_check(name, True, "skipped: dense backend not available here (BM25 fallback); "
+                                              "required in the Python 3.12 embed CI job"))
+            return
+        bad = [c for c in cases if not is_correct(r, c, d(c))]
+        for c in bad:
+            res = resolve(c["question"])
+            top5 = r.search(c["question"], res.scheme_id if res.kind == "one" else None)
+            misses.append(f"| {name.split(' (')[0]} | {c.get('id', '')} | {c['question']} | "
+                          f"{c['expect'].get('topic') or c['expect']['kind']} | {d(c).kind} {d(c).chunk_id or ''} | "
+                          + ", ".join(f"{h.chunk['id']} {h.score:.2f}" for h in top5) + " |")
+        rate = 1 - len(bad) / len(cases)
+        results.append(_check(name, rate >= threshold,
+                              f"{len(cases) - len(bad)} / {len(cases)} ({rate:.1%}; need ≥ {threshold:.0%})"))
+
+    # Scheme resolution (no retrieval involved).
+    res_cases = [(c["question"], c["expect"]["scheme_id"]) for c in facts] + \
+                [(c["question"], c["expect"]["scheme_id"]) for c in ambiguous if c["expect"]["kind"] == "answer"]
+    ok = sum(resolve(q).scheme_ids == (sid,) for q, sid in res_cases)
+    results.append(_check("Scheme resolution accuracy", ok / len(res_cases) >= 0.99,
+                          f"{ok} / {len(res_cases)} ({ok / len(res_cases):.1%}; need ≥ 99%)"))
+    accuracy("Clarify accuracy (confusable names, AC 7a)",
+             [c for c in ambiguous if c["expect"]["kind"] == "clarify"], 1.0)
+    accuracy("Other fund houses / non-fund HDFC / schemes not covered → not found (GAP-01)",
+             [c for c in ambiguous + ooc if c["expect"].get("reason") in
+              ("other_amc", "non_fund", "scheme_not_covered")], 1.0)
+
+    # Retrieval accuracy through the full Phase 3 decision.
+    accuracy("Top-1 on template-wording facts (324)", facts, 0.98)
+    accuracy("Top-1 on general questions", general, 0.90, dense_only=True)
+    accuracy("Top-1 on paraphrases (user wording)", paraphrases, 0.90, dense_only=True)
+    accuracy("Top-1 on the held-out set (never tuned on)", hold_pos, 0.90, dense_only=True)
+    mrr_cases = facts + general + paraphrases
+    mrr = sum(reciprocal_rank(r, c) for c in mrr_cases) / len(mrr_cases)
+    results.append(_check("MRR@5 (facts + general + paraphrases)", mrr >= 0.95 or not dense,
+                          f"{mrr:.3f} (need ≥ 0.95" + ("" if dense else "; BM25 reported only") + ")"))
+
+    # Out of scope: never answered with a fact (hard gate); mostly an explicit not-found.
+    oos = ooc + hold_neg
+    answered = [c for c in oos if d(c).kind == "answer"]
+    results.append(_check("Out-of-scope questions answered with a fact (hard gate: 0)", not answered,
+                          f"{len(answered)} of {len(oos)}" + (f": {[c['id'] for c in answered]}" if answered else "")))
+    nf = sum(d(c).kind in ("not_found", "refusal", "performance", "privacy") for c in oos)
+    results.append(_check("Not-found precision on out-of-scope questions", nf / len(oos) >= 0.95,
+                          f"{nf} / {len(oos)} ({nf / len(oos):.1%}; need ≥ 95%; the rest asked which scheme)"))
+
+    # Wrong scheme: no answer may come from a scheme other than the one asked about.
+    wrong = []
+    for c in facts + paraphrases + hold_pos + [c for c in ambiguous if c["expect"]["kind"] == "answer"]:
+        dec, sid = d(c), c["expect"].get("scheme_id")
+        if dec.kind == "answer" and r.by_id[dec.chunk_id]["scheme_id"] not in (None, sid):
+            wrong.append(c.get("id", c["question"]))
+    results.append(_check("Wrong-scheme answers (hard gate: 0)", not wrong, f"{len(wrong)}" + (f": {wrong}" if wrong else "")))
+
+    # Speed.
+    q = "what is the exit load of HDFC Mid Cap Fund"
+    if dense:
+        vec = r.embedder.embed_query(q)
+        t0 = time.perf_counter()
+        for _ in range(10):
+            r.store.query(vec, "hdfc-mid-cap", 22)
+        search_ms = (time.perf_counter() - t0) / 10 * 1000
+        t0 = time.perf_counter()
+        for _ in range(5):
+            r.embedder.embed_query(q)
+        embed_ms = (time.perf_counter() - t0) / 5 * 1000
+        results.append(_check("Speed: ChromaDB search < 10 ms, query embedding < 100 ms",
+                              search_ms < 10 and embed_ms < 100, f"search {search_ms:.1f} ms, embedding {embed_ms:.0f} ms"))
+    else:
+        t0 = time.perf_counter()
+        for _ in range(50):
+            r.search(q, "hdfc-mid-cap")
+        ms = (time.perf_counter() - t0) / 50 * 1000
+        results.append(_check("Speed: BM25 search < 5 ms", ms < 5, f"{ms:.2f} ms"))
+
+    # Report: per-topic and per-scheme accuracy, every miss with its top 5.
+    by_topic, by_scheme = defaultdict(lambda: [0, 0]), defaultdict(lambda: [0, 0])
+    for c in facts + general + paraphrases + hold_pos:
+        good = is_correct(r, c, d(c))
+        t = c["expect"]["topic"]
+        by_topic[t][0] += good
+        by_topic[t][1] += 1
+        if c["expect"].get("scheme_id"):
+            by_scheme[c["expect"]["scheme_id"]][0] += good
+            by_scheme[c["expect"]["scheme_id"]][1] += 1
+    SECTIONS.append("\n".join([
+        f"## Phase 3 retrieval ({r.backend_name()})", "",
+        "### Accuracy by topic (facts + general + paraphrases + held-out)", "",
+        "| Topic | Correct |", "|---|---|",
+        *[f"| {t} | {a} / {n} ({a / n:.0%}) |" for t, (a, n) in sorted(by_topic.items())],
+        "", "### Accuracy by scheme", "", "| Scheme | Correct |", "|---|---|",
+        *[f"| {s.id} | {by_scheme[s.id][0]} / {by_scheme[s.id][1]} |" for s in registry.SCHEMES],
+        "", "### Every miss, with the top 5 candidates", "",
+        *(["None."] if not misses else
+          ["| Set | ID | Question | Expected | Got | Top 5 (score) |", "|---|---|---|---|---|---|", *misses]),
+    ]))
+    return results
+
+
+PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks, 2: phase2_checks, 3: phase3_checks}
 
 
 def run(phases: list[int]) -> dict:

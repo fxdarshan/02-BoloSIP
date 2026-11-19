@@ -535,11 +535,72 @@ def build(offline: bool = False, log=print) -> tuple[dict, dict[str, str], dict]
     return corpus, new_snapshots, fetch_log
 
 
+def build_embeddings(corpus_path: Path | None = None, *, log=print) -> str:
+    """Embed every chunk, save data/embeddings.npy + .json, and (re)build the Chroma
+    collection (architecture §8.4). Returns "built", "up to date" or "skipped: <why>".
+
+    Skips the 40-second model run when the saved vectors already match this corpus
+    and model. Never fails ingestion: problems are reported and BM25 stays available.
+    """
+    from bolosip import config, embedder, vectorstore
+
+    corpus_path = corpus_path or CORPUS
+    corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
+    chunks = corpus["chunks"]
+    sha = embedder.corpus_hash(corpus_path)
+    model_name = config.SETTINGS.embed_model
+    try:
+        import chromadb  # noqa: F401
+        import numpy  # noqa: F401
+    except ImportError:
+        return "skipped: the 'embed' extra is not installed (needs Python 3.10–3.14; see README)"
+
+    vectors, meta = vectorstore.load_vectors()
+    if vectors is not None and meta.get("corpus_sha256") == sha and meta.get("model") == model_name:
+        status = "up to date"
+    else:
+        model = embedder.load(model_name, allow_download=True)
+        if model is None:
+            return f"skipped: could not load {model_name} (no network on first run?)"
+        log(f"Embedding {len(chunks)} chunks with {model_name} (about a minute on CPU)...")
+        vectors = model.embed_documents([embedder.document_text(c) for c in chunks])
+        meta = {
+            "model": model_name,
+            "doc_prefix": config.EMBED_DOC_PREFIX,
+            "query_prefix": config.EMBED_QUERY_PREFIX,
+            "embedded_text": "text + keywords",
+            "dims": int(vectors.shape[1]),
+            "count": int(vectors.shape[0]),
+            "chunk_ids": [c["id"] for c in chunks],
+            "corpus_sha256": sha,
+            "built_on": today(),
+        }
+        vectorstore.save_vectors(vectors, meta)
+        status = "built"
+    vectorstore.reset_cache()
+    store = vectorstore.build(vectors, chunks, meta)
+    log(f"ChromaDB collection '{config.CHROMA_COLLECTION}': {store.count} vectors in "
+        f"{config.SETTINGS.chroma_dir.relative_to(ROOT) if config.SETTINGS.chroma_dir.is_relative_to(ROOT) else config.SETTINGS.chroma_dir}")
+    return status
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Build data/corpus.json from the 27 HDFC scheme pages.")
     ap.add_argument("--offline", action="store_true", help="use saved snapshots only (no network)")
+    ap.add_argument("--embed-only", action="store_true",
+                    help="don't fetch; (re)build embeddings + ChromaDB for the existing corpus.json")
+    ap.add_argument("--no-embed", action="store_true", help="skip the embedding step (used by tests)")
     args = ap.parse_args(argv)
     utf8_output()
+
+    if args.embed_only:
+        problems = validate_corpus(json.loads(CORPUS.read_text(encoding="utf-8")))
+        if problems:
+            print("NOT EMBEDDED: corpus.json fails validation; run python ingest.py first", file=sys.stderr)
+            return 2
+        status = build_embeddings()
+        print(f"Embeddings: {status}")
+        return 0 if not status.startswith("skipped") else 2
 
     try:
         with IngestLock():
@@ -558,6 +619,11 @@ def main(argv: list[str] | None = None) -> int:
 
     from_snapshot = [sid for sid, src in corpus["sources"].items() if src["origin"] == "snapshot"]
     print(f"Wrote {len(corpus['chunks'])} chunks for {len(corpus['schemes'])} schemes -> data/corpus.json")
+    if not args.no_embed:
+        try:
+            print(f"Embeddings: {build_embeddings()}")
+        except Exception as e:   # never fail ingestion because of embeddings
+            print(f"Embeddings: skipped ({type(e).__name__}: {e})", file=sys.stderr)
     if from_snapshot:
         print(f"WARNING: {len(from_snapshot)} scheme(s) used saved snapshots: {', '.join(from_snapshot)}",
               file=sys.stderr)

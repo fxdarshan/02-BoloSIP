@@ -26,7 +26,7 @@ Everything here is reproducible: the scripts, question set and raw results are i
 | Fallback | Keep **BM25** (text + keywords) when the embedding model isn't available | App still runs on Python 3.15 and in offline tests; 96% on template wording |
 | Retrieval | Dense cosine similarity, **filtered to the resolved scheme's 12 facts + the 10 official notes** | Same-topic chunks of different schemes are 50–70% identical, so scheme must come from the name resolver, not similarity |
 | Hybrid (BM25 + embeddings, RRF) | **Rejected** | Lowered general-question accuracy (100% → 83%) and out-of-scope rejection (100% → 79%) |
-| Vector store | **No vector database.** A 334 × 768 float32 matrix (1 MB) saved as `data/embeddings.npy`, exact search with numpy | 0.03 ms per exact search; a database would add dependencies and nothing else |
+| Vector store | Research recommended **no vector database** (1 MB numpy matrix, exact search). **Owner's decision (18 Nov 2026): local ChromaDB**, rebuilt from the committed `.npy` vectors (architecture §8.4) | 0.03 ms per exact search; Chroma's HNSW returns the same top hits at this size, so accuracy is unaffected |
 | Score threshold | Start at **cosine 0.74** (tune in Phase 8) | Highest out-of-scope score 0.73; 5th-percentile real question 0.76 |
 
 ## 3. What the data looks like
@@ -124,20 +124,21 @@ A threshold of **0.74** rejects all 14 out-of-scope questions and keeps about 95
 
 | Option | Fit for 334 × 768 vectors | Verdict |
 |---|---|---|
-| **numpy matrix in `data/embeddings.npy`, exact cosine** | 1 MB, 0.03 ms, deterministic, diffable by hash | **Chosen** |
+| numpy matrix in `data/embeddings.npy`, exact cosine | 1 MB, 0.03 ms, deterministic, diffable by hash | Research's recommendation; kept as the committed copy of the vectors |
 | sqlite-vec | Single file, but needs a loadable SQLite extension (fragile on Windows Python builds) | Upgrade path if the corpus reaches tens of thousands of chunks |
 | FAISS | Fast approximate search for millions of vectors; platform-specific wheels | Overkill |
-| Chroma / LanceDB | Embedded databases with many dependencies and their own storage format | Overkill; adds failure points |
+| **Chroma** (local, embedded) | Embedded database, many dependencies (84 packages), own storage format; no Python 3.15 build | **Chosen by the project owner** for a real vector DB that can grow; local, telemetry off |
+| LanceDB | Embedded database with its own storage format | Not needed |
 | Qdrant / Weaviate / Pinecone | Separate server or cloud service | Overkill; adds operations and sends data off the laptop |
 
-Exact search also means results never vary between runs (approximate indexes can), which keeps the evaluation reproducible.
+Exact search also means results never vary between runs (approximate indexes can), which keeps the evaluation reproducible. With Chroma chosen, a test checks that Chroma's top hits equal exact search over the `.npy` copy.
 
 ## 7. Constraints and how the design handles them
 
 | Constraint | Handling |
 |---|---|
 | **Groq has no embeddings endpoint** (its models page lists only chat and speech models) | Embeddings run locally; questions never leave the laptop for retrieval |
-| **onnxruntime has no Python 3.15 build yet**, and the laptop's default Python is 3.15 | Embeddings are an optional extra (`pip install .[embed]`, needs Python 3.10–3.13). On 3.15, or without the model, BoloSIP falls back to BM25 and says so in `/api/health`. Recommended: run BoloSIP in a `uv` Python 3.12 environment |
+| **onnxruntime has no Python 3.15 build yet**, and the laptop's default Python is 3.15 | Embeddings are an optional extra (`pip install .[embed]`, needs Python 3.10–3.14). On 3.15, or without the model, BoloSIP falls back to BM25 and says so in `/api/health`. Recommended: run BoloSIP in a `uv` Python 3.12 environment |
 | Model download (548 MB) on first use | Cached under `.cache/models/` in the project (git-ignored) instead of the system temp folder |
 | Vectors must match the corpus | `data/embeddings.json` records the model ID, prefixes, dimensions, chunk-ID order and a SHA-256 hash of `corpus.json`. On mismatch the app refuses to use the vectors and falls back to BM25 |
 | Default tests must stay offline and fast | Default tests use BM25 and a tiny stub embedder. Real-model tests run only when the model is cached, plus a CI job on Python 3.12 that caches the model |

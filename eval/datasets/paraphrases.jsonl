@@ -1,0 +1,81 @@
+{"id": "PAR-ER-1", "ref": "paraphrase", "question": "how much does HDFC Mid Cap charge every year", "expect": {"kind": "answer", "scheme_id": "hdfc-mid-cap", "topic": "expense_ratio"}}
+{"id": "PAR-ER-2", "ref": "paraphrase", "question": "annual fee of the HDFC liquid fund", "expect": {"kind": "answer", "scheme_id": "hdfc-liquid", "topic": "expense_ratio"}}
+{"id": "PAR-ER-3", "ref": "paraphrase", "question": "what are the yearly costs for HDFC Gilt Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-gilt", "topic": "expense_ratio"}}
+{"id": "PAR-ER-4", "ref": "paraphrase", "question": "TER for flexi cap?", "expect": {"kind": "answer", "scheme_id": "hdfc-flexi-cap", "topic": "expense_ratio"}}
+{"id": "PAR-ER-5", "ref": "paraphrase", "question": "management fee of HDFC Small Cap", "expect": {"kind": "answer", "scheme_id": "hdfc-small-cap", "topic": "expense_ratio"}}
+{"id": "PAR-ER-6", "ref": "paraphrase", "question": "what percentage is deducted yearly for running HDFC Technology Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-technology", "topic": "expense_ratio"}}
+{"id": "PAR-EL-1", "ref": "paraphrase", "question": "is there a penalty if I withdraw early from HDFC Arbitrage", "expect": {"kind": "answer", "scheme_id": "hdfc-arbitrage", "topic": "exit_load"}}
+{"id": "PAR-EL-2", "ref": "paraphrase", "question": "what do I pay if I redeem the defence fund within a month", "expect": {"kind": "answer", "scheme_id": "hdfc-defence", "topic": "exit_load"}}
+{"id": "PAR-EL-3", "ref": "paraphrase", "question": "charges on early redemption of HDFC liquid fund", "expect": {"kind": "answer", "scheme_id": "hdfc-liquid", "topic": "exit_load"}}
+{"id": "PAR-EL-4", "ref": "paraphrase", "question": "can I take my money out of HDFC Overnight Fund anytime without a fee", "expect": {"kind": "answer", "scheme_id": "hdfc-overnight", "topic": "exit_load"}}
+{"id": "PAR-EL-5", "ref": "paraphrase", "question": "redemption fee for HDFC Focused Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-focused", "topic": "exit_load"}}
+{"id": "PAR-EL-6", "ref": "paraphrase", "question": "what is deducted when I sell units of HDFC Infrastructure within 30 days", "expect": {"kind": "answer", "scheme_id": "hdfc-infrastructure", "topic": "exit_load"}}
+{"id": "PAR-MI-1", "ref": "paraphrase", "question": "smallest amount to start investing in HDFC Technology Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-technology", "topic": "min_investment"}}
+{"id": "PAR-MI-2", "ref": "paraphrase", "question": "can I start with 100 rupees in HDFC Gilt Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-gilt", "topic": "min_investment"}}
+{"id": "PAR-MI-3", "ref": "paraphrase", "question": "minimum amount for a one time investment in HDFC Infrastructure Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-infrastructure", "topic": "min_investment"}}
+{"id": "PAR-MI-4", "ref": "paraphrase", "question": "least I can put in every month into HDFC Housing Opportunities", "expect": {"kind": "answer", "scheme_id": "hdfc-housing-opportunities", "topic": "min_investment"}}
+{"id": "PAR-MI-5", "ref": "paraphrase", "question": "monthly instalment minimum for HDFC Balanced Advantage", "expect": {"kind": "answer", "scheme_id": "hdfc-balanced-advantage", "topic": "min_investment"}}
+{"id": "PAR-MI-6", "ref": "paraphrase", "question": "can I put a lump sum into HDFC Defence Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-defence", "topic": "min_investment"}}
+{"id": "PAR-RK-1", "ref": "paraphrase", "question": "how risky is HDFC Small Cap Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-small-cap", "topic": "riskometer"}}
+{"id": "PAR-RK-2", "ref": "paraphrase", "question": "risk category of HDFC Money Market Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-money-market", "topic": "riskometer"}}
+{"id": "PAR-RK-3", "ref": "paraphrase", "question": "what risk grade does the HDFC gilt fund carry", "expect": {"kind": "answer", "scheme_id": "hdfc-gilt", "topic": "riskometer"}}
+{"id": "PAR-RK-4", "ref": "paraphrase", "question": "is HDFC Overnight Fund labelled low risk or high risk", "expect": {"kind": "answer", "scheme_id": "hdfc-overnight", "topic": "riskometer"}}
+{"id": "PAR-RK-5", "ref": "paraphrase", "question": "risk label of HDFC Silver ETF FoF", "expect": {"kind": "answer", "scheme_id": "hdfc-silver-etf-fof", "topic": "riskometer"}}
+{"id": "PAR-BM-1", "ref": "paraphrase", "question": "which index is HDFC Focused Fund compared against", "expect": {"kind": "answer", "scheme_id": "hdfc-focused", "topic": "benchmark"}}
+{"id": "PAR-BM-2", "ref": "paraphrase", "question": "what does the HDFC Nifty 50 index fund track", "expect": {"kind": "answer", "scheme_id": "hdfc-nifty-50-index", "topic": "benchmark"}}
+{"id": "PAR-BM-3", "ref": "paraphrase", "question": "against what is HDFC Pharma and Healthcare measured", "expect": {"kind": "answer", "scheme_id": "hdfc-pharma-and-healthcare", "topic": "benchmark"}}
+{"id": "PAR-BM-4", "ref": "paraphrase", "question": "reference index for HDFC Banking and PSU Debt Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-banking-and-psu-debt", "topic": "benchmark"}}
+{"id": "PAR-BM-5", "ref": "paraphrase", "question": "what market index does HDFC Multi Cap follow", "expect": {"kind": "answer", "scheme_id": "hdfc-multi-cap", "topic": "benchmark"}}
+{"id": "PAR-LI-1", "ref": "paraphrase", "question": "can I withdraw from HDFC Mid Cap anytime or is it locked", "expect": {"kind": "answer", "scheme_id": "hdfc-mid-cap", "topic": "lock_in"}}
+{"id": "PAR-LI-2", "ref": "paraphrase", "question": "how long is my money stuck in HDFC Equity Savings Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-equity-savings", "topic": "lock_in"}}
+{"id": "PAR-LI-3", "ref": "paraphrase", "question": "is there a minimum holding period for HDFC Arbitrage Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-arbitrage", "topic": "lock_in"}}
+{"id": "PAR-LI-4", "ref": "paraphrase", "question": "is HDFC Flexi Cap a tax saving fund with lock in", "expect": {"kind": "answer", "scheme_id": "hdfc-flexi-cap", "topic": "lock_in"}}
+{"id": "PAR-FM-1", "ref": "paraphrase", "question": "who runs HDFC Large Cap Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-large-cap", "topic": "fund_manager"}}
+{"id": "PAR-FM-2", "ref": "paraphrase", "question": "name of the person managing HDFC Technology Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-technology", "topic": "fund_manager"}}
+{"id": "PAR-FM-3", "ref": "paraphrase", "question": "who is in charge of the HDFC gilt fund portfolio", "expect": {"kind": "answer", "scheme_id": "hdfc-gilt", "topic": "fund_manager"}}
+{"id": "PAR-FM-4", "ref": "paraphrase", "question": "who takes the investment decisions for HDFC Defence Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-defence", "topic": "fund_manager"}}
+{"id": "PAR-CT-1", "ref": "paraphrase", "question": "what kind of fund is HDFC Business Cycle", "expect": {"kind": "answer", "scheme_id": "hdfc-business-cycle", "topic": "category"}}
+{"id": "PAR-CT-2", "ref": "paraphrase", "question": "what does HDFC Defence Fund invest in", "expect": {"kind": "answer", "scheme_id": "hdfc-defence", "topic": "category"}}
+{"id": "PAR-CT-3", "ref": "paraphrase", "question": "is HDFC Multi Asset Allocation an equity or hybrid fund", "expect": {"kind": "answer", "scheme_id": "hdfc-multi-asset-allocation", "topic": "category"}}
+{"id": "PAR-CT-4", "ref": "paraphrase", "question": "what is the investment objective of HDFC Liquid Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-liquid", "topic": "category"}}
+{"id": "PAR-CT-5", "ref": "paraphrase", "question": "tell me about HDFC Silver ETF FoF", "expect": {"kind": "answer", "scheme_id": "hdfc-silver-etf-fof", "topic": "category"}}
+{"id": "PAR-NV-1", "ref": "paraphrase", "question": "current unit price of HDFC Mid Cap", "expect": {"kind": "answer", "scheme_id": "hdfc-mid-cap", "topic": "nav"}}
+{"id": "PAR-NV-2", "ref": "paraphrase", "question": "today's NAV of the HDFC overnight fund", "expect": {"kind": "answer", "scheme_id": "hdfc-overnight", "topic": "nav"}}
+{"id": "PAR-NV-3", "ref": "paraphrase", "question": "what is one unit of HDFC Silver FoF worth", "expect": {"kind": "answer", "scheme_id": "hdfc-silver-etf-fof", "topic": "nav"}}
+{"id": "PAR-NV-4", "ref": "paraphrase", "question": "latest price per unit for HDFC Focused Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-focused", "topic": "nav"}}
+{"id": "PAR-AU-1", "ref": "paraphrase", "question": "how big is HDFC Balanced Advantage Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-balanced-advantage", "topic": "aum"}}
+{"id": "PAR-AU-2", "ref": "paraphrase", "question": "total assets managed in HDFC Small Cap", "expect": {"kind": "answer", "scheme_id": "hdfc-small-cap", "topic": "aum"}}
+{"id": "PAR-AU-3", "ref": "paraphrase", "question": "corpus of the HDFC liquid fund", "expect": {"kind": "answer", "scheme_id": "hdfc-liquid", "topic": "aum"}}
+{"id": "PAR-AU-4", "ref": "paraphrase", "question": "how many crores are invested in HDFC Flexi Cap", "expect": {"kind": "answer", "scheme_id": "hdfc-flexi-cap", "topic": "aum"}}
+{"id": "PAR-SD-1", "ref": "paraphrase", "question": "when did HDFC Technology Fund start", "expect": {"kind": "answer", "scheme_id": "hdfc-technology", "topic": "scheme_details"}}
+{"id": "PAR-SD-2", "ref": "paraphrase", "question": "ISIN code of HDFC Gilt Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-gilt", "topic": "scheme_details"}}
+{"id": "PAR-SD-3", "ref": "paraphrase", "question": "who is the registrar for HDFC Focused Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-focused", "topic": "scheme_details"}}
+{"id": "PAR-SD-4", "ref": "paraphrase", "question": "launch date of the HDFC defence fund", "expect": {"kind": "answer", "scheme_id": "hdfc-defence", "topic": "scheme_details"}}
+{"id": "PAR-ST-1", "ref": "paraphrase", "question": "stamp duty on purchase of HDFC Mid Cap units", "expect": {"kind": "answer", "scheme_id": "hdfc-mid-cap", "topic": "stamp_duty"}}
+{"id": "PAR-ST-2", "ref": "paraphrase", "question": "is any government duty charged when I invest in HDFC Liquid Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-liquid", "topic": "stamp_duty"}}
+{"id": "PAR-GN-1", "ref": "paraphrase", "question": "how to get a statement of my investments", "expect": {"kind": "answer", "scheme_id": null, "topic": "statement"}}
+{"id": "PAR-GN-2", "ref": "paraphrase", "question": "where do I download my transaction history", "expect": {"kind": "answer", "scheme_id": null, "topic": "statement"}}
+{"id": "PAR-GN-3", "ref": "paraphrase", "question": "how do I get proof of my gains for tax filing", "expect": {"kind": "answer", "scheme_id": null, "topic": "capital_gains"}}
+{"id": "PAR-GN-4", "ref": "paraphrase", "question": "realised gains report for income tax", "expect": {"kind": "answer", "scheme_id": null, "topic": "capital_gains"}}
+{"id": "PAR-GN-5", "ref": "paraphrase", "question": "how long are tax saving funds locked", "expect": {"kind": "answer", "scheme_id": null, "topic": "lock_in_general"}}
+{"id": "PAR-GN-6", "ref": "paraphrase", "question": "what do the riskometer categories mean", "expect": {"kind": "answer", "scheme_id": null, "topic": "riskometer_general"}}
+{"id": "PAR-GN-7", "ref": "paraphrase", "question": "what is total expense ratio", "expect": {"kind": "answer", "scheme_id": null, "topic": "expense_ratio_general"}}
+{"id": "PAR-GN-8", "ref": "paraphrase", "question": "explain what an exit load is", "expect": {"kind": "answer", "scheme_id": null, "topic": "exit_load_general"}}
+{"id": "PAR-GN-9", "ref": "paraphrase", "question": "why is the direct plan cheaper than regular", "expect": {"kind": "answer", "scheme_id": null, "topic": "plans_general"}}
+{"id": "PAR-GN-10", "ref": "paraphrase", "question": "what does investing through SIP mean", "expect": {"kind": "answer", "scheme_id": null, "topic": "sip_general"}}
+{"id": "PAR-GN-11", "ref": "paraphrase", "question": "where can I see what stocks HDFC funds hold", "expect": {"kind": "answer", "scheme_id": null, "topic": "factsheet"}}
+{"id": "PAR-GN-12", "ref": "paraphrase", "question": "monthly fund report download", "expect": {"kind": "answer", "scheme_id": null, "topic": "factsheet"}}
+{"id": "PAR-GN-13", "ref": "paraphrase", "question": "combined statement across all fund houses", "expect": {"kind": "answer", "scheme_id": null, "topic": "statement"}}
+{"id": "PAR-GN-14", "ref": "paraphrase", "question": "difference between direct and regular", "expect": {"kind": "answer", "scheme_id": null, "topic": "plans_general"}}
+{"id": "PAR-GN-15", "ref": "paraphrase", "question": "what is ELSS", "expect": {"kind": "answer", "scheme_id": null, "topic": "lock_in_general"}}
+{"id": "PAR-GN-16", "ref": "paraphrase", "question": "what are the six risk levels", "expect": {"kind": "answer", "scheme_id": null, "topic": "riskometer_general"}}
+{"id": "PAR-GN-17", "ref": "paraphrase", "question": "how is TER charged to investors", "expect": {"kind": "answer", "scheme_id": null, "topic": "expense_ratio_general"}}
+{"id": "PAR-X-1", "ref": "paraphrase", "question": "yearly expense charged by HDFC Multi Cap", "expect": {"kind": "answer", "scheme_id": "hdfc-multi-cap", "topic": "expense_ratio"}}
+{"id": "PAR-X-2", "ref": "paraphrase", "question": "do I lose money to an exit charge if I leave HDFC Gilt Fund early", "expect": {"kind": "answer", "scheme_id": "hdfc-gilt", "topic": "exit_load"}}
+{"id": "PAR-X-3", "ref": "paraphrase", "question": "least amount for SIP in HDFC Nifty 50 Index Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-nifty-50-index", "topic": "min_investment"}}
+{"id": "PAR-X-4", "ref": "paraphrase", "question": "how risky is the HDFC Transportation and Logistics Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-transportation-and-logistics", "topic": "riskometer"}}
+{"id": "PAR-X-5", "ref": "paraphrase", "question": "what index is HDFC Large Cap compared with", "expect": {"kind": "answer", "scheme_id": "hdfc-large-cap", "topic": "benchmark"}}
+{"id": "PAR-X-6", "ref": "paraphrase", "question": "who manages money for HDFC Money Market Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-money-market", "topic": "fund_manager"}}
+{"id": "PAR-X-7", "ref": "paraphrase", "question": "how big is the HDFC Gilt Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-gilt", "topic": "aum"}}
+{"id": "PAR-X-8", "ref": "paraphrase", "question": "how do I get a copy of my mutual fund statement", "expect": {"kind": "answer", "scheme_id": null, "topic": "statement"}}
+{"id": "PAR-X-9", "ref": "paraphrase", "question": "what is meant by exit load", "expect": {"kind": "answer", "scheme_id": null, "topic": "exit_load_general"}}

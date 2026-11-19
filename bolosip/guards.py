@@ -115,9 +115,14 @@ ADVISORY_PATTERNS = [
     r"\bwhich\s+(?:is|would\s+be)\s+(?:better|best|good|safer)\b",
     r"\bbetter\s+(?:than|fund|option|choice|investment)\b",
     r"\brecommend\w*\b", r"\bsuggest\w*\b", r"\badvi[cs]e\b", r"\badvis[oe]r\b",
-    r"\b(?:vs\.?|versus)\b", r"\bcompar(?:e|ed|ing|ison)\b",
+    # "compared against / with / to" is how people ask for a benchmark ("which index is it
+    # compared against?"); comparing two schemes is still refused, or clarified as several schemes.
+    r"\b(?:vs\.?|versus)\b", r"\bcompar(?:e|ing|ison)\b", r"\bcompared\b(?!\s+(?:against|with|to)\b)",
+    r"\bwhich\s+one\b",
     # transactions and portfolio decisions
-    r"\bbuy\b", r"\bsell\b", r"\bswitch\s+(?:to|from|my)\b", r"\bexit\s+(?:now|the\s+fund|my)\b",
+    # "when I sell units of X within 30 days" is an exit-load question, not a sell decision.
+    r"\bbuy\b", r"\bsell\b(?!\s+(?:the\s+|my\s+|some\s+|all\s+)?units\s+(?:of|in|within|before|after|from)\b)",
+    r"\bswitch\s+(?:to|from|my)\b", r"\bexit\s+(?:now|the\s+fund|my)\b",
     # "allocation" is advice except in scheme names / objectives ("Multi Asset Allocation",
     # "dynamic allocation between sectors").
     r"\bhow\s+much\s+(?:should|can|must)\s+i\s+invest\b",
@@ -128,7 +133,8 @@ ADVISORY_PATTERNS = [
     r"\bsuit(?:able|s)\b", r"\bgood\s+for\s+(?:me|beginners|long[\s-]term|retirement|"
     r"tax|kids|children|my)\b",
     r"\bfor\s+my\s+(?:child|children|kid|kids|son|daughter|retirement|goal|wife|husband|family|parents|wedding|house)\b",
-    r"\b(?:can|will|could|might)\s+i\s+lose\b", r"\blose\s+(?:my\s+)?money\b",
+    r"\b(?:can|will|could|might)\s+i\s+lose\b",
+    r"\blose\s+(?:my\s+)?money\b(?!\s+to\s+(?:an?\s+|the\s+)?(?:exit|redemption))",
     # "guaranteed returns?" is advice; "securities guaranteed by GoI" (a gilt objective) is not.
     r"\bguarantee\w*\s+(?:returns?|profits?|income|gains?|growth)\b",
     r"\b(?:returns?|profits?|income)\s+(?:are\s+|is\s+)?guaranteed\b",

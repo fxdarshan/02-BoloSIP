@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.3 · 18 Nov 2026 · Implements [problem_statement.md](problem_statement.md) v2.2 · v1.3: retrieval uses local embeddings (nomic) with a BM25 fallback, decided in [retrieval-research.md](retrieval-research.md) · v1.2: the optional LLM is **Groq** · v1.1 added the 9 design-gap fixes from [edge-case.md](edge-case.md) §16 (marked **GAP-xx** below)
+Version 1.4 · 18 Nov 2026 · Implements [problem_statement.md](problem_statement.md) v2.2 · v1.4: vectors stored and searched in a local **ChromaDB** collection (project owner's choice) · v1.3: retrieval uses local embeddings (nomic) with a BM25 fallback, decided in [retrieval-research.md](retrieval-research.md) · v1.2: the optional LLM is **Groq** · v1.1 added the 9 design-gap fixes from [edge-case.md](edge-case.md) §16 (marked **GAP-xx** below)
 
 ---
 
@@ -18,7 +18,7 @@ These principles drive the design. When two pull in different directions, the fi
 | P2 | **Accuracy over intelligence** | The source text is the answer. An LLM may only rephrase it, and the system works fully without one. |
 | P3 | **One fact, one source** | The corpus is split into single-fact chunks, each carrying its own source URL and date. The citation comes from the chunk, never from the model. |
 | P4 | **Code enforces the rules** | Sentence limit, single link and footer are added or checked in code after composition, not left to a prompt. |
-| P5 | **Small and inspectable** | The core runs on the Python standard library. Two optional extras: `embed` (fastembed + numpy, for better retrieval) and `llm` (groq). Without them BoloSIP still works (BM25, extractive answers). The corpus is one JSON file you can read, diff and review in git. |
+| P5 | **Small and inspectable** | The core runs on the Python standard library. Two optional extras: `embed` (fastembed + numpy + chromadb, for better retrieval) and `llm` (groq). Without them BoloSIP still works (BM25, extractive answers). The corpus is one JSON file you can read, diff and review in git. |
 
 ## 2. System context
 
@@ -123,7 +123,8 @@ Files marked *(Phase N)* don't exist yet; they are created in that phase of the 
 │   ├── corpus.json                      # generated, committed for review
 │   ├── raw/<scheme-id>.html             # last good page snapshot per scheme
 │   ├── raw/fetched.json                 # when each snapshot was fetched (footer date in offline runs)
-│   ├── embeddings.npy / embeddings.json # 334 × 768 vectors + model/hash metadata (Phase 3)
+│   ├── embeddings.npy / embeddings.json # 334 × 768 vectors + model/hash metadata, committed (Phase 3)
+│   ├── chroma/                          # local ChromaDB collection built from them (git-ignored) (Phase 3)
 │   └── bolosip.sqlite3                  # runtime threads (git-ignored) (Phase 5)
 ├── web/
 │   └── index.html                       # (Phase 6)
@@ -306,7 +307,8 @@ The pipeline's single output type. The API serialises it directly to JSON.
 Users write "mid cap", "HDFC equity", "the sensex one", or "its exit load" as a follow-up. Resolution works in these steps:
 
 0. **Other fund house check (GAP-01).** Before matching aliases, look for another AMC's name in the message, e.g. SBI, Axis, ICICI Prudential, Nippon, Kotak, Mirae, Parag Parikh / PPFAS, UTI, Aditya Birla Sun Life, DSP, Tata, Quant, Motilal Oswal, Franklin Templeton, Edelweiss, Canara Robeco, Bandhan, Invesco, HSBC, WhiteOak, Mahindra Manulife, Baroda BNP Paribas, Sundaram, LIC, Union, PGIM, 360 ONE, Navi, Bajaj Finserv, Helios, Samco, JM, ITI, Shriram, Quantum, NJ. If one is found and "HDFC" is not, reply `not_found`: "BoloSIP only covers HDFC Mutual Fund schemes." Without this, "SBI Small Cap exit load" would match the alias "small cap" and be answered with **HDFC** Small Cap data. The list lives in `config.py` and is matched on whole words after normalisation.
-1. **Alias match on the message.** Lowercase the text, normalise `&`→`and` and hyphens→spaces, then find every alias that appears. Longest match wins, so "large and mid cap" beats "large cap" and "mid cap".
+   The same step catches **non-fund HDFC businesses** (HDFC Bank, HDFC Life, HDFC ERGO, HDFC Securities…; SCH-17) and **HDFC schemes outside the 27** ("HDFC Gold ETF Fund of Fund", "HDFC ELSS Tax Saver"; SCH-18, kind `not_covered`). Both reply `not_found`.
+1. **Alias match on the message.** Lowercase the text (NFKC, zero-width characters removed), normalise `&`→`and` and hyphens→spaces, then find every alias that appears. Longest match wins, so "large and mid cap" beats "large cap" and "mid cap". **Weak aliases** are words that are also everyday market terms ("sensex", "silver", "gilt", "liquid", "pharma", "technology", "housing", "money market"…). They name a scheme only when the message also reads like a fund question (HDFC, "fund", "scheme", NAV, SIP, expense ratio, exit load…). So "what is the Sensex today" is out of scope, while "Sensex fund exit load" is the BSE Sensex Index Fund.
 2. **Count distinct schemes matched:**
    - **one:** use it.
    - **several, because the user named several** (e.g. "mid cap and small cap"): if this is a comparison, guard 2 has already refused it. Otherwise ask the user to pick one, since an answer can cite only one source.
@@ -356,11 +358,23 @@ Chunks for different schemes are 50–70% identical (same template, different va
 | Model cache | `.cache/models/` in the project (git-ignored); downloaded once from Hugging Face |
 | Cost | About 41 s to embed the corpus once at ingestion; about 30 ms per question |
 | Where it runs | Locally. Groq has no embeddings endpoint, and questions never leave the laptop for retrieval |
-| Python | fastembed / onnxruntime support Python 3.10–3.13 (no 3.15 build yet). Recommended: run BoloSIP in a `uv` Python 3.12 environment |
+| Python | fastembed, onnxruntime and chromadb support Python 3.10–3.14 (no 3.15 builds yet). Recommended: run BoloSIP in a `uv` Python 3.12 environment |
 
-### 8.4 Vector store: a numpy matrix, not a database
+### 8.4 Vector store: local ChromaDB
 
-The 334 vectors (768 float32 each, about 1 MB) are written by ingestion to **`data/embeddings.npy`**, plus **`data/embeddings.json`** recording the model ID, prefixes, dimensions, chunk-ID order and a SHA-256 hash of `corpus.json`. Search is an exact cosine product over the candidate rows (0.03 ms for all 334). A vector database (Chroma, FAISS, Qdrant, sqlite-vec…) would add dependencies and change nothing at this size; sqlite-vec is the upgrade path if the corpus ever reaches tens of thousands of chunks. Exact search also keeps results identical across runs.
+The project owner chose **ChromaDB** as the vector store (18 Nov 2026), over the research's numpy-only option, so that BoloSIP uses a real vector database that can grow with the corpus. It runs **embedded and local** (`chromadb.PersistentClient`); there is no server and no cloud.
+
+| Item | Design |
+|---|---|
+| Collection | `bolosip_facts` in `data/chroma/` (git-ignored); cosine distance (`hnsw:space = cosine`); score = 1 − distance |
+| Records | One per chunk: `id` = chunk ID, the vector, and metadata `scheme_id` (`""` for official notes), `topic`, `kind` (`scheme` / `official`) |
+| Embeddings | Computed by BoloSIP's own embedder (§8.3) and passed in; the collection has no embedding function, so Chroma never downloads a model of its own |
+| Scheme filter (§8.1) | Chroma `where` filter: `{"$or": [{"scheme_id": "<id>"}, {"kind": "official"}]}`, or none when no scheme is resolved |
+| Privacy | `Settings(anonymized_telemetry=False)`: Chroma's usage telemetry is switched off, so nothing leaves the laptop |
+| Source of truth | Ingestion also writes **`data/embeddings.npy`** (334 × 768 float32, about 1 MB) and **`data/embeddings.json`** (model ID, prefixes, dimensions, chunk-ID order, SHA-256 of `corpus.json`), committed to git. The Chroma collection is rebuilt from these in about a second whenever it is missing or its stored corpus hash differs, with no model run. Chroma's binary files never go into git |
+| Concurrency | One client per process, opened at start-up; queries are read-only |
+
+Chroma's index (HNSW) is approximate in general, but at 334 vectors it returns the same top hits as exact search; a test checks this against the `.npy` copy, so evaluation stays reproducible.
 
 ### 8.5 Fallback: BM25
 
@@ -371,7 +385,16 @@ If fastembed or the cached model isn't available (Python 3.15, offline first run
 
 ### 8.6 Confidence threshold
 
-The answer path is used only if the top candidate's score is at least `MIN_SCORE`: cosine **0.74** for embeddings (all 14 out-of-scope probe questions scored ≤ 0.73; the 5th-percentile real question 0.76), or a BM25 threshold for the fallback. Otherwise the reply is `not_found`, never a guess. Both thresholds are re-tuned in Phase 8 on a held-out set. The margin is small, so the resolver's other-fund-house and non-fund-HDFC checks (GAP-01, SCH-17) remain the first defence.
+The answer path is used only if the top candidate's **raw** score clears a two-level threshold. The bar is higher when no scheme is named, because then the search runs over all 334 chunks:
+
+| Backend | No scheme named | Scheme named (12 facts + 10 notes searched) |
+|---|---|---|
+| Embeddings (cosine) | `MIN_SCORE = 0.70` | `MIN_SCORE_SCHEME = 0.62` |
+| BM25 | `MIN_LEXICAL = 15.0` | `MIN_LEXICAL_SCHEME = 3.0` |
+
+These values were calibrated in Phase 3 with a decision-level sweep over the facts, general, paraphrase, out-of-corpus and ambiguous sets (not the held-out set). Below the bar the reply is `not_found`, never a guess. If no scheme is named and the top hit is a scheme's fact rather than an official note, the reply is a clarifying question when the message reads like a fund question, and `not_found` otherwise. The margin is thin (the highest out-of-scope score was 0.695 against 0.70), so the resolver's checks (GAP-01, SCH-17, SCH-18, weak aliases) remain the first defence. Phase 8 re-tunes both levels.
+
+**Topic boost.** When a scheme is named, a chunk whose topic matches a high-precision phrase in the question (`TOPIC_PHRASES`, e.g. "management fee" → expense ratio, "fund size" → AUM) gets `+0.05` (BM25 `+3.0`) **for ordering only**. Confidence always uses the raw score, and nothing is boosted when no scheme is named.
 
 ### 8.7 Options considered
 
@@ -463,7 +486,7 @@ The guards run on the **raw** text. The redacted text is what gets stored and lo
 
 - **Isolation:** all conversation state is keyed by `thread_id`: message history and `last_scheme`. The pipeline gets the context for one thread only and keeps no global state between requests.
 - **Server:** `http.server.ThreadingHTTPServer` handles each request on its own thread.
-- **Read-only shared data:** the corpus, the embedding matrix (or BM25 index) and the embedding model are loaded once at start-up and never changed, so threads can read them safely without locks.
+- **Read-only shared data:** the corpus, the Chroma collection (or BM25 index) and the embedding model are loaded once at start-up and never changed, so threads can read them safely without locks.
 - **SQLite:** each request opens its own connection (`check_same_thread=False` is not needed). WAL mode is on (`PRAGMA journal_mode=WAL`) so reads don't block writes. A user message and its reply are written in one transaction.
 - **LLM calls:** the Groq client is created once and shared between threads. Its HTTP client supports concurrent use.
 - **Ordering:** the UI disables the send button for a thread while a request is in flight, so messages within one thread arrive in order. Different threads can still run at the same time.
@@ -565,6 +588,7 @@ Settings are read from environment variables. For local use, put them in a **`.e
 | `BOLOSIP_RETRIEVER` | `auto` | `auto` (embeddings if available, else BM25) · `embed` (require embeddings) · `bm25` |
 | `BOLOSIP_EMBED_MODEL` | `nomic-ai/nomic-embed-text-v1.5` | Local embedding model (must match `data/embeddings.json`) |
 | `BOLOSIP_MODEL_CACHE` | `.cache/models` | Where the embedding model is downloaded |
+| `BOLOSIP_CHROMA_DIR` | `data/chroma` | Local ChromaDB folder (rebuilt from `data/embeddings.npy` when missing or stale) |
 | `BOLOSIP_RATE_MSG` / `BOLOSIP_RATE_ALL` | `30` / `120` | Per-IP limits per minute: messages / all requests (GAP-09) |
 | `GROQ_API_KEY` | — | Groq API key, read by the SDK; never logged or committed |
 
@@ -626,7 +650,7 @@ python -m unittest discover tests
 - **Freshness.** Answers are only as current as the last ingestion run. NAV and TER change often, and the footer date makes this visible.
 - **Groww data quirks.** For HDFC Multi Asset Allocation, Groww's page shows a Groww label ("Groww Equity Hybrid") instead of an official benchmark, so BoloSIP points to the HDFC factsheet instead of naming one. Groww's `nfo_risk` field is stale and is never used.
 - **Retrieval accuracy.** Embeddings find the right fact for about 93% of real-user wording (BM25 fallback: 69%). Misses are mostly neighbouring topics (e.g. "management fee" vs fund manager); keyword synonyms close them, and a miss below the threshold becomes `not_found` rather than a wrong answer.
-- **Embedding runtime.** The embedding extra needs Python 3.10–3.13 and a one-time 548 MB model download; elsewhere BoloSIP falls back to BM25.
+- **Embedding runtime.** The embedding extra (fastembed, numpy, chromadb) needs Python 3.10–3.14 and a one-time 548 MB model download; on Python 3.15 or without it, BoloSIP falls back to BM25.
 - **Regex guards.** These can miss unusual phrasings. They are tuned toward refusing, since a wrong refusal is safer than wrong advice.
 - **English only.** Questions in Hindi or other languages are not supported.
 - **Single-node.** SQLite and an in-process index suit one server, not a horizontally scaled deployment.
@@ -637,7 +661,8 @@ python -m unittest discover tests
 |---|---|---|---|
 | D1 | Python standard library server, no web framework | FastAPI, Flask | Zero install for the core app; the API is tiny |
 | D2 | One fact per chunk, written at ingest time | Chunking raw page text | Makes citations exact and the extractive answer already correct |
-| D3 | Local embeddings (nomic, fastembed) + scheme filter; BM25 fallback; numpy matrix instead of a vector DB | BM25 only; hybrid RRF; hosted embeddings; Chroma / FAISS / Qdrant | Measured in [retrieval-research.md](retrieval-research.md): 93% vs 69% on user wording, 100% out-of-scope rejection; a 1 MB matrix needs no database (§8) |
+| D3 | Local embeddings (nomic, fastembed) + scheme filter; BM25 fallback | BM25 only; hybrid RRF; hosted embeddings | Measured in [retrieval-research.md](retrieval-research.md): 93% vs 69% on user wording, 100% out-of-scope rejection (§8) |
+| D13 | Local ChromaDB as the vector store, rebuilt from committed `.npy` vectors | numpy-only file (research's choice); Pinecone (cloud) | Owner's choice for a real, growable vector database; local keeps privacy and offline tests; Pinecone would need an account, key and network (§8.4) |
 | D4 | LLM optional and rephrase-only | LLM generates the answer | Accuracy over intelligence; works offline and in tests |
 | D5 | Guards before retrieval | Classify with the LLM | Deterministic, free, and personal data never leaves the process |
 | D6 | Citation and footer added in code | Ask the model to cite | Guarantees exactly one valid link every time |
@@ -652,6 +677,6 @@ python -m unittest discover tests
 
 - Take scheme facts directly from HDFC Mutual Fund documents (SID/KIM, TER disclosure, factsheet PDF) and use Groww only as a cross-check.
 - Run ingestion on a schedule, with an alert when a fact changes by more than a threshold.
-- Re-run the retrieval research when the corpus or model landscape changes; move to sqlite-vec only if the corpus grows to tens of thousands of chunks.
+- Re-run the retrieval research when the corpus or model landscape changes.
 - Answers in Hindi built from the same extractive chunks.
 - An admin view listing `not_found` questions, to grow keyword synonyms and the official notes.

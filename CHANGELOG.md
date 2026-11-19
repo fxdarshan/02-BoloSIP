@@ -4,6 +4,16 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (Phase 3: scheme resolution and retrieval, 19 Nov 2026)
+- `bolosip/schemes.py`: `resolve()` returns one / ambiguous / multiple / other_amc / non_fund / not_covered / none; longest alias first; weak aliases (Sensex, silver, gilt, liquid…) need a fund signal; thread follow-ups only for scheme topics.
+- `bolosip/embedder.py` (nomic-embed-text-v1.5 via fastembed, prefixes, L2-normalised, local cache only), `bolosip/vectorstore.py` (local ChromaDB `bolosip_facts`, cosine, scheme filter, telemetry off, rebuilt from the committed `data/embeddings.npy` + `.json` when missing or stale), `bolosip/retriever.py` (dense search with BM25 fallback; `BOLOSIP_RETRIEVER` = auto / embed / bm25; two-level thresholds; topic boost for ordering only).
+- `ingest.py` builds embeddings after the corpus (`--embed-only`, `--no-embed`); ingestion never fails when the `embed` extra is missing.
+- Question sets: `paraphrases.jsonl` (81), `ambiguous.jsonl` (40), `out_of_corpus.jsonl` (48), `holdout.jsonl` (60); `eval/retrieval_eval.py`; Phase 3 gate with per-topic and per-scheme accuracy and the top 5 for every miss.
+- Tests: `test_schemes.py`, `test_retrieval.py` (BM25, stub dense path, backend selection, real-model tests); 141 tests.
+- CI: new `embed` job (Python 3.12, `.[embed]`, cached model, vectors-up-to-date check, dense gate).
+- Fixed: three advice false refusals; scheme lock-in keywords no longer outrank the ELSS note.
+- Results (dense): facts 100%, general 95.7%, paraphrases 96.3%, held-out 100%, MRR@5 0.999, out-of-scope answered 0/58, wrong scheme 0. BM25: facts 100%, out-of-scope answered 0/58.
+
 ### Research: retrieval for Phase 3 (18 Nov 2026)
 - `Doc/retrieval-research.md`: corpus profile and a benchmark of BM25, 5 embedding models, 3 chunk-text variants and hybrid fusion on 324 template, 23 general and 72 user-wording questions plus 14 out-of-scope questions.
 - Decision: keep fact-level chunks; embed `search_document: {text} {keywords}` with local `nomic-embed-text-v1.5` (fastembed, ONNX): 93% vs 69% (BM25) on user wording, 100% out-of-scope rejection; no vector database (1 MB numpy matrix, exact search); BM25 fallback; hybrid rejected.

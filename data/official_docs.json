@@ -8,7 +8,7 @@
       "text": "You can download an HDFC Mutual Fund account statement on its official 'Download Statement' page by entering your PAN or folio number, verifying with the OTP sent to your registered contact, and choosing the period; the statement is emailed to your registered email address. Statements can be PAN-based (all folios linked to the PAN) or folio-based, and there is no charge.",
       "source_url": "https://www.hdfcfund.com/services/consolidated-account-statement",
       "source_name": "HDFC Mutual Fund – Download Statement",
-      "keywords": "download statement account statement how to get statement folio pdf email statement transaction history soa",
+      "keywords": "download statement account statement how to get statement folio pdf email statement transaction history soa transaction history investment statement email statement portfolio statement copy of statement get my statement",
       "checked": "Page shows PAN or Folio, Send OTP, Duration, Send Email; FAQ says PAN-based and folio-based statements, no charge."
     },
     {
@@ -17,7 +17,7 @@
       "text": "CAMS and KFintech, the registrars, together provide a Consolidated Account Statement (CAS) showing your holdings across all funds they service. You can request it on the CAMS website, and it is sent to the email address registered in your folios.",
       "source_url": "https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement",
       "source_name": "CAMS – Consolidated Account Statement",
-      "keywords": "consolidated account statement cas all funds all amcs cams kfintech registrar combined statement",
+      "keywords": "consolidated account statement cas all funds all amcs cams kfintech registrar combined statement combined statement single statement all fund houses all folios across mutual funds",
       "checked": "Page says CAMS and KFintech provide a consolidated account statement across funds serviced by all the RTAs; form sends it by email."
     },
     {
@@ -26,7 +26,7 @@
       "text": "HDFC Mutual Fund's 'Request Statement' page lets you ask for a Capital Gains Statement or a Consolidated realized gains statement for your folio. Statements are sent to the email address registered with HDFC Mutual Fund.",
       "source_url": "https://www.hdfcfund.com/services/additional-info/request-statement",
       "source_name": "HDFC Mutual Fund – Request Statement",
-      "keywords": "capital gains statement capital gain report tax statement itr realised realized gains download capital gains",
+      "keywords": "capital gains statement capital gain report tax statement itr realised realized gains download capital gains proof of gains tax filing realised gains income tax gains report itr filing",
       "checked": "Page lists 'Capital Gains Statement' and 'Consolidated realized gains statement' under Request statement; statements go to the registered email."
     },
     {
@@ -35,7 +35,7 @@
       "text": "An ELSS (Equity Linked Savings Scheme) invests at least 80% in stocks and has a lock-in period of 3 years. None of the 27 HDFC schemes covered by BoloSIP is an ELSS scheme.",
       "source_url": "https://www.amfiindia.com/investor/knowledge-center-info?zoneName=CategorizationOfMutualFundSchemes",
       "source_name": "AMFI – Categorisation of Mutual Fund Schemes",
-      "keywords": "elss lock in lock-in lockin period tax saving 80c three years 3 years equity linked savings scheme",
+      "keywords": "elss lock in lock-in lockin period tax saving 80c three years 3 years equity linked savings scheme what is elss tax saving funds locked how long locked",
       "checked": "AMFI page: 'ELSS invests at least 80% in stocks' and 'Has lock-in period of 3 years'. Second sentence is BoloSIP's own scheme list (problem statement 3.1)."
     },
     {
@@ -44,7 +44,7 @@
       "text": "SEBI's riskometer grades every mutual fund scheme on six levels: Low, Low to Moderate, Moderate, Moderately High, High and Very High.",
       "source_url": "https://investor.sebi.gov.in/riskometer.html",
       "source_name": "SEBI Investor – Understanding the Riskometer",
-      "keywords": "what is riskometer riskometer levels risk categories risk grade meaning risk o meter",
+      "keywords": "what is riskometer riskometer levels risk categories risk grade meaning risk o meter what is a riskometer risk levels sebi risk categories risk colours",
       "checked": "SEBI riskometer page lists the six levels Low, Low to Moderate, Moderate, Moderately High, High, Very High."
     },
     {
@@ -53,7 +53,7 @@
       "text": "The Total Expense Ratio (TER) is the total of the costs a scheme is allowed to charge for running and managing it, such as investment management, registrar, custodian and audit fees, expressed as a percentage of its net assets. A scheme's daily NAV is published after these expenses are deducted.",
       "source_url": "https://www.amfiindia.com/investor/knowledge-center-info?zoneName=expenseRatio",
       "source_name": "AMFI – Expense Ratio",
-      "keywords": "what is expense ratio meaning ter definition total expense ratio explained",
+      "keywords": "what is expense ratio meaning ter definition total expense ratio explained what does expense ratio include ter charged to investors",
       "checked": "AMFI page: costs such as investment management, registrar, custodian, audit fees as % of daily net assets are the TER; daily NAV disclosed after deducting expenses."
     },
     {
@@ -62,7 +62,7 @@
       "text": "A load on redemption, commonly called an exit load, is an amount deducted from the applicable NAV when units are redeemed or switched out. Each scheme states whether an exit load applies and for how long.",
       "source_url": "https://www.hdfcfund.com/glossary/l",
       "source_name": "HDFC Mutual Fund – Glossary (Load)",
-      "keywords": "what is exit load meaning definition exit load explained redemption load",
+      "keywords": "what is exit load meaning definition exit load explained redemption load what does exit load mean load on redemption",
       "checked": "HDFC glossary 'Load': on redemption / switch out, the sum of money deducted from the applicable NAV."
     },
     {
@@ -80,7 +80,7 @@
       "text": "A Systematic Investment Plan (SIP) lets you invest a fixed amount in a mutual fund scheme at regular intervals, such as once a month, instead of making a single lump-sum investment.",
       "source_url": "https://www.amfiindia.com/investor/become-mf-distributor?zoneName=sip",
       "source_name": "AMFI – Systematic Investment Plan (SIP)",
-      "keywords": "what is sip systematic investment plan meaning how sip works",
+      "keywords": "what is sip systematic investment plan meaning how sip works what is a sip what does sip mean investing through sip monthly investment",
       "checked": "AMFI page: invest a fixed amount periodically at fixed intervals, say once a month, instead of a lump-sum investment."
     },
     {
@@ -89,7 +89,7 @@
       "text": "HDFC Mutual Fund publishes a monthly factsheet with each scheme's objective, inception date, fund manager, portfolio holdings, risk ratios and historical performance. The latest and past factsheets are on its official factsheet page.",
       "source_url": "https://www.hdfcfund.com/mutual-funds/factsheets",
       "source_name": "HDFC Mutual Fund – Factsheets",
-      "keywords": "factsheet monthly factsheet portfolio holdings download factsheet",
+      "keywords": "factsheet monthly factsheet portfolio holdings download factsheet monthly report fund report what stocks",
       "checked": "Page: factsheet endeavoured monthly; includes objective, inception date, fund manager, portfolio holdings, risk ratios, historical performance; latest and historical factsheets."
     }
   ]
