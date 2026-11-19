@@ -8,6 +8,7 @@ dense code path through a pure-Python stand-in embedder and store. Tests marked
 import json
 import math
 import re
+import os
 import shutil
 import tempfile
 import time
@@ -240,7 +241,9 @@ def _dense_available() -> bool:
     return _model_cached() and config.EMBEDDINGS_NPY.exists()
 
 
-@unittest.skipUnless(_dense_available(), "needs the 'embed' extra and the cached model")
+# With BOLOSIP_RETRIEVER=embed (the CI embed job) these must run, never silently skip.
+@unittest.skipUnless(_dense_available() or os.environ.get("BOLOSIP_RETRIEVER") == "embed",
+                     "needs the 'embed' extra and the cached model")
 class TestRealModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
