@@ -56,6 +56,14 @@ On macOS / Linux the interpreter is `.venv/bin/python`. Then build the vectors a
 
 Everything stays on your computer: the model runs locally, ChromaDB is a local folder (`data/chroma/`), and its usage telemetry is switched off. Without this step BoloSIP still works, using keyword search.
 
+To look at what is stored in ChromaDB, use the read-only viewer. It shows the collection summary, then each chunk's metadata, its text, the exact text that was embedded, and its vector:
+
+```bash
+.venv/Scripts/python.exe scripts/show_embeddings.py
+```
+
+Options: `--scheme hdfc-mid-cap` (or `official`), `--topic exit_load`, `--id hdfc-mid-cap:exit_load --full` (all 768 values), `--query "exit load of HDFC Mid Cap"` (the 5 nearest chunks with cosine scores), `--limit 0` (all records) and `--csv data/embeddings_view.csv` (every record and dimension, for a spreadsheet).
+
 ## Settings and the Groq API key
 
 All local settings live in a `.env` file in the project folder. It is git-ignored, so your key never reaches GitHub.

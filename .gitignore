@@ -31,3 +31,6 @@ data/.ingest.lock
 *.egg-info/
 build/
 dist/
+
+# Optional CSV export from scripts/show_embeddings.py (regenerable)
+data/embeddings_view.csv

@@ -4,6 +4,9 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (19 Nov 2026)
+- `scripts/show_embeddings.py`: read-only viewer for the ChromaDB collection (summary, per-chunk metadata, text, embedded text and vector; filters, nearest-chunk query, CSV export).
+
 ### Added (Phase 3: scheme resolution and retrieval, 19 Nov 2026)
 - `bolosip/schemes.py`: `resolve()` returns one / ambiguous / multiple / other_amc / non_fund / not_covered / none; longest alias first; weak aliases (Sensex, silver, gilt, liquid…) need a fund signal; thread follow-ups only for scheme topics.
 - `bolosip/embedder.py` (nomic-embed-text-v1.5 via fastembed, prefixes, L2-normalised, local cache only), `bolosip/vectorstore.py` (local ChromaDB `bolosip_facts`, cosine, scheme filter, telemetry off, rebuilt from the committed `data/embeddings.npy` + `.json` when missing or stale), `bolosip/retriever.py` (dense search with BM25 fallback; `BOLOSIP_RETRIEVER` = auto / embed / bm25; two-level thresholds; topic boost for ordering only).
