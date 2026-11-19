@@ -32,6 +32,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | **Retrieval research for Phase 3** | **Done** (18 Nov 2026): [retrieval-research.md](retrieval-research.md); local nomic embeddings chosen (93% vs BM25 69% on user wording) |
 | **Phase 3: Scheme resolution and retrieval** | **Done** (19 Nov 2026): resolver (+ weak aliases, `not_covered`), local nomic embeddings in ChromaDB, BM25 fallback; dense gate: paraphrases 96.3%, held-out 100% (50/50), out-of-scope answered 0/58; 141 tests; gate report `eval/reports/2026-11-19-phase0-1-2-3-b11b02f.md` |
 | **Phase 4: Answer pipeline (extractive), M1** | **Done** (19 Nov 2026): `formatter.py` (`Reply`, `validate`), `composer.py` (extractive + fixed replies), `pipeline.py` (`handle`), `python -m bolosip`; dense gate: 135/135 core facts, format and citations 901/901, reply kind 99.8%, context 63/63; 177 tests. Human review (M1) pending: 30 answers listed in the gate report |
+| **Phase 5: Thread store and HTTP API** | **Done** (19 Nov 2026): `bolosip/store.py` (SQLite, WAL), `server.py` (stdlib JSON API, Host/Origin/JSON checks, per-IP rate limit); dense gate: API parity 838/838, context over HTTP 63/63, 0 leaks, 0 personal data stored, p50 25 ms / p95 ≤ 46 ms; 213 tests |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -385,9 +386,18 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 **Files:** `bolosip/store.py`, `server.py`, `tests/test_threads.py`, `tests/test_api.py`
 
 **Exit criteria**
-- [ ] `python server.py` starts, and `/api/health` reports 27 schemes.
-- [ ] `test_threads.py` and `test_api.py` pass.
-- [ ] Searching the SQLite file for every sample personal-data value from Phase 2 finds nothing.
+- [x] `python server.py` starts, and `/api/health` reports 27 schemes.
+- [x] `test_threads.py` (15) and `test_api.py` (21) pass.
+- [x] Searching the SQLite file for every sample personal-data value from Phase 2 finds nothing (0 of 41 values; `eval/pii_scan.py`).
+
+**Decisions and findings (19 Nov 2026)**
+- **Schema:** `messages` also stores `candidates` (JSON) and `scheme_id`, so clarify buttons and help examples survive a reload (Phase 6). Indexes on `messages(thread_id, id)` and `threads(updated_at)`.
+- **Limits:** the thread list returns the newest 100 (THR-07); a thread's history returns its latest 200 messages (THR-08). An unused thread is titled "New chat" (THR-09).
+- **Redaction twice:** the server redacts before storing, and `store.add_exchange` redacts again (idempotent), so no code path can store a raw value.
+- **SQLite:** WAL with `synchronous = NORMAL` (crash-safe; an fsync per message made p95 latency spike to 274 ms on Windows); 5 s busy timeout; schema re-created if the file is deleted (THR-05).
+- **All POSTs need JSON**, including `POST /api/threads`, so a plain HTML form on another site cannot create threads. `GET /` returns `404` until Phase 6 adds `web/index.html`. `/api/config` is added now (the plan had it in Phase 6).
+- **PII scan:** thread titles and user messages are checked for every value, even 4-digit fragments; raw database bytes and logs only for values of 8+ characters, because short digit runs occur by chance in UUIDs and timestamps.
+- `conversations.jsonl` is run interleaved (turn 1 of every conversation, then turn 2…) for the isolation check.
 
 **Covers:** AC 6, 7; arch §5.3, §12, §13, §17; PS §6, §7
 

@@ -4,6 +4,14 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (Phase 5: thread store and HTTP API, 19 Nov 2026)
+- `bolosip/store.py`: SQLite threads and messages (WAL, `synchronous=NORMAL`, foreign keys, busy timeout); one transaction per exchange; redacts again before storing; titles from the redacted first question; schema re-created if the file is deleted.
+- `server.py`: standard-library JSON API (health, config, threads, messages, delete); Host and Origin checks, JSON-only POST, no CORS (GAP-08); per-IP token-bucket rate limits with `Retry-After` (GAP-09); 4 KB body, 500-character, UUID and method checks; 10 s socket timeout; security headers; logs without message text or error details; warning when bound to a public address.
+- `eval/api_harness.py` (real server on a free port), `eval/pii_scan.py`; Phase 5 gate (API parity, context and isolation over HTTP, concurrency, personal-data scan, persistence, request safety, latency).
+- Tests: `test_threads.py` (15), `test_api.py` (21); 213 tests.
+- Retriever: query embeddings are cached (one question can need three searches).
+- Groq default model is now `openai/gpt-oss-120b`; the account's rate limits are in `config.GROQ_LIMITS` for Phase 7.
+
 ### Added (Phase 4: answer pipeline, milestone M1, 19 Nov 2026)
 - `bolosip/formatter.py`: `Reply` (+ `to_dict`, `render`), URL stripping, 3-sentence limit, footer, `validate()`.
 - `bolosip/composer.py`: extractive answers with a Phase 7 `rephrase` hook; fixed replies for refusal (AMFI), performance (factsheet, no figures), privacy (SEBI), clarify (≤ 5 candidates), help (3 examples), not found (closest official page), other fund house, non-fund HDFC, HDFC scheme not covered, Direct-Growth-only (GAP-05).

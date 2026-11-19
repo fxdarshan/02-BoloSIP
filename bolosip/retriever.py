@@ -102,6 +102,10 @@ class Retriever:
             if c["scheme_id"]:
                 self._rows_by_scheme.setdefault(c["scheme_id"], []).append(i)
         self.bm25 = BM25([embedder_mod.document_text(c) for c in self.chunks])
+        # One question can need up to three searches (pipeline: unfiltered, scheme-filtered,
+        # closest official note); embed it once. Small, thread-safe, bounded.
+        self._qvec: dict[str, object] = {}
+        self._qvec_lock = threading.Lock()
 
         mode = (mode or config.SETTINGS.retriever_mode).lower()
         self.embedder, self.store, self.reason = None, None, ""
@@ -157,7 +161,7 @@ class Retriever:
         boosted = phrase_topics(query) if scheme_id is not None else set()
         if self.store is not None:
             try:
-                vec = self.embedder.embed_query(query)
+                vec = self._embed_query(query)
                 n = len(self.candidate_rows(scheme_id))
                 hits = [Hit(self.by_id[cid], score, "dense")
                         for cid, score in self.store.query(vec, scheme_id, n) if cid in self.by_id]
@@ -170,6 +174,17 @@ class Retriever:
         bonus = lambda i: config.TOPIC_BOOST_BM25 if self.chunks[i]["topic"] in boosted else 0.0  # noqa: E731
         scored.sort(key=lambda x: (-(x[1] + bonus(x[0])), x[0]))
         return [Hit(self.chunks[i], s, "bm25") for i, s in scored[:k] if s > 0]
+
+    def _embed_query(self, query: str):
+        with self._qvec_lock:
+            vec = self._qvec.get(query)
+        if vec is None:
+            vec = self.embedder.embed_query(query)
+            with self._qvec_lock:
+                if len(self._qvec) >= 512:
+                    self._qvec.pop(next(iter(self._qvec)))
+                self._qvec[query] = vec
+        return vec
 
     def is_confident(self, hits: list[Hit], scheme_id: str | None = None) -> bool:
         return bool(hits) and hits[0].score >= self.min_score(scheme_id is not None)

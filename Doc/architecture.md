@@ -224,9 +224,12 @@ CREATE TABLE messages (
   source_url  TEXT,
   source_name TEXT,
   as_of       TEXT,
+  candidates  TEXT,                      -- JSON list: clarify candidates / help examples
+  scheme_id   TEXT,
   created_at  TEXT NOT NULL
 );
 CREATE INDEX idx_messages_thread ON messages(thread_id, id);
+CREATE INDEX idx_threads_updated ON threads(updated_at);
 ```
 
 ## 6. Request pipeline
@@ -488,7 +491,7 @@ The guards run on the **raw** text. The redacted text is what gets stored and lo
 - **Isolation:** all conversation state is keyed by `thread_id`: message history and `last_scheme`. The pipeline gets the context for one thread only and keeps no global state between requests.
 - **Server:** `http.server.ThreadingHTTPServer` handles each request on its own thread.
 - **Read-only shared data:** the corpus, the Chroma collection (or BM25 index) and the embedding model are loaded once at start-up and never changed, so threads can read them safely without locks.
-- **SQLite:** each request opens its own connection (`check_same_thread=False` is not needed). WAL mode is on (`PRAGMA journal_mode=WAL`) so reads don't block writes. A user message and its reply are written in one transaction.
+- **SQLite:** each request opens its own connection (`check_same_thread=False` is not needed). WAL mode is on (`PRAGMA journal_mode=WAL`, `synchronous=NORMAL`) so reads don't block writes, with a 5 s busy timeout. A user message and its reply are written in one transaction that first checks the thread still exists, so a delete during a request never leaves an orphan.
 - **LLM calls:** the Groq client is created once and shared between threads. Its HTTP client supports concurrent use.
 - **Ordering:** the UI disables the send button for a thread while a request is in flight, so messages within one thread arrive in order. Different threads can still run at the same time.
 
@@ -501,13 +504,13 @@ All responses are JSON, and errors look like `{"error": "<message>"}`.
 | `GET` | `/` | — | `web/index.html` |
 | `GET` | `/api/health` | — | `{status, llm_enabled, corpus_built_on, schemes}` |
 | `GET` | `/api/config` | — | `{welcome, examples[3], disclaimer}` for the UI |
-| `GET` | `/api/threads` | — | `[{id, title, updated_at}]`, newest first |
-| `POST` | `/api/threads` | — | `{id, title}` (new empty thread) |
-| `GET` | `/api/threads/{id}/messages` | — | `[{role, text, kind, source, footer, created_at}]` |
+| `GET` | `/api/threads` | — | `[{id, title, updated_at}]`, newest first, at most 100 |
+| `POST` | `/api/threads` | `{}` (JSON) | `201 {id, title}` (new empty thread, title "New chat") |
+| `GET` | `/api/threads/{id}/messages` | — | `[{role, text, kind, source, footer, candidates, scheme_id, created_at}]`, latest 200 |
 | `POST` | `/api/threads/{id}/messages` | `{text}` (1–500 chars) | `Reply` (section 6.2) |
 | `DELETE` | `/api/threads/{id}` | — | `204` |
 
-**Input limits:** request body ≤ 4 KB, `text` ≤ 500 characters, and a thread ID must be a valid UUID. Everything else gets a `400`.
+**Input limits:** request body ≤ 4 KB (else `413`), `text` 1–500 characters after trimming, and a thread ID must be a valid UUID; everything else gets a `400`. An unknown thread is `404`, a known path with the wrong method `405` with `Allow`. Sockets time out after 10 s (SEC-07). Responses carry `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` and `Referrer-Policy: no-referrer`; the page also gets a strict `Content-Security-Policy`.
 
 **Request origin checks (GAP-08).** The server listens on localhost, but any web page open in the user's browser can still send requests to it. Every request must pass:
 

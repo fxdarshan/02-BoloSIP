@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import io
 import json
 import os
 import subprocess
@@ -20,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "eval" / "reports"
-CURRENT_PHASE = 4
+CURRENT_PHASE = 5
 
 
 def _git_commit() -> str:
@@ -568,7 +569,142 @@ def phase4_checks() -> list[dict]:
     return results
 
 
-PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks, 2: phase2_checks, 3: phase3_checks, 4: phase4_checks}
+def phase5_checks() -> list[dict]:
+    """Phase 5 gate (Doc/eval.md §5): the Phase 4 behaviour over HTTP, plus storage and safety."""
+    import tempfile
+    import time
+    import unittest
+    from concurrent.futures import ThreadPoolExecutor
+
+    sys.path.insert(0, str(ROOT))
+    from bolosip import pipeline
+    from bolosip.formatter import Reply, Source
+    from bolosip.retriever import Retriever
+    from eval.answer_eval import check_reply
+    from eval.api_harness import LiveServer
+
+    r = Retriever()
+    dense = r.store is not None
+    results = [_check("Server starts (retriever in use)", True, r.backend_name())]
+    tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+    db = Path(tmp.name) / "gate.sqlite3"
+
+    def as_reply(body):
+        return Reply(body["kind"], body["text"], Source(**body["source"]) if body["source"] else None,
+                     body["footer"], body["scheme_id"],
+                     tuple(body["candidates"]) if body["candidates"] is not None else None)
+
+    with LiveServer(db, r) as api:
+        # API parity: every Phase 4 case, each in a fresh thread, equals the in-memory pipeline.
+        names = ("facts", "general", "paraphrases", "holdout", "ambiguous", "out_of_corpus",
+                 "advice", "performance", "pii", "help", "variants")
+        cases = [c for n in names for c in _load_set(n)]
+        diffs = []
+        for c in cases:
+            tid = api.new_thread()
+            status, body = api.ask(tid, c["question"])
+            want = pipeline.handle(c["question"], {}, retriever=r)[0].to_dict()
+            if status != 200 or body != want:
+                diffs.append(c["id"])
+        results.append(_check("API parity: every Phase 4 case over HTTP gives the same reply", not diffs,
+                              f"{len(cases) - len(diffs)} / {len(cases)}" + (f"; differ: {diffs[:10]}" if diffs else "")))
+
+        # Context over HTTP, and thread isolation with conversations interleaved turn by turn.
+        convs = _load_set("conversations")
+        tids = [api.new_thread() for _ in convs]
+        good = total = leaks = 0
+        for i in range(max(len(c["turns"]) for c in convs)):
+            for conv, tid in zip(convs, tids):
+                if i >= len(conv["turns"]):
+                    continue
+                turn = conv["turns"][i]
+                status, body = api.ask(tid, turn["q"])
+                if turn["expect"].get("dense_only") and not dense:
+                    continue
+                total += 1
+                problems = check_reply(r, as_reply(body), turn["expect"]) if status == 200 else ["status"]
+                good += not problems
+                want = turn["expect"].get("scheme_id")
+                if body.get("scheme_id") and want and body["scheme_id"] != want:
+                    leaks += 1
+        results.append(_check("Context accuracy over HTTP (AC 7), all conversations interleaved",
+                              good / total >= 0.98, f"{good} / {total} ({good / total:.1%}; need ≥ 98%)"))
+        results.append(_check("Thread isolation: answers about another thread's scheme (hard gate: 0)",
+                              leaks == 0, str(leaks)))
+
+        # Concurrency: 20 parallel requests over 5 threads, 10 rounds.
+        questions = ["HDFC Mid Cap expense ratio", "its exit load", "its benchmark", "its riskometer"]
+        errors = bad_history = 0
+        for _ in range(10):
+            ts = [api.new_thread() for _ in range(5)]
+            with ThreadPoolExecutor(max_workers=20) as pool:
+                out = list(pool.map(lambda t: [api.ask(t, q)[0] for q in questions], ts))
+            errors += sum(s != 200 for res in out for s in res)
+            for t in ts:
+                user = [m["text"] for m in api.messages(t) if m["role"] == "user"]
+                bad_history += user != questions
+        results.append(_check("Concurrency: 20 parallel requests × 5 threads, 10 rounds", errors == 0 and bad_history == 0,
+                              f"{errors} errors, {bad_history} incomplete or out-of-order histories"))
+
+        # Personal data: every positive sent, then the DB files and the logs scanned.
+        pii = [c for c in _load_set("pii") if c["expect"]["kind"] == "privacy"]
+        t = api.new_thread()
+        for c in pii:
+            api.ask(t, c["question"])
+            api.ask(api.new_thread(), c["question"])                 # also as a thread title
+        from eval.pii_scan import leaked_values
+        leaked = leaked_values(db, [v for c in pii for v in c["expect"].get("values", [])], api.log.getvalue())
+        results.append(_check("Personal data in the database or logs (AC 6, hard gate: 0)", not leaked,
+                              f"{len(leaked)} of {sum(len(c['expect'].get('values', [])) for c in pii)} values"
+                              + (f": {leaked}" if leaked else "")))
+
+        # Latency, extractive, local.
+        t = api.new_thread()
+        qs = ["HDFC Mid Cap expense ratio", "its exit load", "HDFC Liquid Fund benchmark",
+              "What is the ELSS lock-in period?", "hi", "who manages HDFC Gilt Fund", "its riskometer",
+              "should I invest in small cap?", "expense ratio of SBI Bluechip", "HDFC Equity exit load"]
+        for q in qs:                                   # warm-up: first embedding of each question
+            api.ask(t, q)
+        times = []
+        for q in qs * 20:
+            start = time.perf_counter()
+            api.ask(t, q)
+            times.append((time.perf_counter() - start) * 1000)
+        times.sort()
+        p50, p95 = times[len(times) // 2], times[int(len(times) * 0.95)]
+        results.append(_check("Latency (extractive, local): p50 < 50 ms, p95 < 150 ms", p50 < 50 and p95 < 150,
+                              f"p50 {p50:.0f} ms, p95 {p95:.0f} ms"))
+        survivor = api.new_thread()
+        api.ask(survivor, "HDFC Small Cap Fund expense ratio")
+
+    # Persistence: a new server on the same database file.
+    with LiveServer(db, r) as api:
+        hist = api.messages(survivor)
+        status, body = api.ask(survivor, "what about its exit load?")
+        ok = len(hist) == 2 and status == 200 and body.get("scheme_id") == "hdfc-small-cap"
+        results.append(_check("Persistence: history and last_scheme survive a restart", ok,
+                              f"{len(hist)} messages kept; follow-up scheme {body.get('scheme_id')}"))
+    tmp.cleanup()
+
+    # Request safety: the unit tests for IN-01–12, GAP-08, GAP-09 and SEC-01–07 (tests/test_api.py).
+    import tests.test_api as t_api
+    groups = {
+        "Input validation (IN-01–12): correct status codes": [t_api.TestInputValidation],
+        "Request origin checks (GAP-08): wrong Host / foreign Origin / non-JSON POST blocked": [t_api.TestOriginChecks],
+        "Rate limit (GAP-09): the 31st message in a minute gets 429": [t_api.TestRateLimit],
+        "Security cases (SEC-01–08, THR-06)": [t_api.TestSecurity],
+    }
+    for name, classes in groups.items():
+        suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(c) for c in classes)
+        res = unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(suite)
+        bad = [str(x[0]).split(" ")[0] for x in res.failures + res.errors]
+        results.append(_check(name, res.wasSuccessful(),
+                              f"{res.testsRun - len(bad)} / {res.testsRun} tests" + (f"; failed: {bad}" if bad else "")))
+    return results
+
+
+PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks, 2: phase2_checks, 3: phase3_checks, 4: phase4_checks,
+                5: phase5_checks}
 
 
 def run(phases: list[int]) -> dict:
