@@ -298,7 +298,7 @@ The pipeline's single output type. The API serialises it directly to JSON.
 }
 ```
 
-`kind` is one of `answer | refusal | performance | privacy | clarify | help | not_found`. Every kind except `clarify` and `help` carries exactly one `source` and a `footer`. The `clarify` kind carries `candidates`, a list of scheme names, and no link, because no fact is being stated.
+`kind` is one of `answer | refusal | performance | privacy | clarify | help | not_found`. Every kind except `clarify` and `help` carries exactly one `source` and a `footer`. The `clarify` kind carries `candidates`, a list of at most 5 scheme names (or 3 example schemes when no scheme was named), and no link, because no fact is being stated. The `help` kind carries the 3 example questions in `candidates`.
 
 **`help` kind (GAP-02).** Greetings ("hi", "thanks"), questions about BoloSIP itself ("what can you do?") and messages with no meaningful words after stop-word removal ("???", "what is the") get a short welcome plus the 3 example questions. Like `clarify`, it states no fact, so it has no link and no footer. It is detected after the three guards, so "hi, should I invest?" is still refused.
 

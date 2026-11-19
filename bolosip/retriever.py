@@ -91,6 +91,9 @@ class Retriever:
         self.corpus_path = Path(corpus_path or config.SETTINGS.corpus_path)
         corpus = json.loads(self.corpus_path.read_text(encoding="utf-8"))
         self.chunks: list[dict] = corpus["chunks"]
+        # Corpus metadata used by the reply builders (Phase 4): scheme names and factsheet
+        # links, per-scheme fetch dates, and the date the official notes were reviewed.
+        self.meta = {k: v for k, v in corpus.items() if k != "chunks"}
         self.by_id = {c["id"]: c for c in self.chunks}
         self.row = {c["id"]: i for i, c in enumerate(self.chunks)}
         self._official_rows = [i for i, c in enumerate(self.chunks) if not c["scheme_id"]]

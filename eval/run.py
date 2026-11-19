@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "eval" / "reports"
-CURRENT_PHASE = 3
+CURRENT_PHASE = 4
 
 
 def _git_commit() -> str:
@@ -454,7 +454,121 @@ def phase3_checks() -> list[dict]:
     return results
 
 
-PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks, 2: phase2_checks, 3: phase3_checks}
+def phase4_checks() -> list[dict]:
+    """Phase 4 gate (Doc/eval.md §5): every dataset through the full pipeline, no server, no LLM."""
+    import random
+    import re
+    from collections import Counter, defaultdict
+
+    sys.path.insert(0, str(ROOT))
+    from bolosip import pipeline
+    from bolosip.formatter import KINDS, validate
+    from bolosip.retriever import Retriever
+    from bolosip.topics import CORE_TOPICS
+    from eval.answer_eval import check_reply, citation_ok
+
+    r = Retriever()
+    dense = r.store is not None
+    results = [_check("Pipeline starts (retriever in use)", True, r.backend_name())]
+    sets = {n: _load_set(n) for n in ("facts", "general", "paraphrases", "holdout", "ambiguous", "out_of_corpus",
+                                      "advice", "performance", "pii", "help", "variants")}
+    dense_sets = ("general", "paraphrases", "holdout")       # measured on the dense path only (Phase 3)
+
+    rows = []           # (set, case_id, question, expect, reply, problems)
+    for name, cases in sets.items():
+        for c in cases:
+            reply, _ = pipeline.handle(c["question"], {}, retriever=r)
+            rows.append((name, c["id"], c["question"], c["expect"], reply, check_reply(r, reply, c["expect"])))
+    turns = []
+    for conv in _load_set("conversations"):
+        ctx = {}
+        for i, t in enumerate(conv["turns"]):
+            reply, ctx = pipeline.handle(t["q"], ctx, retriever=r)
+            turns.append((f"{conv['id']}#{i + 1}", t, reply, check_reply(r, reply, t["expect"])))
+    all_replies = [x[4] for x in rows] + [x[2] for x in turns]
+
+    def rate(name, good, total, need, extra=""):
+        results.append(_check(name, total and good / total >= need,
+                              f"{good} / {total} ({good / total:.1%}; need ≥ {need:.0%}){extra}"))
+
+    core = [x for x in rows if x[0] == "facts" and x[3]["topic"] in CORE_TOPICS]
+    rate("Fact accuracy, 135 core questions (AC 1)", sum(not x[5] for x in core), len(core), 0.98)
+    rate("Fact accuracy, all 324 fact questions", sum(not x[5] for x in rows if x[0] == "facts"),
+         len(sets["facts"]), 0.98)
+    bad_format = [x for x in all_replies if validate(x)]
+    rate("Format compliance (AC 2): 1–3 sentences, one link, footer; clarify/help none",
+         len(all_replies) - len(bad_format), len(all_replies), 1.0)
+    bad_cite = [x for x in all_replies if not citation_ok(x)]
+    rate("Citation validity (AC 3): scheme page or allowed official domain",
+         len(all_replies) - len(bad_cite), len(all_replies), 1.0)
+    facts = [x for x in rows if x[0] == "facts"]
+    rate("Citation correctness on facts (the scheme's own page)",
+         sum(x[4].kind == "answer" and x[4].source.url == x[3]["source_url"] for x in facts), len(facts), 1.0)
+
+    # Reply kind. Expected not_found answered by a guard (e.g. "bitcoin price prediction" -> refusal)
+    # is a refusal, not an answer, so it counts as right. Guard negatives have no expected kind.
+    def kind_ok(expect, reply):
+        k = expect.get("kind")
+        return reply.kind == k or (k == "not_found" and reply.kind in ("refusal", "performance", "privacy"))
+    kinds = [x for x in rows if x[3].get("kind") and (dense or x[0] not in dense_sets)]
+    kinds += [(None, cid, t["q"], t["expect"], reply, p) for cid, t, reply, p in turns
+              if dense or not t["expect"].get("dense_only")]
+    rate("Reply-kind accuracy, all sets", sum(kind_ok(x[3], x[4]) for x in kinds), len(kinds), 0.97,
+         "" if dense else "; general/paraphrase/held-out sets need the dense path and are left out here")
+
+    adv = [x for x in rows if x[0] == "advice" and x[3]["kind"] == "refusal"]
+    rate("Refusal recall (AC 4)", sum(x[4].kind == "refusal" for x in adv), len(adv), 1.0)
+    perf = [x for x in rows if x[0] == "performance" and x[3]["kind"] == "performance"]
+    rate("Performance routed (AC 5)", sum(x[4].kind == "performance" for x in perf), len(perf), 0.97)
+    figures = [x for x in all_replies if x.kind == "performance" and re.search(r"\d", x.text)]
+    results.append(_check("Figures in performance replies (hard gate: 0)", not figures, str(len(figures))))
+    hlp = [x for x in rows if x[0] == "help" and x[3]["kind"] == "help"]
+    rate("Help replies (GAP-02)", sum(x[4].kind == "help" for x in hlp), len(hlp), 0.95)
+    var = [x for x in rows if x[0] == "variants"]
+    rate("Plan variants (GAP-05): Direct value never shown as Regular / IDCW",
+         sum(not x[5] for x in var), len(var), 1.0)
+    elss = [x for x in rows if re.search(r"(?i)\b(?:elss|tax sav)", x[2]) and x[4].kind in ("answer", "not_found")]
+    rate("ELSS wording: says none of the 27 is ELSS",
+         sum(bool(re.search(r"(?i)none of the 27|not an ELSS", x[4].text)) for x in elss), len(elss), 1.0)
+    ctx_turns = [x for x in turns if dense or not x[1]["expect"].get("dense_only")]
+    rate("Context accuracy (conversations.jsonl, in memory)", sum(not x[3] for x in ctx_turns), len(ctx_turns),
+         0.95, "" if dense else f"; {len(turns) - len(ctx_turns)} definition turns need the dense path")
+
+    # Report: confusion matrix, samples per kind, every failure.
+    matrix = defaultdict(Counter)
+    for x in kinds:
+        matrix[x[3]["kind"]][x[4].kind] += 1
+    rnd = random.Random(4)
+    samples = []
+    for k in KINDS:
+        of_kind = [x for x in rows if x[4].kind == k]
+        for x in rnd.sample(of_kind, min(10, len(of_kind))):
+            src = x[4].source.url if x[4].source else "—"
+            samples.append(f"| {k} | {x[2]} | {x[4].text[:160]} | {src} |")
+    answers = [x for x in rows if x[4].kind == "answer"]
+    review = rnd.sample(answers, min(30, len(answers)))
+    failures = [f"| {x[0]} | {x[1]} | {x[2]} | {'; '.join(x[5])} |" for x in rows if x[5] and
+                (dense or x[0] not in dense_sets) and
+                not (kind_ok(x[3], x[4]) and x[4].kind != x[3].get("kind") and len(x[5]) == 1)]
+    failures += [f"| conversation | {cid} | {t['q']} | {'; '.join(p)} |" for cid, t, _, p in turns
+                 if p and (dense or not t["expect"].get("dense_only"))]
+    SECTIONS.append("\n".join([
+        f"## Phase 4 pipeline ({r.backend_name()})", "",
+        "### Reply-kind confusion matrix (expected rows × actual columns)", "",
+        "| expected \\ actual | " + " | ".join(KINDS) + " |", "|---|" + "---|" * len(KINDS),
+        *[f"| {e} | " + " | ".join(str(matrix[e][a]) for a in KINDS) + " |" for e in KINDS if matrix[e]],
+        "", "### Every failing case", "",
+        *(["None."] if not failures else ["| Set | ID | Question | Problems |", "|---|---|---|---|", *failures]),
+        "", "### 10 sample replies of each kind", "", "| Kind | Question | Reply | Link |", "|---|---|---|---|",
+        *samples,
+        "", "### Human review (M1): 30 random answers to rate (eval.md §7; two reviewers, ≥ 4.5 / 5)", "",
+        "| # | Question | Answer |", "|---|---|---|",
+        *[f"| {i} | {x[2]} | {x[4].text} |" for i, x in enumerate(review, 1)],
+    ]))
+    return results
+
+
+PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks, 2: phase2_checks, 3: phase3_checks, 4: phase4_checks}
 
 
 def run(phases: list[int]) -> dict:

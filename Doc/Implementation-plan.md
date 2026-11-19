@@ -26,11 +26,12 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 |---|---|
 | Problem statement v2.2, architecture v1.2, edge cases v1.2, eval v1.1 | Done |
 | **Phase 0: Foundation** | **Done** (16 Nov 2026): config with `.env` loading, `.env.example`, 21 tests, eval runner; gate report `eval/reports/2026-11-16-phase0-8def061.md` |
-| **Phase 1: Ingestion (fetch, parse, chunk)** | **Done** (16 Nov 2026): 334 chunks (27 × 12 + 10 official notes), all 27 pages live; 61 tests; gate report `eval/reports/2026-11-19-phase0-1-2-3-b11b02f.md` |
+| **Phase 1: Ingestion (fetch, parse, chunk)** | **Done** (16 Nov 2026): 334 chunks (27 × 12 + 10 official notes), all 27 pages live; 61 tests; gate report in `eval/reports/` |
 | **Phase 2: Guards** | **Done** (16 Nov 2026): ordered `check()`; 220 guard cases (advice 108, returns 50, personal data 62) + 23 general questions; 84 tests; gate 10/10 |
 | **Audit of Phases 0–2** | **Done** (18 Nov 2026): every sub-point re-checked; 9 gaps fixed (see CHANGELOG) |
 | **Retrieval research for Phase 3** | **Done** (18 Nov 2026): [retrieval-research.md](retrieval-research.md); local nomic embeddings chosen (93% vs BM25 69% on user wording) |
 | **Phase 3: Scheme resolution and retrieval** | **Done** (19 Nov 2026): resolver (+ weak aliases, `not_covered`), local nomic embeddings in ChromaDB, BM25 fallback; dense gate: paraphrases 96.3%, held-out 100% (50/50), out-of-scope answered 0/58; 141 tests; gate report `eval/reports/2026-11-19-phase0-1-2-3-b11b02f.md` |
+| **Phase 4: Answer pipeline (extractive), M1** | **Done** (19 Nov 2026): `formatter.py` (`Reply`, `validate`), `composer.py` (extractive + fixed replies), `pipeline.py` (`handle`), `python -m bolosip`; dense gate: 135/135 core facts, format and citations 901/901, reply kind 99.8%, context 63/63; 177 tests. Human review (M1) pending: 30 answers listed in the gate report |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -337,9 +338,20 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 **Files:** `bolosip/formatter.py`, `bolosip/composer.py`, `bolosip/pipeline.py`, `bolosip/__main__.py`, `tests/test_format.py`, `tests/test_pipeline.py`
 
 **Exit criteria**
-- [ ] `validate()` passes for **every** chunk in `corpus.json` used as an answer.
-- [ ] Each of the 7 reply kinds is produced by at least one test and has the right link (none for `clarify` and `help`).
-- [ ] M1 demo works for the 3 UI example questions plus one refusal and one returns question.
+- [x] `validate()` passes for **every** chunk in `corpus.json` used as an answer (334/334, text unchanged; `tests/test_format.py`).
+- [x] Each of the 7 reply kinds is produced by at least one test and has the right link (none for `clarify` and `help`) (`tests/test_pipeline.py`).
+- [x] M1 demo works for the 3 UI example questions plus one refusal and one returns question (`python -m bolosip`).
+
+**Decisions and findings (19 Nov 2026)**
+- **Follow-ups:** a message with no scheme uses the thread's scheme when it refers back ("its", "it") or names a scheme topic outright ("exit load?"); never for definition wording ("what is an exit load?") or a general topic (statements, CTX-10). When a scheme is known, the topic is named and the search ranks that scheme's fact for it first among the scheme's facts, that fact is the answer even under the score bar ("its aum").
+- **No topic, scheme only** ("HDFC Mid Cap", "and small cap?"): the scheme's category fact (SCH-22, CTX-03). Topics are not carried over between turns.
+- **Plan variants (GAP-05):** "regular", "IDCW", "dividend" or "payout" with a shared topic → answer prefixed "For the Direct Growth plan: "; with a plan-specific topic or no clear topic → `not_found` with the scheme page.
+- **ELSS:** any ELSS question with no covered scheme named gets the official ELSS note ("none of the 27…"); with a covered scheme, its lock-in fact ("not an ELSS"); an HDFC ELSS scheme → `not_found` saying none of the 27 is ELSS.
+- **Two topics** (RET-02): one answered, plus "You can ask separately about the …".
+- **Not a scheme** (OOC-34, HO-NEG-05): gold, bank accounts, cards, loans, insurance, FDs, demat → `not_found`, never "which scheme?".
+- **`help` replies** carry the 3 example questions in `candidates` (the UI shows them as buttons, like clarify candidates).
+- New sets: `help.jsonl` (22), `variants.jsonl` (12), `conversations.jsonl` (27 scripts, 63 turns; built here because the Phase 4 gate measures single-thread context; Phase 5 adds the interleaved-thread scripts).
+- BM25 fallback: the 2 definition turns in a thread are `not_found` (BM25's no-scheme bar is high); marked `dense_only`.
 
 **Covers:** AC 2, 3, 4, 5, 8; arch §6, §9.1, §10; PS §4
 

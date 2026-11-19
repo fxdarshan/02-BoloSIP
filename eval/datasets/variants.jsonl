@@ -1,0 +1,12 @@
+{"id": "VAR-01", "ref": "GAP-05", "question": "expense ratio of HDFC Mid Cap Fund regular plan", "expect": {"kind": "not_found", "scheme_id": "hdfc-mid-cap"}}
+{"id": "VAR-02", "ref": "GAP-05", "question": "What is the NAV of HDFC Liquid Fund IDCW option?", "expect": {"kind": "not_found", "scheme_id": "hdfc-liquid"}}
+{"id": "VAR-03", "ref": "GAP-05", "question": "TER of HDFC Small Cap regular", "expect": {"kind": "not_found", "scheme_id": "hdfc-small-cap"}}
+{"id": "VAR-04", "ref": "GAP-05", "question": "AUM of HDFC Flexi Cap Fund regular plan", "expect": {"kind": "not_found", "scheme_id": "hdfc-flexi-cap"}}
+{"id": "VAR-05", "ref": "GAP-05", "question": "ISIN of HDFC Gilt Fund IDCW payout", "expect": {"kind": "not_found", "scheme_id": "hdfc-gilt"}}
+{"id": "VAR-06", "ref": "GAP-05", "question": "does HDFC Mid Cap pay dividend?", "expect": {"kind": "not_found", "scheme_id": "hdfc-mid-cap"}}
+{"id": "VAR-07", "ref": "GAP-05", "question": "NAV of HDFC Balanced Advantage dividend option", "expect": {"kind": "not_found", "scheme_id": "hdfc-balanced-advantage"}}
+{"id": "VAR-08", "ref": "GAP-05", "question": "exit load of HDFC Mid Cap Fund regular plan", "expect": {"kind": "answer", "scheme_id": "hdfc-mid-cap", "topic": "exit_load", "prefix": "For the Direct Growth plan: "}}
+{"id": "VAR-09", "ref": "GAP-05", "question": "benchmark of HDFC Liquid Fund regular plan", "expect": {"kind": "answer", "scheme_id": "hdfc-liquid", "topic": "benchmark", "prefix": "For the Direct Growth plan: "}}
+{"id": "VAR-10", "ref": "GAP-05", "question": "who manages HDFC Small Cap IDCW?", "expect": {"kind": "answer", "scheme_id": "hdfc-small-cap", "topic": "fund_manager", "prefix": "For the Direct Growth plan: "}}
+{"id": "VAR-11", "ref": "GAP-05", "question": "riskometer of HDFC Gilt Fund regular plan", "expect": {"kind": "answer", "scheme_id": "hdfc-gilt", "topic": "riskometer", "prefix": "For the Direct Growth plan: "}}
+{"id": "VAR-12", "ref": "GAP-05", "question": "minimum SIP for HDFC Flexi Cap regular plan", "expect": {"kind": "answer", "scheme_id": "hdfc-flexi-cap", "topic": "min_investment", "prefix": "For the Direct Growth plan: "}}

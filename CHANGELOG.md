@@ -4,6 +4,15 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (Phase 4: answer pipeline, milestone M1, 19 Nov 2026)
+- `bolosip/formatter.py`: `Reply` (+ `to_dict`, `render`), URL stripping, 3-sentence limit, footer, `validate()`.
+- `bolosip/composer.py`: extractive answers with a Phase 7 `rephrase` hook; fixed replies for refusal (AMFI), performance (factsheet, no figures), privacy (SEBI), clarify (≤ 5 candidates), help (3 examples), not found (closest official page), other fund house, non-fund HDFC, HDFC scheme not covered, Direct-Growth-only (GAP-05).
+- `bolosip/pipeline.py`: `handle(text, ctx) -> (Reply, ctx)`, rules 1–6 in order; follow-ups, definitions, scheme-only questions, plan variants, ELSS, two-topic questions.
+- `python -m bolosip`: ask from the terminal (several questions share a thread; `--json`; interactive mode).
+- Sets: `help.jsonl`, `variants.jsonl`, `conversations.jsonl`; `eval/answer_eval.py`; Phase 4 gate (confusion matrix, samples per kind, 30 answers for human review).
+- Tests: `test_format.py`, `test_pipeline.py`; 177 tests.
+- Results (dense): core facts 135/135, all facts 324/324, format and citations 901/901, reply kind 99.8%, refusals 78/78, performance 36/36 with 0 figures, help 18/18, variants 12/12, ELSS 10/10, context 63/63.
+
 ### Added (19 Nov 2026)
 - `scripts/show_embeddings.py`: read-only viewer for the ChromaDB collection (summary, per-chunk metadata, text, embedded text and vector; filters, nearest-chunk query, CSV export).
 

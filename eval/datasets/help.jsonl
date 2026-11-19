@@ -1,0 +1,22 @@
+{"id": "HLP-01", "ref": "GAP-02", "question": "hi", "expect": {"kind": "help"}}
+{"id": "HLP-02", "ref": "GAP-02", "question": "Hello!", "expect": {"kind": "help"}}
+{"id": "HLP-03", "ref": "GAP-02", "question": "hey there", "expect": {"kind": "help"}}
+{"id": "HLP-04", "ref": "GAP-02", "question": "thanks", "expect": {"kind": "help"}}
+{"id": "HLP-05", "ref": "GAP-02", "question": "Thank you so much", "expect": {"kind": "help"}}
+{"id": "HLP-06", "ref": "GAP-02", "question": "ok", "expect": {"kind": "help"}}
+{"id": "HLP-07", "ref": "GAP-02", "question": "good morning", "expect": {"kind": "help"}}
+{"id": "HLP-08", "ref": "GAP-02", "question": "namaste", "expect": {"kind": "help"}}
+{"id": "HLP-09", "ref": "GAP-02", "question": "???", "expect": {"kind": "help"}}
+{"id": "HLP-10", "ref": "GAP-02", "question": "...", "expect": {"kind": "help"}}
+{"id": "HLP-11", "ref": "GAP-02", "question": "what is the", "expect": {"kind": "help"}}
+{"id": "HLP-12", "ref": "GAP-02", "question": "what can you do?", "expect": {"kind": "help"}}
+{"id": "HLP-13", "ref": "GAP-02", "question": "Who made you?", "expect": {"kind": "help"}}
+{"id": "HLP-14", "ref": "GAP-02", "question": "What is BoloSIP?", "expect": {"kind": "help"}}
+{"id": "HLP-15", "ref": "GAP-02", "question": "how does this work", "expect": {"kind": "help"}}
+{"id": "HLP-16", "ref": "GAP-02", "question": "what questions can I ask?", "expect": {"kind": "help"}}
+{"id": "HLP-17", "ref": "GAP-02", "question": "help", "expect": {"kind": "help"}}
+{"id": "HLP-18", "ref": "GAP-02", "question": "bye", "expect": {"kind": "help"}}
+{"id": "HLP-NEG-01", "ref": "GAP-02", "question": "hi, what is the exit load of HDFC Mid Cap Fund?", "expect": {"kind": "answer", "scheme_id": "hdfc-mid-cap", "topic": "exit_load"}}
+{"id": "HLP-NEG-02", "ref": "GAP-02", "question": "hi, should I invest in HDFC Mid Cap?", "expect": {"kind": "refusal"}}
+{"id": "HLP-NEG-03", "ref": "GAP-02", "question": "thanks, and what is its benchmark? HDFC Liquid Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-liquid", "topic": "benchmark"}}
+{"id": "HLP-NEG-04", "ref": "GAP-02", "question": "hello my PAN is ABCDE1234F", "expect": {"kind": "privacy"}}

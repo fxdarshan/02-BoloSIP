@@ -79,6 +79,27 @@ TOPIC_PHRASES = {
     "stamp_duty": ("stamp duty",),
 }
 
+# How each scheme topic is named in replies ("You can ask separately about the exit load.").
+TOPIC_LABELS = {
+    "expense_ratio": "expense ratio",
+    "exit_load": "exit load",
+    "min_investment": "minimum investment",
+    "riskometer": "riskometer level",
+    "benchmark": "benchmark",
+    "lock_in": "lock-in period",
+    "fund_manager": "fund managers",
+    "category": "category and objective",
+    "nav": "NAV",
+    "aum": "fund size (AUM)",
+    "scheme_details": "launch date and ISIN",
+    "stamp_duty": "stamp duty",
+}
+
+# Topics whose value differs between the Direct and Regular plans or the Growth and
+# IDCW options (GAP-05). The corpus holds Direct Growth only, so these are never
+# answered for another plan; the other topics are shared by every plan of a scheme.
+VARIANT_TOPICS = ("expense_ratio", "nav", "aum", "scheme_details")
+
 # SEBI's six riskometer levels (problem statement glossary).
 SEBI_RISK_LEVELS = (
     "Low",
