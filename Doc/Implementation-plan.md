@@ -436,7 +436,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 **Tasks**
 
 1. **`bolosip/llm.py`:** create the Groq client (`from groq import Groq`; `Groq(timeout=15.0, max_retries=1)`) once, lazily, and only if the `groq` package is installed, `GROQ_API_KEY` is set, and `BOLOSIP_LLM` is not `off`.
-   - `client.chat.completions.create(model=config.MODEL, messages=[system, user], temperature=0, max_completion_tokens=200)`; default model `llama-3.3-70b-versatile`.
+   - `client.chat.completions.create(model=config.MODEL, messages=[system, user], temperature=0, max_completion_tokens=200)`; default model `openai/gpt-oss-120b`.
    - `rephrase(question, chunk_text) -> str | None`; returns `None` on **any** exception, a `finish_reason` other than `stop`, empty text, or `NOT_IN_SOURCE`.
 2. **System prompt** (arch §9.2): answer only from the given text, ≤ 3 sentences, no new facts, numbers, opinions, advice, comparisons or URLs; reply `NOT_IN_SOURCE` if the text doesn't answer.
 3. **Output checks** in `composer.py` (arch §9.2):
@@ -452,6 +452,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
    - Reformatted but equal numbers are **accepted** (GAP-06): "₹100687.07" for "₹1,00,687.07", "one year" for "1 year", "0.730%" for "0.73%".
    - An optional live test, `@skipUnless(credentials)`, rephrases 10 real questions, checks they pass the output checks, and logs the fallback rate.
 6. `/api/health` shows `llm_enabled`.
+7. **Rate limits** (`config.GROQ_LIMITS`: 30 requests/min, 1,000/day, 8,000 tokens/min, 200,000/day): a thread-safe client-side budget counts requests and the tokens Groq reports in `usage`; when a call would exceed a limit, or Groq returns `429`, the answer stays extractive (no waiting, no retry storm). `gpt-oss-120b` is a reasoning model: measure its reasoning tokens and set the reasoning effort so a rephrase fits `max_completion_tokens`.
 
 **Files:** `bolosip/llm.py`, `bolosip/composer.py`, `tests/test_llm.py`, `requirements.txt`
 

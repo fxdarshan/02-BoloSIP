@@ -424,13 +424,14 @@ This mode uses **Groq** as the LLM provider. It is enabled when the `groq` packa
 | Provider | Groq (fast hosted inference of open-weight models) |
 | SDK | `groq` (official Python SDK): `from groq import Groq`, then `client.chat.completions.create(...)` |
 | Client | `Groq(timeout=15.0, max_retries=1)`; reads `GROQ_API_KEY` from the environment |
-| Model | `llama-3.3-70b-versatile` (a Groq production model; override with `BOLOSIP_MODEL`) |
+| Model | `openai/gpt-oss-120b` (owner's choice, 19 Nov 2026; override with `BOLOSIP_MODEL`) |
+| Rate limits (account) | 30 requests/min, 1,000/day; 8,000 tokens/min, 200,000/day (`config.GROQ_LIMITS`). At about 600 tokens per rephrase, that is about 13 answers a minute and 330 a day; over a limit the answer stays extractive |
 | `temperature` | `0`: the same input gives the same rewording |
 | `max_completion_tokens` | `200`: enough for 3 short sentences |
 | Messages | `system` = rules below; `user` = question + **only the top chunk's text** (not the URL) |
 | Timeout | 15 s, then extractive mode |
 
-Groq retires and adds models over time, so the model ID lives only in `config.py` / `BOLOSIP_MODEL`. Check the current production list at console.groq.com/docs/models before each release. Smaller models (e.g. `llama-3.1-8b-instant`) are faster but must still pass the Phase 7 evaluation before being used.
+Groq retires and adds models over time, so the model ID lives only in `config.py` / `BOLOSIP_MODEL`. Check the current production list at console.groq.com/docs/models before each release. `gpt-oss-120b` is a reasoning model: Phase 7 must check how its reasoning tokens count against `max_completion_tokens` and the token limits, and set the reasoning effort accordingly. Any other model (e.g. `llama-3.1-8b-instant`) must also pass the Phase 7 evaluation before being used.
 
 **System prompt (outline):**
 
@@ -584,7 +585,7 @@ Settings are read from environment variables. For local use, put them in a **`.e
 | `BOLOSIP_DB` | `data/bolosip.sqlite3` | Thread store path |
 | `BOLOSIP_CORPUS` | `data/corpus.json` | Corpus path |
 | `BOLOSIP_LLM` | `auto` | `auto` (on if credentials found) · `on` · `off` |
-| `BOLOSIP_MODEL` | `llama-3.3-70b-versatile` | Groq model used for rephrasing |
+| `BOLOSIP_MODEL` | `openai/gpt-oss-120b` | Groq model used for rephrasing |
 | `BOLOSIP_RETRIEVER` | `auto` | `auto` (embeddings if available, else BM25) · `embed` (require embeddings) · `bm25` |
 | `BOLOSIP_EMBED_MODEL` | `nomic-ai/nomic-embed-text-v1.5` | Local embedding model (must match `data/embeddings.json`) |
 | `BOLOSIP_MODEL_CACHE` | `.cache/models` | Where the embedding model is downloaded |

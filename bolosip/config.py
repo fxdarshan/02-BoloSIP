@@ -86,7 +86,7 @@ DEFAULT_EMBED_MODEL = "nomic-ai/nomic-embed-text-v1.5"
 
 # Default Groq model. A Groq *production* model as of Nov 2026; Groq retires
 # models over time, so check console.groq.com/docs/models before a release.
-DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
 
 
 @dataclass(frozen=True)
@@ -212,6 +212,17 @@ LLM_TIMEOUT_S = 15.0
 LLM_MAX_RETRIES = 1
 LLM_TEMPERATURE = 0
 LLM_MAX_COMPLETION_TOKENS = 200
+
+# Groq rate limits of the project's account for the default model (owner, 19 Nov 2026).
+# Phase 7 enforces them in the client: over a limit, a reply simply stays extractive.
+# Each rephrase is about 600 tokens (prompt + chunk + answer), so the token limits bind
+# first: about 13 rephrased answers a minute and 330 a day.
+GROQ_LIMITS = {
+    "requests_per_minute": 30,
+    "requests_per_day": 1_000,
+    "tokens_per_minute": 8_000,
+    "tokens_per_day": 200_000,
+}
 
 # ---------------------------------------------------------------------------
 # Fixed links used in non-answer replies (architecture §10.1)

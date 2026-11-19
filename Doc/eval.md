@@ -262,7 +262,7 @@ Each phase lists what is evaluated, the dataset, the metrics and the pass thresh
 
 **Live (only with credentials; reported, not gating unless marked)**
 
-Run the 135 core facts + 30 paraphrases through the real Groq model (`llama-3.3-70b-versatile` by default, `temperature=0`). To compare models, repeat with another Groq production model (e.g. `llama-3.1-8b-instant`) via `BOLOSIP_MODEL` and report both.
+Run the 135 core facts + 30 paraphrases through the real Groq model (`openai/gpt-oss-120b` by default, `temperature=0`). To compare models, repeat with another Groq production model (e.g. `llama-3.1-8b-instant`) via `BOLOSIP_MODEL` and report both.
 
 | Metric | Pass |
 |---|---|
