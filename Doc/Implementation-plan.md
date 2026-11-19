@@ -26,11 +26,11 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 |---|---|
 | Problem statement v2.2, architecture v1.2, edge cases v1.2, eval v1.1 | Done |
 | **Phase 0: Foundation** | **Done** (16 Nov 2026): config with `.env` loading, `.env.example`, 21 tests, eval runner; gate report `eval/reports/2026-11-16-phase0-8def061.md` |
-| **Phase 1: Ingestion (fetch, parse, chunk)** | **Done** (16 Nov 2026): 334 chunks (27 × 12 + 10 official notes), all 27 pages live; 61 tests; gate report in `eval/reports/` |
+| **Phase 1: Ingestion (fetch, parse, chunk)** | **Done** (16 Nov 2026): 334 chunks (27 × 12 + 10 official notes), all 27 pages live; 61 tests; gate report `eval/reports/2026-11-19-phase0-1-2-3-b11b02f.md` |
 | **Phase 2: Guards** | **Done** (16 Nov 2026): ordered `check()`; 220 guard cases (advice 108, returns 50, personal data 62) + 23 general questions; 84 tests; gate 10/10 |
 | **Audit of Phases 0–2** | **Done** (18 Nov 2026): every sub-point re-checked; 9 gaps fixed (see CHANGELOG) |
 | **Retrieval research for Phase 3** | **Done** (18 Nov 2026): [retrieval-research.md](retrieval-research.md); local nomic embeddings chosen (93% vs BM25 69% on user wording) |
-| **Phase 3: Scheme resolution and retrieval** | **Done** (19 Nov 2026): resolver (+ weak aliases, `not_covered`), local nomic embeddings in ChromaDB, BM25 fallback; dense gate: paraphrases 96.3%, held-out 100% (50/50), out-of-scope answered 0/58; 141 tests; gate report in `eval/reports/` |
+| **Phase 3: Scheme resolution and retrieval** | **Done** (19 Nov 2026): resolver (+ weak aliases, `not_covered`), local nomic embeddings in ChromaDB, BM25 fallback; dense gate: paraphrases 96.3%, held-out 100% (50/50), out-of-scope answered 0/58; 141 tests; gate report `eval/reports/2026-11-19-phase0-1-2-3-b11b02f.md` |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
