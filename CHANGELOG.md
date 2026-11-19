@@ -9,6 +9,7 @@ All notable changes to BoloSIP. Newest first.
 - `server.py`: standard-library JSON API (health, config, threads, messages, delete); Host and Origin checks, JSON-only POST, no CORS (GAP-08); per-IP token-bucket rate limits with `Retry-After` (GAP-09); 4 KB body, 500-character, UUID and method checks; 10 s socket timeout; security headers; logs without message text or error details; warning when bound to a public address.
 - `eval/api_harness.py` (real server on a free port), `eval/pii_scan.py`; Phase 5 gate (API parity, context and isolation over HTTP, concurrency, personal-data scan, persistence, request safety, latency).
 - Tests: `test_threads.py` (15), `test_api.py` (21); 213 tests.
+- Fixed after CI: listen backlog raised from 5 to 128 (connection resets under 20 parallel requests); latency target enforced locally, reported on CI.
 - Retriever: query embeddings are cached (one question can need three searches).
 - Groq default model is now `openai/gpt-oss-120b`; the account's rate limits are in `config.GROQ_LIMITS` for Phase 7.
 

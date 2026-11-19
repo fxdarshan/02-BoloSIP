@@ -64,6 +64,9 @@ class ApiError(Exception):
 
 class BoloSIPServer(ThreadingHTTPServer):
     daemon_threads = True
+    # socketserver's default listen backlog is 5: a burst of 20 parallel requests (THR-03)
+    # had connections reset on Linux before a handler thread could accept them.
+    request_queue_size = 128
 
     def __init__(self, address, *, store: Store, retriever: Retriever, rate_msg: int, rate_all: int,
                  extra_hosts: tuple[str, ...] = ()):

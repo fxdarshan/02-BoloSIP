@@ -398,6 +398,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 - **All POSTs need JSON**, including `POST /api/threads`, so a plain HTML form on another site cannot create threads. `GET /` returns `404` until Phase 6 adds `web/index.html`. `/api/config` is added now (the plan had it in Phase 6).
 - **PII scan:** thread titles and user messages are checked for every value, even 4-digit fragments; raw database bytes and logs only for values of 8+ characters, because short digit runs occur by chance in UUIDs and timestamps.
 - `conversations.jsonl` is run interleaved (turn 1 of every conversation, then turn 2…) for the isolation check.
+- **Found by CI:** `socketserver`'s default listen backlog of 5 reset connections when 20 requests arrived at once (Linux); raised to 128. The latency target is enforced by the gate on local runs; on shared CI runners it is reported only, and the unit test keeps a loose regression bound (p50 < 250 ms).
 
 **Covers:** AC 6, 7; arch §5.3, §12, §13, §17; PS §6, §7
 
