@@ -114,6 +114,8 @@ To run the refresh by hand (for example to try it without committing):
 gh workflow run refresh-data.yml -f dry_run=true
 ```
 
+To test the failure path (never commits): `-f force_failure=gate` fails the evaluation step, and `-f force_failure=blocked` makes the change report see six stable-fact changes. Either opens the `data-refresh` issue; the next normal run closes it.
+
 To see what changed between two corpus versions:
 
 ```bash

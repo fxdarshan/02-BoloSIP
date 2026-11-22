@@ -500,9 +500,9 @@ Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (
 
 **Exit criteria**
 - [x] A manual dry run completes every step (scrape, parse, validate, chunk, embed, ChromaDB, tests, gates) and commits nothing. *(Run 45033364556, 22 Nov 2026: all 27 pages live, 54 facts changed, 249 tests OK, gates PASS, no commit.)*
-- [ ] A scheduled run at 10:00 IST commits refreshed data when facts changed and nothing when they didn't, on two consecutive days; the footer date of a fresh answer equals the run date after `git pull` and a server restart. *(First manual real run 45033734142 committed 5db17bb "Data refresh 22 Nov 2026: 54 facts changed"; after `git pull` and a restart, `/api/health` shows `data_age_days` 0 and answers carry "Last updated from sources: 22 Nov 2026". The two scheduled days are still to watch.)*
+- [ ] A scheduled run at 10:00 IST commits refreshed data when facts changed and nothing when they didn't, on two consecutive days; the footer date of a fresh answer equals the run date after `git pull` and a server restart. *(First manual real run 45033734142 committed 5db17bb "Data refresh 22 Nov 2026: 54 facts changed"; after `git pull` and a restart, `/api/health` shows `data_age_days` 0 and answers carry "Last updated from sources: 22 Nov 2026". A manual run with unchanged data (45039854958) committed nothing. The two scheduled days are still to watch.)*
 - [ ] A day when only NAV and fund size changed leaves `data/embeddings.npy` unchanged.
-- [ ] A forced failure (a gate failure, and a blocked stable-fact change) commits nothing and opens the `data-refresh` issue; the next good run closes it.
+- [x] A forced failure (a gate failure, and a blocked stable-fact change) commits nothing and opens the `data-refresh` issue; the next good run closes it. *(22 Nov 2026, using the `force_failure` input: gate run 45039549799 opened issue #1; blocked run 45039705446 reported "BLOCKED: 6 stable facts changed in one run (limit 5)" and commented on it; good run 45039854958 closed it. `main` unchanged throughout.)*
 - [x] Every evaluation gate still passes on the refreshed data. *(Both runs on 22 Nov 2026.)*
 
 **Covers:** PS §8 (data freshness); arch §15 (ingestion), §8.4 (ChromaDB rebuild); risks R8, R13, R14, R15
