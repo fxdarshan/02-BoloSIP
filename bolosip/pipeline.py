@@ -180,7 +180,9 @@ def _answer_or_not(r: Retriever, text: str, norm: str, last: str | None, rephras
 
     # RET-02: two topics asked at once -> answer one, and say so.
     suffix = ""
-    others = [t for t in named if t != top.topic and t in TOPIC_LABELS]
+    # "category" is left out: its phrases ("invest in", "what type") are too loose to mean
+    # the user asked about it ("government duty when I invest in X" is one question).
+    others = [t for t in named if t != top.topic and t in TOPIC_LABELS and t != "category"]
     if top.scheme_id and others:
         suffix = f"You can ask separately about the {TOPIC_LABELS[sorted(others)[0]]}."
     return composer.answer(text, top.chunk, suffix=suffix, rephrase=rephrase), scheme_id

@@ -54,7 +54,7 @@ TOPIC_KEYWORDS = {
     "nav": "nav net asset value unit price price per unit",
     "aum": "aum fund size assets under management corpus size",
     "scheme_details": "launch date inception launched isin registrar rta plan direct growth started",
-    "stamp_duty": "stamp duty",
+    "stamp_duty": "stamp duty government duty duty charged duty on purchase tax on purchase levy on investing",
 }
 
 # High-precision phrases that name a scheme topic outright. Used only to break ties
@@ -76,7 +76,7 @@ TOPIC_PHRASES = {
     "nav": ("nav", "net asset value", "unit price", "price per unit"),
     "aum": ("aum", "fund size", "assets under management", "how big", "corpus size"),
     "scheme_details": ("isin", "launch date", "launched", "registrar", "rta", "inception"),
-    "stamp_duty": ("stamp duty",),
+    "stamp_duty": ("stamp duty", "government duty", "duty charged", "duty on purchase"),
 }
 
 # How each scheme topic is named in replies ("You can ask separately about the exit load.").
