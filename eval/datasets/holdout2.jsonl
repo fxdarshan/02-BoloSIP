@@ -1,0 +1,40 @@
+{"id": "HO2-01", "ref": "holdout2", "question": "annual charges on HDFC Focused Fund?", "expect": {"kind": "answer", "scheme_id": "hdfc-focused", "topic": "expense_ratio"}}
+{"id": "HO2-02", "ref": "holdout2", "question": "how much expense ratio does the HDFC Overnight Fund charge", "expect": {"kind": "answer", "scheme_id": "hdfc-overnight", "topic": "expense_ratio"}}
+{"id": "HO2-03", "ref": "holdout2", "question": "if I take my money out of HDFC Multi Cap in 6 months is there a charge", "expect": {"kind": "answer", "scheme_id": "hdfc-multi-cap", "topic": "exit_load"}}
+{"id": "HO2-04", "ref": "holdout2", "question": "redemption fee for HDFC Equity Savings", "expect": {"kind": "answer", "scheme_id": "hdfc-equity-savings", "topic": "exit_load"}}
+{"id": "HO2-05", "ref": "holdout2", "question": "smallest monthly SIP I can start in HDFC Pharma and Healthcare Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-pharma-and-healthcare", "topic": "min_investment"}}
+{"id": "HO2-06", "ref": "holdout2", "question": "min lumpsum for HDFC Money Market Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-money-market", "topic": "min_investment"}}
+{"id": "HO2-07", "ref": "holdout2", "question": "what risk category is HDFC Banking and PSU Debt Fund in", "expect": {"kind": "answer", "scheme_id": "hdfc-banking-and-psu-debt", "topic": "riskometer"}}
+{"id": "HO2-08", "ref": "holdout2", "question": "riskometer for HDFC Housing Opportunities", "expect": {"kind": "answer", "scheme_id": "hdfc-housing-opportunities", "topic": "riskometer"}}
+{"id": "HO2-09", "ref": "holdout2", "question": "which index is HDFC Infrastructure Fund measured against", "expect": {"kind": "answer", "scheme_id": "hdfc-infrastructure", "topic": "benchmark"}}
+{"id": "HO2-10", "ref": "holdout2", "question": "benchmark index of HDFC Business Cycle Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-business-cycle", "topic": "benchmark"}}
+{"id": "HO2-11", "ref": "holdout2", "question": "can I withdraw anytime from HDFC Arbitrage Fund or is it locked", "expect": {"kind": "answer", "scheme_id": "hdfc-arbitrage", "topic": "lock_in"}}
+{"id": "HO2-12", "ref": "holdout2", "question": "name of the fund manager of HDFC Technology Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-technology", "topic": "fund_manager"}}
+{"id": "HO2-13", "ref": "holdout2", "question": "who runs HDFC Balanced Advantage Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-balanced-advantage", "topic": "fund_manager"}}
+{"id": "HO2-14", "ref": "holdout2", "question": "latest NAV HDFC BSE Sensex Index Fund", "expect": {"kind": "answer", "scheme_id": "hdfc-bse-sensex-index", "topic": "nav"}}
+{"id": "HO2-15", "ref": "holdout2", "question": "price per unit of HDFC Silver ETF FoF", "expect": {"kind": "answer", "scheme_id": "hdfc-silver-etf-fof", "topic": "nav"}}
+{"id": "HO2-16", "ref": "holdout2", "question": "how big is the HDFC Small Cap Fund in terms of assets", "expect": {"kind": "answer", "scheme_id": "hdfc-small-cap", "topic": "aum"}}
+{"id": "HO2-17", "ref": "holdout2", "question": "when did HDFC Multi Asset Allocation Fund start", "expect": {"kind": "answer", "scheme_id": "hdfc-multi-asset-allocation", "topic": "scheme_details"}}
+{"id": "HO2-18", "ref": "holdout2", "question": "ISIN code of HDFC Defence Fund direct growth", "expect": {"kind": "answer", "scheme_id": "hdfc-defence", "topic": "scheme_details"}}
+{"id": "HO2-19", "ref": "holdout2", "question": "what kind of fund is HDFC Ultra Short Term", "expect": {"kind": "answer", "scheme_id": "hdfc-ultra-short-term", "topic": "category"}}
+{"id": "HO2-20", "ref": "holdout2", "question": "is stamp duty charged on HDFC Large Cap purchases", "expect": {"kind": "answer", "scheme_id": "hdfc-large-cap", "topic": "stamp_duty"}}
+{"id": "HO2-21", "ref": "holdout2", "question": "how can I get a statement of all my HDFC mutual fund investments", "expect": {"kind": "answer", "topic": "statement"}}
+{"id": "HO2-22", "ref": "holdout2", "question": "where do I get the capital gain report for my taxes", "expect": {"kind": "answer", "topic": "capital_gains"}}
+{"id": "HO2-23", "ref": "holdout2", "question": "how many years is the lock in for tax saving ELSS funds", "expect": {"kind": "answer", "topic": "lock_in_general"}}
+{"id": "HO2-24", "ref": "holdout2", "question": "explain the different riskometer levels", "expect": {"kind": "answer", "topic": "riskometer_general"}}
+{"id": "HO2-25", "ref": "holdout2", "question": "what does total expense ratio cover", "expect": {"kind": "answer", "topic": "expense_ratio_general"}}
+{"id": "HO2-26", "ref": "holdout2", "question": "is a direct plan cheaper than a regular plan and why", "expect": {"kind": "answer", "topic": "plans_general"}}
+{"id": "HO2-27", "ref": "holdout2", "question": "how does SIP investing work", "expect": {"kind": "answer", "topic": "sip_general"}}
+{"id": "HO2-28", "ref": "holdout2", "question": "where are HDFC MF monthly factsheets published", "expect": {"kind": "answer", "topic": "factsheet"}}
+{"id": "HO2-NEG-01", "ref": "holdout2", "question": "what is the HDFC Bank fixed deposit interest rate", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-02", "ref": "holdout2", "question": "expense ratio of Kotak Emerging Equity Fund", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-03", "ref": "holdout2", "question": "what is the repo rate set by RBI", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-04", "ref": "holdout2", "question": "how do I change my bank mandate for SIP", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-05", "ref": "holdout2", "question": "what is the Nifty 50 closing value today", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-06", "ref": "holdout2", "question": "exit load of HDFC Gold ETF Fund of Fund", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-07", "ref": "holdout2", "question": "how to file income tax return online", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-08", "ref": "holdout2", "question": "what is a demat account", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-09", "ref": "holdout2", "question": "price of silver per kg today", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-10", "ref": "holdout2", "question": "who is the CEO of HDFC AMC", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-11", "ref": "holdout2", "question": "how do I update my KYC address", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-12", "ref": "holdout2", "question": "what is GST on mutual fund expenses", "expect": {"kind": "not_found"}}
