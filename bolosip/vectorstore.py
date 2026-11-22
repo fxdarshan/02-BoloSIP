@@ -104,6 +104,24 @@ _store_cache: dict[str, VectorStore | None] = {}
 _store_lock = threading.Lock()
 
 
+def mismatch(vectors, meta: dict | None, chunks: list[dict]) -> str | None:
+    """Why the saved vectors can't be used with these chunks, or None if they match.
+
+    Besides the corpus hash, the chunk ids and row count must match exactly: once a
+    mangled id in embeddings.json ("hdfcalanced-advantage:category", ISS-024) passed the
+    hash check and crashed the Chroma rebuild."""
+    if vectors is None or not meta:
+        return "data/embeddings.npy or .json missing"
+    ids = meta.get("chunk_ids") or []
+    want = [c["id"] for c in chunks]
+    if len(ids) != len(vectors):
+        return f"embeddings.json lists {len(ids)} chunks but embeddings.npy has {len(vectors)} rows"
+    if ids != want:
+        bad = next((i for i in ids if i not in set(want)), None) or next((i for i in want if i not in set(ids)), "order")
+        return f"embeddings.json chunk ids don't match corpus.json (first difference: {bad})"
+    return None
+
+
 def open_store(chunks: list[dict], corpus_sha256: str, chroma_dir: Path | None = None) -> VectorStore | None:
     """Open the collection for this corpus, rebuilding it from the committed vectors if it
     is missing or stale. None if Chroma isn't installed or the vectors don't match."""
@@ -125,6 +143,10 @@ def _open(chunks, corpus_sha256, chroma_dir) -> VectorStore | None:
     vectors, meta = load_vectors()
     if vectors is None or meta.get("corpus_sha256") != corpus_sha256:
         log.info("vector store unavailable: data/embeddings.npy is missing or doesn't match corpus.json")
+        return None
+    problem = mismatch(vectors, meta, chunks)
+    if problem:
+        log.warning("vector store unavailable: %s (run ingest.py --embed-only)", problem)
         return None
     try:
         col = _client(chroma_dir).get_collection(config.CHROMA_COLLECTION)

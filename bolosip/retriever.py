@@ -132,6 +132,9 @@ class Retriever:
         sha = embedder_mod.corpus_hash(self.corpus_path)
         if meta.get("corpus_sha256") != sha:
             return None, None, "vectors are stale: corpus.json changed since they were built"
+        problem = vectorstore.mismatch(vectors, meta, self.chunks)
+        if problem:                                   # ISS-024: never crash on a damaged file
+            return None, None, f"{problem} (run ingest.py --embed-only)"
         store = vectorstore.open_store(self.chunks, sha)
         if store is None:
             return None, None, "ChromaDB unavailable"

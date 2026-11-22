@@ -556,7 +556,8 @@ def build_embeddings(corpus_path: Path | None = None, *, log=print) -> str:
         return "skipped: the 'embed' extra is not installed (needs Python 3.10–3.14; see README)"
 
     vectors, meta = vectorstore.load_vectors()
-    if vectors is not None and meta.get("corpus_sha256") == sha and meta.get("model") == model_name:
+    if (vectors is not None and meta.get("corpus_sha256") == sha and meta.get("model") == model_name
+            and vectorstore.mismatch(vectors, meta, chunks) is None):     # damaged metadata → re-embed (ISS-024)
         # Still make sure the model is cached: queries need it even when the vectors don't
         # (a fresh clone or CI has the committed vectors but not the 550 MB model).
         if embedder.load(model_name, allow_download=True) is None:

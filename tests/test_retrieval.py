@@ -178,6 +178,21 @@ class TestBackendSelection(unittest.TestCase):
             if _dense_available():
                 self.assertIn("stale", r.reason)
 
+    def test_damaged_vector_metadata_is_detected(self):
+        """ISS-024: a mangled chunk id in embeddings.json passed the hash check and crashed
+        the Chroma rebuild. It is now reported, and the dense path is never opened with it."""
+        chunks = CORPUS["chunks"]
+        ids = [c["id"] for c in chunks]
+        rows = [0] * len(ids)                               # only the row count matters here
+        self.assertIsNone(vectorstore.mismatch(rows, {"chunk_ids": ids}, chunks))
+        damaged = list(ids)
+        damaged[ids.index("hdfc-balanced-advantage:category")] = "hdfcalanced-advantage:category"
+        problem = vectorstore.mismatch(rows, {"chunk_ids": damaged}, chunks)
+        self.assertIn("hdfcalanced-advantage:category", problem)
+        self.assertIn("rows", vectorstore.mismatch(rows[:-1], {"chunk_ids": ids}, chunks))
+        self.assertIn("order", vectorstore.mismatch(rows, {"chunk_ids": ids[::-1]}, chunks))
+        self.assertIn("missing", vectorstore.mismatch(None, None, chunks))
+
 
 class TestDecision(unittest.TestCase):
     """Guards -> resolver -> filtered search -> threshold (BM25, offline)."""
