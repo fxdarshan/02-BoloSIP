@@ -24,7 +24,7 @@ from bolosip import composer, guards, registry
 from bolosip.formatter import Reply, validate
 from bolosip.retriever import Retriever, get_retriever, phrase_topics, tokenize
 from bolosip.schemes import has_fund_signal, normalise, resolve
-from bolosip.topics import SCHEME_TOPICS, TOPIC_LABELS, VARIANT_TOPICS
+from bolosip.topics import OFFICIAL_TERMS, SCHEME_TOPICS, TOPIC_LABELS, VARIANT_TOPICS
 
 # --- Help (GAP-02) -----------------------------------------------------------
 _SMALL_TALK = frozenset(
@@ -174,6 +174,9 @@ def _answer_or_not(r: Retriever, text: str, norm: str, last: str | None, rephras
     elif not hits or hits[0].score < r.min_score(scheme_named=scheme_id is not None and not (via_context and not named)):
         # A scheme taken only from the thread, with no topic named ("and bitcoin price?"),
         # must clear the stricter no-scheme bar: the filtered search alone is too lenient.
+        note = _definition_note(r, text, norm) if scheme_id is None and definition else None
+        if note is not None:                                  # ISS-015
+            return composer.answer(text, note, rephrase=rephrase), None
         return composer.not_found(meta, _closest_official(r, text)), scheme_id
     else:
         top = hits[0]
@@ -181,6 +184,9 @@ def _answer_or_not(r: Retriever, text: str, norm: str, last: str | None, rephras
     # Rule 4: a scheme-specific fact but no scheme named. Ask which one, if it reads like a
     # fund question; otherwise it is simply not covered ("what is the money market").
     if scheme_id is None and top.scheme_id is not None:
+        note = _definition_note(r, text, norm) if definition else None
+        if note is not None:                                  # "what is an exit load?" is the definition
+            return composer.answer(text, note, rephrase=rephrase), None
         if (has_fund_signal(text) or named) and not _NOT_A_SCHEME.search(norm):
             return composer.ask_for_scheme(), None
         return composer.not_found(meta, _closest_official(r, text)), None
@@ -200,6 +206,20 @@ def _only_names(norm: str, matched: tuple[str, ...]) -> bool:
     for alias in matched:
         rest = rest.replace(f" {alias} ", " ")
     return not [w for w in rest.split() if w not in _GENERIC]
+
+
+def _definition_note(r: Retriever, text: str, norm: str) -> dict | None:
+    """The official note that defines the term asked about, for a definition question with no
+    scheme ("what is a riskometer?"). Only a note whose own term (topics.OFFICIAL_TERMS) is in
+    the question qualifies, so "what is a demat account" never gets the statement note.
+    The BM25 fallback's no-scheme bar is too high for short definitions (ISS-015)."""
+    padded = f" {norm} "
+    floor = 0.5 if r.store is not None else 0.0
+    for h in r.search(text, None, k=len(r.chunks)):
+        if h.scheme_id is None and h.score > floor and \
+                any(f" {t} " in padded for t in OFFICIAL_TERMS.get(h.topic, ())):
+            return h.chunk
+    return None
 
 
 def _closest_official(r: Retriever, text: str) -> dict | None:

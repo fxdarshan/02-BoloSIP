@@ -76,7 +76,24 @@ TOPIC_PHRASES = {
     "nav": ("nav", "net asset value", "unit price", "price per unit"),
     "aum": ("aum", "fund size", "assets under management", "how big", "corpus size"),
     "scheme_details": ("isin", "launch date", "launched", "registrar", "rta", "inception"),
-    "stamp_duty": ("stamp duty", "government duty", "duty charged", "duty on purchase"),
+    "stamp_duty": ("stamp duty", "government duty", "duty charged", "duty on purchase",
+                   "tax on purchase", "tax on buying", "tax when i buy", "pay when i buy"),
+}
+
+# The subject term of each official note. A definition question ("what is an exit load?")
+# can be answered by a note only if the note's term appears in it (ISS-015): this lets the
+# BM25 fallback answer definitions without a low bar letting "what is a demat account"
+# through on a shared word like "account".
+OFFICIAL_TERMS = {
+    "statement": ("statement", "statements", "cas", "consolidated account"),
+    "capital_gains": ("capital gain", "capital gains"),
+    "lock_in_general": ("elss", "lock in", "lockin", "tax saver", "tax saving"),
+    "riskometer_general": ("riskometer", "risk level", "risk levels"),
+    "expense_ratio_general": ("expense ratio", "ter", "total expense ratio"),
+    "exit_load_general": ("exit load",),
+    "plans_general": ("direct plan", "regular plan", "direct and regular", "direct vs regular"),
+    "sip_general": ("sip", "sips", "systematic investment plan"),
+    "factsheet": ("factsheet", "fact sheet", "factsheets"),
 }
 
 # How each scheme topic is named in replies ("You can ask separately about the exit load.").

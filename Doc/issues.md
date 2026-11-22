@@ -12,12 +12,9 @@ Every error and issue found while building BoloSIP: what happened, why, how it w
 
 | ID | Status | Found | Area | Issue | Notes / next step |
 |---|---|---|---|---|---|
-| ISS-038 | 🟡 | 22 Nov 2026 | Guards | "what tax do I pay when I buy HDFC Gilt Fund units" is refused as advice; the stamp-duty fact (or `not_found`) would be better | Safe failure (no wrong fact). Revisit with the Phase 9 paraphrase set |
 | ISS-033 | 🔴 | 22 Nov 2026 | CI | One unit test failed once on the Windows / Python 3.13 job only (passed in every other job and in the same job minutes earlier); the gate did not say which test | Gate now names failing tests (`eval/run.py` phase 0). Identify and fix if it recurs |
-| ISS-024 | 🔴 | 19 Nov 2026 | Data | `data/embeddings.json` was found with one chunk ID mangled (`hdfc-balanced-advantage:category` → `hdfcalanced-advantage:category`), breaking the Chroma rebuild. Nothing in the code writes that file outside ingestion | Restored from git; not seen again. Root cause unknown; the CI "committed vectors are up to date" check would catch a repeat |
 | ISS-020 | 🟡 | 19 Nov 2026 | Process | Human checks still to do: M1 review of 30 answers (Phase 4 gate report), Edge pass, Lighthouse score ≥ 90, screen-reader pass, 3-person usability check (Phase 6) | Owner |
 | ISS-016 | 🟡 | 19 Nov 2026 | Retrieval | Three near-threshold misses on the dense path with no scheme named: "Where can I download the monthly factsheet?" (0.70), "where do I download my transaction history" (0.66), "what is ELSS" (0.70, answered correctly by the pipeline's ELSS rule) | Lowering the 0.70 bar would let out-of-scope questions through (highest out-of-scope score 0.695). Re-tune in Phase 9 |
-| ISS-015 | 🟡 | 19 Nov 2026 | Retrieval | BM25 fallback (Python 3.15, no embeddings): definition questions inside a thread ("what is a riskometer?") return `not_found`, because BM25's no-scheme bar is high | Marked `dense_only` in `conversations.jsonl`; dense is the default |
 | ISS-010 | 🟡 | 19 Nov 2026 | Evaluation | The held-out set was run once before the weak-alias and topic-boost changes, and one of its misses motivated the weak aliases, so its 100% is slightly optimistic | Write fresh held-out cases in Phase 9 |
 | ISS-009 | 🟡 | 19 Nov 2026 | Retrieval | Thin margin between the no-scheme bar (0.70) and the highest out-of-scope score (0.695) | The resolver checks (other fund house, non-fund HDFC, schemes not covered, weak aliases) are the first defence. Re-tune in Phase 9 |
 
@@ -29,6 +26,9 @@ Every error and issue found while building BoloSIP: what happened, why, how it w
 
 | ID | Issue | Cause | Fix |
 |---|---|---|---|
+| ISS-038 | "what tax do I pay when I buy HDFC Gilt Fund units" refused as advice | Blanket `buy` advice rule | "when/if/once/after I buy" no longer counts as a buy decision ("can I buy…" still refused); stamp-duty purchase-tax phrases; 5 guard cases added |
+| ISS-024 | `embeddings.json` with a mangled chunk id crashed the Chroma rebuild | Root cause still unknown | `vectorstore.mismatch()` checks chunk ids and row count; the server falls back to BM25 with a reason and `ingest --embed-only` re-embeds; regression test |
+| ISS-015 | BM25 fallback: definition questions ("what is an exit load?") got `not_found`, also inside a thread | BM25's no-scheme bar is high | Definition questions with no scheme that would get `not_found` are answered by the official note whose own term is in the question (`topics.OFFICIAL_TERMS`); out-of-scope answered stays 0 on both backends |
 | ISS-037 | Playwright wasn't installed on the laptop, so the browser tests only ran in CI | Optional tool, not part of the core setup | Installed in `.venv` (Playwright 1.65.2 + headless Chromium, 22 Nov 2026); all 7 browser tests pass locally. Documented as the `ui-tests` extra in `pyproject.toml` and in the README |
 | ISS-042 | CI: the first run of the Playwright browser tests failed in 5 of 7 tests | `page.wait_for_function` evaluates a string, which the page's Content-Security-Policy (no `unsafe-eval`) blocks: the policy working as intended | Tests poll with `page.evaluate()` and locator waits instead |
 | ISS-041 | At 320 px with a wide system font (DejaVu Sans on Linux, some Android fonts) the page scrolled sideways (337 px) | The disclaimer pill was set to never wrap, so one line was wider than the screen and pushed the header and page | The disclaimer may wrap on narrow screens; the browser test now also scans with a wide font. Found by the new CI `ui` job |

@@ -121,7 +121,10 @@ ADVISORY_PATTERNS = [
     r"\bwhich\s+one\b",
     # transactions and portfolio decisions
     # "when I sell units of X within 30 days" is an exit-load question, not a sell decision.
-    r"\bbuy\b", r"\bsell\b(?!\s+(?:the\s+|my\s+|some\s+|all\s+)?units\s+(?:of|in|within|before|after|from)\b)",
+    # "what tax do I pay when I buy units" describes a purchase in a factual question
+    # (stamp duty), not a decision to buy (ISS-038); "can I buy …" is still refused.
+    r"(?<!when i )(?<!when we )(?<!when you )(?<!if i )(?<!once i )(?<!after i )\bbuy\b",
+    r"\bsell\b(?!\s+(?:the\s+|my\s+|some\s+|all\s+)?units\s+(?:of|in|within|before|after|from)\b)",
     r"\bswitch\s+(?:to|from|my)\b", r"\bexit\s+(?:now|the\s+fund|my)\b",
     # "allocation" is advice except in scheme names / objectives ("Multi Asset Allocation",
     # "dynamic allocation between sectors").
