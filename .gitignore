@@ -37,3 +37,7 @@ dist/
 
 # Optional CSV export from scripts/show_embeddings.py (regenerable)
 data/embeddings_view.csv
+
+# Local dev-preview launcher and its database
+.claude/launch.json
+data/preview.sqlite3*

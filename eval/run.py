@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "eval" / "reports"
-CURRENT_PHASE = 5
+CURRENT_PHASE = 6
 
 
 def _git_commit() -> str:
@@ -706,8 +706,49 @@ def phase5_checks() -> list[dict]:
     return results
 
 
+def phase6_checks() -> list[dict]:
+    """Phase 6 gate (Doc/eval.md §5): the web page. Scripted checks run here; the browser
+    checks are recorded in eval/manual/phase6_ui_check.json (plan Phase 6 task 9)."""
+    import unittest
+
+    sys.path.insert(0, str(ROOT))
+    import tests.test_web as t_web
+
+    results = []
+    groups = {
+        "Page is self-contained: no external scripts, fonts or trackers": [t_web.TestSelfContained],
+        "Content: sticky disclaimer, 500-character input, privacy hint, kinds, no unbacked claims": [t_web.TestContent],
+        "Contrast (WCAG AA, both themes) and hairline borders": [t_web.TestContrast],
+        "Served by server.py with security headers (CSP, no framing)": [t_web.TestServedPage],
+    }
+    for name, classes in groups.items():
+        suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(c) for c in classes)
+        res = unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(suite)
+        bad = [str(x[0]).split(" ")[0] for x in res.failures + res.errors]
+        results.append(_check(name, res.wasSuccessful(),
+                              f"{res.testsRun - len(bad)} / {res.testsRun} tests" + (f"; failed: {bad}" if bad else "")))
+
+    manual_path = ROOT / "eval" / "manual" / "phase6_ui_check.json"
+    manual = json.loads(manual_path.read_text(encoding="utf-8"))
+    checks = manual["checks"]
+    failed = [c["id"] for c in checks if c["result"] != "pass"]
+    required = {"AC9", "AC9-scroll", "EX", "UI-01", "UI-06", "UI-07", "UI-11", "UI-12-keyboard", "TABS"}
+    missing = sorted(required - {c["id"] for c in checks})
+    results.append(_check(f"Browser checks recorded ({manual['date']})", not failed and not missing,
+                          f"{len(checks) - len(failed)} / {len(checks)} pass" +
+                          (f"; failed: {failed}" if failed else "") + (f"; missing: {missing}" if missing else "")))
+    SECTIONS.append("\n".join([
+        "## Phase 6 web UI", "", f"Method: {manual['method']}", "",
+        "| Check | Result | Notes |", "|---|---|---|",
+        *[f"| {c['id']}: {c['check']} | {c['result']} | {c['notes']} |" for c in checks],
+        "", "### Still to do by hand (not part of the automated gate)", "",
+        *[f"- {p['id']}: {p['check']}" for p in manual.get("pending", [])],
+    ]))
+    return results
+
+
 PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks, 2: phase2_checks, 3: phase3_checks, 4: phase4_checks,
-                5: phase5_checks}
+                5: phase5_checks, 6: phase6_checks}
 
 
 def run(phases: list[int]) -> dict:

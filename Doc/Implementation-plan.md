@@ -33,6 +33,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | **Phase 3: Scheme resolution and retrieval** | **Done** (19 Nov 2026): resolver (+ weak aliases, `not_covered`), local nomic embeddings in ChromaDB, BM25 fallback; dense gate: paraphrases 96.3%, held-out 100% (50/50), out-of-scope answered 0/58; 141 tests; gate report `eval/reports/2026-11-19-phase0-1-2-3-b11b02f.md` |
 | **Phase 4: Answer pipeline (extractive), M1** | **Done** (19 Nov 2026): `formatter.py` (`Reply`, `validate`), `composer.py` (extractive + fixed replies), `pipeline.py` (`handle`), `python -m bolosip`; dense gate: 135/135 core facts, format and citations 901/901, reply kind 99.8%, context 63/63; 177 tests. Human review (M1) pending: 30 answers listed in the gate report |
 | **Phase 5: Thread store and HTTP API** | **Done** (19 Nov 2026): `bolosip/store.py` (SQLite, WAL), `server.py` (stdlib JSON API, Host/Origin/JSON checks, per-IP rate limit); dense gate: API parity 838/838, context over HTTP 63/63, 0 leaks, 0 personal data stored, p50 25 ms / p95 ≤ 46 ms; 213 tests |
+| **Phase 6: Web UI, M2** | **Done** (20 Nov 2026): `web/index.html`, one self-contained file built from the reviewed Google Stitch design ([ui-review.md](design/ui-review.md)); dark (default) and light themes; 14 browser checks recorded; 225 tests. By hand still: Edge, Lighthouse, screen reader, 3-person usability check |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -430,11 +431,21 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 **Files:** `web/index.html`, small additions to `server.py` (`/api/config`)
 
 **Exit criteria**
-- [ ] Welcome message, 3 examples and the disclaimer are visible on first load (AC 9).
-- [ ] Clicking each example gives a correct, cited, footed answer.
-- [ ] Two browser tabs on different threads don't interfere.
-- [ ] Pasting `<script>alert(1)</script>` as a question shows it as plain text.
-- [ ] No horizontal scrolling at 375 px.
+- [x] Welcome message, 3 examples and the disclaimer are visible on first load (AC 9).
+- [x] Clicking each example gives a correct, cited, footed answer.
+- [x] Two browser tabs on different threads don't interfere.
+- [x] Pasting `<script>alert(1)</script>` as a question shows it as plain text.
+- [x] No horizontal scrolling at 375 px.
+
+Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (`eval/manual/phase6_ui_check.json`). Task 9 is half done: the Edge pass is still to do by hand, with the Lighthouse, screen-reader and usability checks from eval.md.
+
+**Decisions and findings (20 Nov 2026)**
+- **Design source:** a Google Stitch export, reviewed in [design/ui-review.md](design/ui-review.md). Kept: palettes, welcome cards, one card per reply kind with a big icon, value highlights, source chips. Fixed: 2px light-grey borders on mobile (every border is now a 1px hairline, tested), mobile replies not rendering, overflowing mobile header, broken logo image. Removed: badges the project can't back ("SEBI-compliant", "AMFI live feed", "verified snapshot"), a user avatar, samples about other fund houses, an echoed PAN, and every external script and font.
+- **Themes:** dark by default; light from the header toggle, remembered in `localStorage` (try/catch). Both themes pass WCAG AA for every text and icon colour (`tests/test_web.py`); the check raised the dark "faint" grey from 4.0:1 to 4.8:1.
+- **Threads are created on the first message**, so "New chat" never leaves empty threads behind.
+- **Clarify choices** send "scheme name + topic": the topic is taken from the question ("HDFC Equity expense ratio" → "HDFC Flexi Cap Fund expense ratio"); with no topic, the scheme name alone (its category fact). Help buttons send the example question itself.
+- **Privacy:** after a privacy reply the thread is re-drawn from the server, so the user sees what was stored (`[redacted]`), not their PAN.
+- **Errors:** `429` → "please wait N seconds"; server down → friendly message and the typed text goes back into the box; a deleted or unknown saved thread → welcome screen (THR-12).
 
 **Covers:** AC 9; arch §14; PS §5
 

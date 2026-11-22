@@ -4,7 +4,7 @@
 
 BoloSIP is a small retrieval-based FAQ assistant that answers factual questions about 27 HDFC Mutual Fund schemes: expense ratio, exit load, minimum SIP, riskometer, benchmark, and how to download statements. Every answer is at most 3 sentences, cites exactly one source, and shows when that source was last updated. It refuses advice and opinion questions, and never asks for or stores personal details.
 
-**Status:** under construction. Phases 0 (foundation), 1 (data for all 27 schemes), 2 (personal-data, advice and returns checks), 3 (scheme resolution and retrieval), 4 (answers in the terminal) and 5 (threads and the JSON API) are done; see the [implementation plan](Doc/Implementation-plan.md).
+**Status:** under construction. Phases 0 (foundation), 1 (data for all 27 schemes), 2 (personal-data, advice and returns checks), 3 (scheme resolution and retrieval), 4 (answers in the terminal), 5 (threads and the JSON API) and 6 (the chat page) are done; see the [implementation plan](Doc/Implementation-plan.md).
 
 Refresh the scheme data (fetches only the 27 Groww scheme pages; falls back to saved copies if offline):
 
@@ -84,7 +84,7 @@ Run `python -m bolosip` with no question for an interactive prompt, or add `--js
 python server.py
 ```
 
-It listens on http://127.0.0.1:8000 and serves the JSON API under `/api/` (the chat page arrives in Phase 6). For example, `GET /api/health` reports the 27 schemes and which search is in use. Conversations are kept in `data/bolosip.sqlite3` (git-ignored); personal details are replaced with `[redacted]` before anything is saved. Start it with the Python 3.12 environment (`.venv/Scripts/python.exe server.py`) to use the embedding search.
+Open http://127.0.0.1:8000 for the chat page: dark theme by default (sun/moon button for light), a list of chats on the left (a drawer on phones), and three example questions to start. The JSON API is under `/api/`. For example, `GET /api/health` reports the 27 schemes and which search is in use. Conversations are kept in `data/bolosip.sqlite3` (git-ignored); personal details are replaced with `[redacted]` before anything is saved. Start it with the Python 3.12 environment (`.venv/Scripts/python.exe server.py`) to use the embedding search.
 
 ## Settings and the Groq API key
 

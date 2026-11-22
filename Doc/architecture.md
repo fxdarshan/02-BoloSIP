@@ -546,8 +546,9 @@ All responses are JSON, and errors look like `{"error": "<message>"}`.
 
 - **Disclaimer:** in a sticky header, so it is always visible.
 - **Safe rendering:** all message text is inserted with `textContent`, never `innerHTML`. Source links get `rel="noopener noreferrer"` and `target="_blank"`.
-- **Remembered thread:** the active thread ID is kept in `localStorage`, wrapped in try/catch. All other state lives on the server.
-- **Narrow screens:** below 700 px the thread list becomes a drawer.
+- **Remembered thread and theme:** the active thread ID and the light/dark choice are kept in `localStorage`, wrapped in try/catch. All other state lives on the server.
+- **Narrow screens:** below 700 px the thread list becomes a drawer and the disclaimer moves to its own row of the sticky header. The same components and 1px hairline borders are used at every width.
+- **Look:** dark theme by default ("Calm Financial Terminal" palette), light theme on request; each reply kind has its own big icon, colour and label; values such as "0.73% per annum" are highlighted by splitting the text into spans, still with `textContent`. Every text and icon colour meets WCAG AA in both themes. Design review: [design/ui-review.md](design/ui-review.md).
 
 ## 15. Ingestion pipeline
 

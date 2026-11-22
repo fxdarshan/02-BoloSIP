@@ -1,0 +1,27 @@
+{
+  "phase": 6,
+  "date": "20 Nov 2026",
+  "method": "web/index.html served by `python server.py` (Python 3.12, dense retriever, separate preview database), driven in the Claude desktop app's built-in Chromium browser at 1440x900 and 375x812 (mobile emulation), dark and light themes.",
+  "checks": [
+    {"id": "AC9", "check": "Welcome text, 3 example questions and the disclaimer visible on first load", "result": "pass", "notes": "Welcome and examples come from /api/config; disclaimer in the sticky header"},
+    {"id": "AC9-scroll", "check": "Disclaimer stays visible while scrolling a long thread", "result": "pass", "notes": "Thread of 20+ replies scrolled to the end; disclaimer still inside the viewport (it sits in the sticky header, outside the scrolling area)"},
+    {"id": "EX", "check": "Each example card gives a correct, cited, footed answer", "result": "pass", "notes": "Mid Cap TER -> Groww Mid Cap page, 19 Nov 2026; ELSS lock-in -> AMFI categorisation page, 16 Nov 2026; statement -> HDFC MF Download Statement page, 16 Nov 2026"},
+    {"id": "KINDS", "check": "All 7 reply kinds render with their own icon, label, colour, link and footer rules", "result": "pass", "notes": "answer, refusal, performance, privacy, clarify, not_found, help; clarify and help show buttons and no link"},
+    {"id": "UI-01", "check": "Script and onerror payloads shown as text", "result": "pass", "notes": "<script>alert(1)</script><img src=x onerror=alert(2)> shown literally; no script or img element created; reply not_found"},
+    {"id": "UI-06", "check": "375 px: no horizontal scroll; drawer works", "result": "pass", "notes": "scrollWidth 375 = innerWidth; drawer opens, closes on scrim / Escape; delete confirmation inside the drawer"},
+    {"id": "UI-07", "check": "Network failure: friendly error, typed text kept", "result": "pass", "notes": "Server stopped: toast \"Can't reach BoloSIP. Is the server running?\", the question returned to the input box, send re-enabled"},
+    {"id": "UI-11", "check": "Clarify buttons resolve", "result": "pass", "notes": "\"HDFC Equity expense ratio\" -> HDFC Flexi Cap Fund / HDFC Equity Savings Fund; clicking Flexi Cap sent \"HDFC Flexi Cap Fund expense ratio\" -> 0.74% answer"},
+    {"id": "UI-12-keyboard", "check": "Every control reachable by keyboard and labelled", "result": "pass", "notes": "No visible button, link or text box with tabindex < 0; every icon-only button has an aria-label; message list is aria-live=polite; Enter sends, Shift+Enter new line"},
+    {"id": "TABS", "check": "Two browser tabs on two threads don't interfere", "result": "pass", "notes": "Tab A Mid Cap then \"what is its exit load?\" -> Mid Cap; tab B Liquid then the same follow-up -> Liquid"},
+    {"id": "PRIVACY", "check": "A message with personal data is shown redacted after the reply", "result": "pass", "notes": "\"my PAN is ABCDE1234F, check my folio\" re-rendered as \"my PAN is [redacted], check my folio\" from the stored history"},
+    {"id": "DELETE", "check": "Deleting the open chat returns to the welcome screen and forgets it", "result": "pass", "notes": "Thread list empty, welcome shown, saved thread id cleared"},
+    {"id": "THEME", "check": "Light / dark toggle applies and is remembered", "result": "pass", "notes": "data-theme and localStorage both 'light' after toggling; dark is the default"},
+    {"id": "CONTRAST", "check": "WCAG AA contrast for text and icons, both themes", "result": "pass", "notes": "Checked by tests/test_web.py; dark 'faint' text raised from #7f8a85 (4.02:1 on raised cards) to #8d9893 (>= 4.83:1)"}
+  ],
+  "pending": [
+    {"id": "EDGE", "check": "Same checks in Microsoft Edge (plan Phase 6 task 9)", "who": "owner"},
+    {"id": "LIGHTHOUSE", "check": "Chrome Lighthouse accessibility score >= 90", "who": "owner"},
+    {"id": "SCREEN-READER", "check": "NVDA or Narrator announces replies", "who": "owner"},
+    {"id": "USABILITY", "check": "3 people, 5 tasks each: >= 13 of 15 done without help; nobody believes BoloSIP gave advice", "who": "owner"}
+  ]
+}
