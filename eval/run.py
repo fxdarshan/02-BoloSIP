@@ -14,6 +14,7 @@ import argparse
 import datetime as dt
 import io
 import json
+import re
 import os
 import subprocess
 import sys
@@ -59,6 +60,13 @@ def phase0_checks() -> list[dict]:
     proc = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-q"],
                           cwd=ROOT, capture_output=True, text=True)
     last = (proc.stderr.strip().splitlines() or ["no output"])[-1]
+    # Name the failing tests (and their assertion), so a failure seen only in CI can be traced.
+    failing = re.findall(r"^(?:FAIL|ERROR): (\S+) \((\S+)\)", proc.stderr, re.M)
+    reasons = re.findall(r"^(\w+(?:Error|Exception)\b.*)$", proc.stderr, re.M)
+    if failing:
+        last += "; " + ", ".join(cls if cls.endswith(name) else f"{cls}.{name}" for name, cls in failing)
+        if reasons:
+            last += f" ({reasons[0][:160]})"
     results.append({"check": "Unit tests pass (python -m unittest discover tests)",
                     "pass": proc.returncode == 0, "detail": last})
 
