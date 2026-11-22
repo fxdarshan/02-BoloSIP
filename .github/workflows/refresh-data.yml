@@ -15,6 +15,11 @@ on:
         description: "Run every step but commit nothing"
         type: boolean
         default: false
+      force_failure:
+        description: "Test the failure path (never commits): gate = fail the evaluation step, blocked = 6 stable facts changed"
+        type: choice
+        options: [none, gate, blocked]
+        default: none
 
 permissions:
   contents: write                  # push the refreshed data
@@ -32,6 +37,7 @@ jobs:
     env:
       BOLOSIP_RETRIEVER: embed      # the dense path must work; never fall back silently
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+      FORCE_FAILURE: ${{ github.event_name == 'workflow_dispatch' && inputs.force_failure || 'none' }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +58,21 @@ jobs:
 
       - name: Keep the current corpus for the change report
         run: cp data/corpus.json "$RUNNER_TEMP/corpus.before.json"
+
+      # Failure-path test only: alter six exit-load facts in the *before* copy, so the real
+      # blocking rule in data_diff.py sees six stable changes. The repo data is untouched.
+      - name: "Test: simulate six stable-fact changes"
+        if: env.FORCE_FAILURE == 'blocked'
+        run: |
+          python - "$RUNNER_TEMP/corpus.before.json" <<'PY'
+          import json, sys
+          p = sys.argv[1]; c = json.load(open(p, encoding="utf-8"))
+          hits = [ch for ch in c["chunks"] if ch.get("topic") == "exit_load"][:6]
+          for ch in hits:
+              ch["text"] += " (forced test change)"
+          json.dump(c, open(p, "w", encoding="utf-8"), ensure_ascii=False)
+          print("altered:", [ch["id"] for ch in hits])
+          PY
 
       # Exit codes: 0 all pages live, 1 some served from their last snapshot (continue,
       # reported), 2 a scheme missing or the corpus invalid (stop; nothing is written).
@@ -78,10 +99,12 @@ jobs:
         run: python -m unittest discover tests
 
       - name: Evaluation gates
-        run: python -m eval.run --all --no-write
+        run: |
+          if [ "$FORCE_FAILURE" = "gate" ]; then echo "::error::Forced gate failure (failure-path test)"; exit 1; fi
+          python -m eval.run --all --no-write
 
       - name: Commit and push the refreshed data
-        if: env.DRY_RUN != 'true' && steps.diff.outputs.changed == 'true'
+        if: env.DRY_RUN != 'true' && env.FORCE_FAILURE == 'none' && steps.diff.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -106,7 +129,7 @@ jobs:
           if [ -n "$n" ]; then gh issue comment "$n" --body "$body"; else gh issue create --title "Daily data refresh needs attention" --label data-refresh --body "$body"; fi
 
       - name: Close the data-refresh issue after a fully live, successful run
-        if: success() && env.DRY_RUN != 'true' && steps.ingest.outputs.exit_code == '0'
+        if: success() && env.DRY_RUN != 'true' && env.FORCE_FAILURE == 'none' && steps.ingest.outputs.exit_code == '0'
         run: |
           for n in $(gh issue list --label data-refresh --state open --json number -q '.[].number'); do
             gh issue close "$n" --comment "Resolved: the refresh of ${{ github.run_id }} fetched every page live and passed every check."
