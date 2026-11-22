@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><style>
+  @layer base {
+    html, body { margin: 0; padding: 0; }
+    body { overscroll-behavior: none; }
+    main > :first-child { margin-top: 0 !important; }
+    main > :last-child { margin-bottom: 0 !important; }
+  }
+  ::-webkit-scrollbar { display: none; }
+
+  /* Smooth Theme Transition */
+  @media (prefers-reduced-motion: no-preference) {
+    *, *::before, *::after {
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
+    }
+  }
+
+  /* Precise 1px hairline styling on cards and containers */
+  .hairline-card {
+    border-width: 1px !important;
+  }
+
+  /* Dark mode specific subtle glows & accents */
+  html.dark .card-factual {
+    box-shadow: 0 4px 24px -2px rgba(61, 214, 163, 0.06);
+  }
+  html.dark .card-advisory,
+  html.dark .card-forecast {
+    box-shadow: 0 4px 24px -2px rgba(155, 202, 255, 0.05);
+  }
+  html.dark .card-privacy {
+    box-shadow: 0 4px 24px -2px rgba(255, 180, 171, 0.05);
+  }
+  html.dark .card-disambiguation {
+    box-shadow: 0 4px 24px -2px rgba(255, 213, 123, 0.05);
+  }
+  html.dark .card-notfound {
+    box-shadow: 0 4px 24px -2px rgba(133, 148, 140, 0.05);
+  }
+
+  /* Comprehensive Pristine Light Mode Overrides */
+  html.light {
+    color-scheme: light;
+  }
+  html.light body {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+  }
+  html.light header {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+  html.light header span.font-title-md {
+    color: #0f172a !important;
+  }
+  html.light header .trust-pill {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #475569 !important;
+  }
+  html.light header .trust-pill span {
+    color: #059669 !important;
+  }
+  html.light aside {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+  html.light aside nav a {
+    color: #475569 !important;
+  }
+  html.light aside nav a:hover {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+  html.light aside nav .active-thread {
+    background-color: #f0fdf4 !important;
+    border-color: #86efac !important;
+    color: #065f46 !important;
+  }
+  html.light aside nav .active-thread span.title {
+    color: #065f46 !important;
+  }
+  html.light aside .border-surface-container-highest {
+    border-color: #e2e8f0 !important;
+  }
+  html.light aside .bg-surface-container-lowest {
+    background-color: #f8fafc !important;
+  }
+  html.light main {
+    background-color: #f8fafc !important;
+  }
+
+  /* User prompt bubbles in light mode */
+  html.light .user-bubble {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  }
+  html.light .user-bubble p {
+    color: #0f172a !important;
+  }
+  html.light .user-bubble code {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+    border: 1px solid #fecaca !important;
+  }
+  html.light .user-avatar {
+    background-color: #0f766e !important;
+  }
+  html.light .user-avatar span {
+    color: #ffffff !important;
+  }
+
+  /* Cards in Light Mode (1px elegant border) */
+  html.light .card-factual {
+    background-color: #ffffff !important;
+    border-color: #bbf7d0 !important;
+    box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.08) !important;
+  }
+  html.light .card-factual .badge-icon {
+    background-color: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+    color: #059669 !important;
+  }
+  html.light .card-factual .tag-pill {
+    background-color: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+    color: #047857 !important;
+  }
+  html.light .card-factual .sub-pill {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #64748b !important;
+  }
+  html.light .card-factual p {
+    color: #1e293b !important;
+  }
+  html.light .card-factual strong.highlight-stat {
+    background-color: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+    color: #065f46 !important;
+  }
+  html.light .card-factual strong.stat-badge {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+  html.light .card-factual .link-pill {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #047857 !important;
+  }
+  html.light .card-factual .link-pill:hover {
+    background-color: #ecfdf5 !important;
+    border-color: #059669 !important;
+  }
+  html.light .card-factual footer {
+    border-color: #f1f5f9 !important;
+    color: #64748b !important;
+  }
+
+  /* Advisory Refusal Card */
+  html.light .card-advisory {
+    background-color: #ffffff !important;
+    border-color: #bfdbfe !important;
+    box-shadow: 0 4px 20px -2px rgba(37, 99, 235, 0.08) !important;
+  }
+  html.light .card-advisory .badge-icon {
+    background-color: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    color: #2563eb !important;
+  }
+  html.light .card-advisory .tag-pill {
+    background-color: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    color: #1d4ed8 !important;
+  }
+  html.light .card-advisory .sub-pill {
+    background-color: #eff6ff !important;
+    border-color: #dbeafe !important;
+    color: #1e40af !important;
+  }
+  html.light .card-advisory p {
+    color: #1e293b !important;
+  }
+  html.light .card-advisory .link-pill {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #1d4ed8 !important;
+  }
+  html.light .card-advisory .link-pill:hover {
+    background-color: #eff6ff !important;
+    border-color: #2563eb !important;
+  }
+  html.light .card-advisory footer {
+    border-color: #f1f5f9 !important;
+    color: #64748b !important;
+  }
+
+  /* Forecast Guard Card */
+  html.light .card-forecast {
+    background-color: #ffffff !important;
+    border-color: #c7d2fe !important;
+    box-shadow: 0 4px 20px -2px rgba(79, 70, 229, 0.08) !important;
+  }
+  html.light .card-forecast .badge-icon {
+    background-color: #eef2ff !important;
+    border-color: #c7d2fe !important;
+    color: #4f46e5 !important;
+  }
+  html.light .card-forecast .tag-pill {
+    background-color: #eef2ff !important;
+    border-color: #c7d2fe !important;
+    color: #4338ca !important;
+  }
+  html.light .card-forecast .sub-pill {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #64748b !important;
+  }
+  html.light .card-forecast p {
+    color: #1e293b !important;
+  }
+  html.light .card-forecast .link-pill {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #4338ca !important;
+  }
+  html.light .card-forecast .link-pill:hover {
+    background-color: #eef2ff !important;
+    border-color: #4f46e5 !important;
+  }
+  html.light .card-forecast footer {
+    border-color: #f1f5f9 !important;
+    color: #64748b !important;
+  }
+
+  /* Privacy Alert Card */
+  html.light .card-privacy {
+    background-color: #ffffff !important;
+    border-color: #fecdd3 !important;
+    box-shadow: 0 4px 20px -2px rgba(225, 29, 72, 0.08) !important;
+  }
+  html.light .card-privacy .badge-icon {
+    background-color: #fff1f2 !important;
+    border-color: #fecdd3 !important;
+    color: #e11d48 !important;
+  }
+  html.light .card-privacy .tag-pill {
+    background-color: #fff1f2 !important;
+    border-color: #fecdd3 !important;
+    color: #be123c !important;
+  }
+  html.light .card-privacy .sub-pill {
+    background-color: #fff1f2 !important;
+    border-color: #ffe4e6 !important;
+    color: #e11d48 !important;
+  }
+  html.light .card-privacy p {
+    color: #1e293b !important;
+  }
+  html.light .card-privacy .link-pill {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #be123c !important;
+  }
+  html.light .card-privacy .link-pill:hover {
+    background-color: #fff1f2 !important;
+    border-color: #e11d48 !important;
+  }
+  html.light .card-privacy footer {
+    border-color: #f1f5f9 !important;
+    color: #64748b !important;
+  }
+
+  /* Disambiguation Card */
+  html.light .card-disambiguation {
+    background-color: #ffffff !important;
+    border-color: #fde68a !important;
+    box-shadow: 0 4px 20px -2px rgba(217, 119, 6, 0.08) !important;
+  }
+  html.light .card-disambiguation .badge-icon {
+    background-color: #fffbeb !important;
+    border-color: #fde68a !important;
+    color: #d97706 !important;
+  }
+  html.light .card-disambiguation .tag-pill {
+    background-color: #fffbeb !important;
+    border-color: #fde68a !important;
+    color: #b45309 !important;
+  }
+  html.light .card-disambiguation .sub-pill {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #64748b !important;
+  }
+  html.light .card-disambiguation p {
+    color: #1e293b !important;
+  }
+  html.light .card-disambiguation .option-btn {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
+  }
+  html.light .card-disambiguation .option-btn:hover {
+    border-color: #f59e0b !important;
+    background-color: #fffbeb !important;
+  }
+  html.light .card-disambiguation .option-btn span.title {
+    color: #0f172a !important;
+  }
+
+  /* Not Found Card */
+  html.light .card-notfound {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 20px -2px rgba(100, 116, 139, 0.08) !important;
+  }
+  html.light .card-notfound .badge-icon {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #475569 !important;
+  }
+  html.light .card-notfound .tag-pill {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #475569 !important;
+  }
+  html.light .card-notfound .sub-pill {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #64748b !important;
+  }
+  html.light .card-notfound p {
+    color: #1e293b !important;
+  }
+  html.light .card-notfound .link-pill {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #334155 !important;
+  }
+  html.light .card-notfound .link-pill:hover {
+    background-color: #f1f5f9 !important;
+    border-color: #64748b !important;
+  }
+  html.light .card-notfound footer {
+    border-color: #f1f5f9 !important;
+    color: #64748b !important;
+  }
+
+  /* Anchor bar & Docked Input Bar in Light Mode */
+  html.light .session-anchor-bar {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #475569 !important;
+  }
+  html.light .session-anchor-bar .session-title {
+    color: #0f172a !important;
+  }
+  html.light .docked-input-container {
+    background-color: rgba(255, 255, 255, 0.94) !important;
+    border-color: #e2e8f0 !important;
+  }
+  html.light .docked-input-box {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+  }
+  html.light .docked-input-box input {
+    color: #0f172a !important;
+  }
+  html.light .docked-input-box .token-counter {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: #64748b !important;
+  }
+  html.light .loading-bubble {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #475569 !important;
+  }
+  html.light .loading-bot-icon {
+    background-color: #ecfdf5 !important;
+    color: #059669 !important;
+    border-color: #a7f3d0 !important;
+  }
+  html.light .delete-popover {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+  }
+  html.light .delete-popover .title {
+    color: #0f172a !important;
+  }
+  html.light .delete-popover .desc {
+    color: #64748b !important;
+  }
+  html.light #rate-limit-toast {
+    background-color: #ffffff !important;
+    border-color: #fecdd3 !important;
+    box-shadow: 0 20px 25px -5px rgba(225, 29, 72, 0.1) !important;
+  }
+  html.light #rate-limit-toast .toast-title {
+    color: #0f172a !important;
+  }
+  html.light #rate-limit-toast .toast-sub {
+    color: #64748b !important;
+  }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "on-background": "#e1e2e9",
+        "on-secondary-fixed": "#001d35",
+        "on-secondary-container": "#dae9ff",
+        "secondary-fixed": "#d0e4ff",
+        "background": "#111319",
+        "on-error-container": "#ffdad6",
+        "surface-container-low": "#191c21",
+        "tertiary": "#ffd57b",
+        "on-primary-fixed": "#002115",
+        "on-secondary-fixed-variant": "#00497a",
+        "surface-container-highest": "#32353a",
+        "primary": "#61f3be",
+        "tertiary-fixed": "#ffdf9d",
+        "secondary-fixed-dim": "#9bcaff",
+        "surface-variant": "#32353a",
+        "secondary-container": "#006cb0",
+        "surface-tint": "#48deab",
+        "outline-variant": "#3c4a43",
+        "inverse-on-surface": "#2e3036",
+        "on-tertiary": "#3f2e00",
+        "tertiary-fixed-dim": "#f0c04d",
+        "on-surface-variant": "#bbcac1",
+        "primary-fixed-dim": "#48deab",
+        "surface-bright": "#36393f",
+        "on-primary": "#003827",
+        "inverse-surface": "#e1e2e9",
+        "primary-container": "#3dd6a3",
+        "secondary": "#9bcaff",
+        "surface": "#111319",
+        "surface-container-high": "#272a30",
+        "primary-fixed": "#6afbc6",
+        "surface-container-lowest": "#0b0e13",
+        "on-secondary": "#003256",
+        "surface-container": "#1d2025",
+        "outline": "#85948c",
+        "on-primary-container": "#005840",
+        "inverse-primary": "#006c4e",
+        "on-error": "#690005",
+        "on-surface": "#e1e2e9",
+        "error": "#ffb4ab",
+        "on-primary-fixed-variant": "#00513a",
+        "on-tertiary-fixed-variant": "#5b4300",
+        "tertiary-container": "#e8b846",
+        "error-container": "#93000a",
+        "surface-dim": "#111319",
+        "on-tertiary-fixed": "#251a00",
+        "on-tertiary-container": "#634900"
+      },
+      borderRadius: {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "2xl": "1rem",
+        "full": "9999px"
+      },
+      fontFamily: {
+        sans: ["Inter", "sans-serif"],
+        "body-md": ["Inter", "sans-serif"],
+        "label-sm": ["Inter", "sans-serif"],
+        "label-md": ["Inter", "sans-serif"],
+        "title-md": ["Inter", "sans-serif"],
+        "headline-sm": ["Inter", "sans-serif"]
+      },
+      fontSize: {
+        "label-sm": ["11px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600" }],
+        "label-md": ["13px", { lineHeight: "18px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "body-sm": ["12px", { lineHeight: "18px", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", fontWeight: "400" }],
+        "body-lg": ["15px", { lineHeight: "24px", fontWeight: "400" }],
+        "title-md": ["18px", { lineHeight: "26px", fontWeight: "600" }]
+      }
+    }
+  }
+};
+</script></head><body class="bg-surface-container-lowest font-body-md text-on-surface antialiased min-h-screen selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Header -->
+<header class="fixed top-0 left-0 right-0 h-16 z-50 bg-surface-container-low border-b border-surface-container-highest flex items-center justify-between px-6 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary-container/10 border border-primary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-[20px]">account_balance_wallet</span>
+</div>
+<span class="font-title-md text-title-md text-on-surface font-semibold tracking-tight">BoloSIP</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm border border-surface-container-highest font-mono">RESEARCH ENGINE</span>
+</div>
+<div class="flex items-center gap-3">
+<!-- Compliance Notice Pill -->
+<div class="trust-pill hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-lowest border border-surface-container-highest shadow-sm">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="material-symbols-outlined text-primary-container text-[16px]">verified_user</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wide">Facts-only. No investment advice.</span>
+</div>
+<!-- Hairline Dual Theme Switcher Toggle Pill (Sun / Moon) -->
+<div aria-label="Appearance theme selection" class="flex items-center p-0.5 rounded-full bg-surface-container border border-surface-container-highest shadow-inner relative" role="radiogroup">
+<button aria-checked="false" aria-label="Switch to Light theme" class="w-7 h-7 rounded-full flex items-center justify-center text-outline hover:text-on-surface transition-all focus:outline-none" id="theme-btn-light" role="radio" tabindex="0" title="Light mode" type="button">
+<span class="material-symbols-outlined text-[16px]">light_mode</span>
+</button>
+<button aria-checked="true" aria-label="Switch to Dark theme" class="w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center text-primary-container border border-primary-container/30 shadow-sm transition-all focus:outline-none" id="theme-btn-dark" role="radio" tabindex="0" title="Dark mode" type="button">
+<span class="material-symbols-outlined text-[16px]">dark_mode</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary-container/20 border border-primary-container/40 flex items-center justify-center text-primary-container shadow-sm"><span class="material-symbols-outlined text-[18px]">person</span></div>
+</div>
+</header>
+<!-- Left Sidebar Navigation -->
+<aside class="fixed left-0 top-16 bottom-0 w-[280px] bg-surface-container-low border-r border-surface-container-highest z-40 flex flex-col justify-between p-4 transition-colors">
+<div class="flex flex-col gap-3 flex-1 overflow-hidden">
+<button class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary-container text-on-primary-container font-label-md text-label-md font-semibold hover:brightness-105 active:scale-[0.99] transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>New chat</span>
+</button>
+<div class="flex items-center justify-between px-1 pt-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Recent Threads</span>
+<span class="font-label-sm text-label-sm text-outline">Synced</span>
+</div>
+<nav class="flex flex-col gap-1 overflow-y-auto pr-1 flex-1">
+<!-- Active Highlighted Thread (1px hairline) -->
+<div class="relative group">
+<a class="active-thread flex items-center justify-between p-2.5 rounded-xl bg-surface-container text-on-surface font-medium border border-primary-container/40 shadow-sm transition-all hairline-card" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-primary-container text-[18px]">chat_bubble</span>
+<div class="flex flex-col truncate text-left">
+<span class="title font-body-md text-body-md font-medium text-on-surface truncate">HDFC Mid Cap exit load</span>
+<span class="font-label-sm text-label-sm text-primary">10m ago · Active</span>
+</div>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container shrink-0"></span>
+</a>
+</div>
+<!-- Thread with Floating Delete Confirmation Modal / Popover -->
+<div class="relative group">
+<div class="flex items-center justify-between p-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all border border-transparent hairline-card">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-outline text-[18px]">chat_bubble</span>
+<div class="flex flex-col truncate text-left">
+<span class="font-body-md text-body-md truncate">Download statement</span>
+<span class="font-label-sm text-label-sm text-outline">2h ago</span>
+</div>
+</div>
+<button aria-label="Delete thread" class="text-error hover:opacity-80 transition-opacity" id="toggle-delete-btn" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+<!-- Floating Delete Confirmation Popover (Contextual Showcase) -->
+<div class="delete-popover absolute left-6 top-6 z-50 w-64 p-3.5 rounded-xl bg-surface-container-high border border-outline-variant/60 shadow-2xl hairline-card transition-all" id="delete-modal">
+<div class="flex items-start gap-2.5 mb-3">
+<div class="w-7 h-7 rounded-lg bg-error-container/20 border border-error/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error text-[16px]">delete_forever</span>
+</div>
+<div class="flex flex-col">
+<span class="title font-label-md text-label-md font-semibold text-on-surface">Delete this chat?</span>
+<span class="desc font-body-sm text-body-sm text-on-surface-variant mt-0.5">This action cannot be undone.</span>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 pt-1 border-t border-surface-container-highest/60">
+<button class="px-2.5 py-1 rounded-lg text-outline hover:text-on-surface font-label-sm text-label-sm transition-colors" onclick="document.getElementById('delete-modal').classList.toggle('hidden')" type="button">Cancel</button>
+<button class="px-3 py-1 rounded-lg bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold hover:brightness-110 transition-all border border-error/30" onclick="document.getElementById('delete-modal').classList.add('hidden')" type="button">Delete</button>
+</div>
+</div>
+</div>
+<!-- Thread 3 -->
+<a class="group flex items-center justify-between p-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all border border-transparent hairline-card" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-outline text-[18px] group-hover:text-primary transition-colors">chat_bubble</span>
+<div class="flex flex-col truncate text-left">
+<span class="font-body-md text-body-md truncate">ELSS tax exemption</span>
+<span class="font-label-sm text-label-sm text-outline">Yesterday</span>
+</div>
+</div>
+</a>
+<!-- Thread 4 -->
+<a class="group flex items-center justify-between p-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all border border-transparent hairline-card" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-outline text-[18px] group-hover:text-primary transition-colors">chat_bubble</span>
+<div class="flex flex-col truncate text-left">
+<span class="font-body-md text-body-md truncate">HDFC Flexi Cap TER</span>
+<span class="font-label-sm text-label-sm text-outline">3 days ago</span>
+</div>
+</div>
+</a>
+</nav>
+</div>
+<!-- AMFI Live Feed Status Box -->
+<div class="pt-3 border-t border-surface-container-highest flex flex-col gap-2">
+<div class="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-lowest border border-surface-container-highest hairline-card">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">database</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">AMFI Live Feed</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-semibold tracking-wider flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>ACTIVE
+    </span>
+</div>
+</div>
+</aside>
+<!-- Workspace Area -->
+<div class="pl-0 md:pl-[280px]">
+<main class="relative pt-16 min-h-screen bg-surface-container-lowest flex flex-col items-center">
+<div class="flex flex-col w-full relative">
+<!-- Rate Limit 429 Ambient Floating Toast Banner (1px hairline) -->
+<aside aria-live="assertive" class="fixed top-20 right-6 z-50 flex items-center gap-3 p-3.5 rounded-xl bg-surface-container-high border border-error/40 shadow-xl backdrop-blur-md transition-all duration-300 hairline-card" id="rate-limit-toast" role="alert">
+<div class="w-9 h-9 rounded-lg bg-error-container/20 border border-error/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error text-[20px]">warning</span>
+</div>
+<div class="flex flex-col pr-3">
+<div class="flex items-center gap-2">
+<span class="toast-title font-label-md text-label-md font-semibold text-on-surface">Rate Limit Exceeded</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-error-container/30 text-error border border-error/30">429 Wait</span>
+</div>
+<span class="toast-sub font-body-sm text-body-sm text-on-surface-variant mt-0.5">Too many messages in window. Please wait a moment.</span>
+</div>
+<button aria-label="Dismiss toast" class="p-1 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-highest transition-colors ml-auto" onclick="document.getElementById('rate-limit-toast').style.opacity='0'; setTimeout(()=&gt;document.getElementById('rate-limit-toast').remove(), 250)" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</aside>
+<!-- Conversation Stream Wrapper (Max-width 760px) -->
+<div class="w-full flex-1 flex flex-col items-center px-4 sm:px-6 lg:px-8 pb-44">
+<div class="w-full max-w-[760px] py-6 space-y-6">
+<!-- Context Session Anchor Ribbon (1px hairline) -->
+<div class="session-anchor-bar flex items-center justify-between py-2 px-4 rounded-xl bg-surface-container-low border border-surface-container-highest text-on-surface-variant hairline-card">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Active Session:</span>
+<span class="session-title font-label-sm text-label-sm text-on-surface font-semibold">HDFC Mutual Fund Database</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span>Verified Snapshot v4.8</span>
+</div>
+</div>
+<!-- Turn 1: User Question 1 -->
+<div class="flex justify-end w-full">
+<div class="flex items-end gap-2.5 max-w-xl">
+<div class="user-bubble bg-surface-container border border-surface-container-highest px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm text-on-surface hairline-card">
+<p class="font-body-md text-body-md">What is the expense ratio of HDFC Mid Cap Fund?</p>
+</div>
+<div class="user-avatar w-7 h-7 rounded-full bg-primary-container flex items-center justify-center shrink-0 shadow-sm mb-0.5">
+<span class="material-symbols-outlined text-on-primary-container text-[15px]">person</span>
+</div>
+</div>
+</div>
+<!-- Turn 2: Factual Answer Card 1: Scheme Metric (1px hairline) -->
+<article class="card-factual bg-surface-container-low p-5 rounded-2xl border border-primary-container/40 hairline-card flex gap-4 transition-all">
+<div class="badge-icon w-12 h-12 rounded-xl bg-primary-container/15 border border-primary-container/30 flex items-center justify-center shrink-0 text-primary-container shadow-sm">
+<span class="material-symbols-outlined text-[26px]">check_circle</span>
+</div>
+<div class="flex flex-col gap-3 flex-1 min-w-0">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="tag-pill px-2.5 py-0.5 rounded-full bg-primary-container/15 border border-primary-container/30 font-label-sm text-label-sm font-semibold uppercase tracking-wider text-primary-container">Scheme Metric · TER</span>
+<span class="sub-pill px-2 py-0.5 rounded-full bg-surface-container text-outline border border-surface-container-highest font-label-sm text-label-sm">Direct Plan</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>Fact Checked
+                </span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">The expense ratio (TER) of HDFC Mid Cap Fund (Direct Growth) is <strong class="highlight-stat font-semibold text-primary-container bg-primary-container/10 px-1.5 py-0.5 rounded border border-primary-container/30">0.73% per annum</strong>, as on 17 Nov 2026.</p>
+<div class="pt-0.5 flex flex-wrap items-center gap-3">
+<a class="link-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container border border-surface-container-highest text-label-md text-label-md text-primary-container hover:bg-surface-container-high transition-all group hairline-card" href="#">
+<span class="material-symbols-outlined text-[16px]">link</span>
+<span>HDFC Mid Cap Fund – Groww scheme page</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-outline group-hover:text-primary-container">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-2 pt-2 text-label-sm text-label-sm text-outline border-t border-surface-container-highest/60">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- Turn 3: User Question 2 -->
+<div class="flex justify-end w-full">
+<div class="flex items-end gap-2.5 max-w-xl">
+<div class="user-bubble bg-surface-container border border-surface-container-highest px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm text-on-surface hairline-card">
+<p class="font-body-md text-body-md">What about its exit load?</p>
+</div>
+<div class="user-avatar w-7 h-7 rounded-full bg-primary-container flex items-center justify-center shrink-0 shadow-sm mb-0.5">
+<span class="material-symbols-outlined text-on-primary-container text-[15px]">person</span>
+</div>
+</div>
+</div>
+<!-- Turn 4: Factual Answer Card 2: Scheme Rules / Exit Load (1px hairline) -->
+<article class="card-factual bg-surface-container-low p-5 rounded-2xl border border-primary-container/40 hairline-card flex gap-4 transition-all">
+<div class="badge-icon w-12 h-12 rounded-xl bg-primary-container/15 border border-primary-container/30 flex items-center justify-center shrink-0 text-primary-container shadow-sm">
+<span class="material-symbols-outlined text-[26px]">check_circle</span>
+</div>
+<div class="flex flex-col gap-3 flex-1 min-w-0">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="tag-pill px-2.5 py-0.5 rounded-full bg-primary-container/15 border border-primary-container/30 font-label-sm text-label-sm font-semibold uppercase tracking-wider text-primary-container">Scheme Rules · Exit Conditions</span>
+<span class="sub-pill px-2 py-0.5 rounded-full bg-surface-container text-outline border border-surface-container-highest font-label-sm text-label-sm">SEBI Filing Compliant</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>Verified
+                </span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">HDFC Mid Cap Fund (Direct Growth) has an exit load of <strong class="stat-badge font-semibold text-on-surface bg-surface-container px-1.5 py-0.5 rounded border border-surface-container-highest">1% if redeemed within 1 year</strong>.</p>
+<div class="pt-0.5 flex flex-wrap items-center gap-3">
+<a class="link-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container border border-surface-container-highest text-label-md text-label-md text-primary-container hover:bg-surface-container-high transition-all group hairline-card" href="#">
+<span class="material-symbols-outlined text-[16px]">description</span>
+<span>HDFC Mutual Fund SID / Factsheet</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-outline group-hover:text-primary-container">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-2 pt-2 text-label-sm text-label-sm text-outline border-t border-surface-container-highest/60">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- Turn 5: User Question 3 -->
+<div class="flex justify-end w-full">
+<div class="flex items-end gap-2.5 max-w-xl">
+<div class="user-bubble bg-surface-container border border-surface-container-highest px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm text-on-surface hairline-card">
+<p class="font-body-md text-body-md">Should I invest in HDFC Mid Cap or HDFC Top 100?</p>
+</div>
+<div class="user-avatar w-7 h-7 rounded-full bg-primary-container flex items-center justify-center shrink-0 shadow-sm mb-0.5">
+<span class="material-symbols-outlined text-on-primary-container text-[15px]">person</span>
+</div>
+</div>
+</div>
+<!-- Turn 6: Card 3: Statutory Compliance / Advisory Refusal (1px hairline) -->
+<article class="card-advisory bg-surface-container-low p-5 rounded-2xl border border-secondary/40 hairline-card flex gap-4 transition-all">
+<div class="badge-icon w-12 h-12 rounded-xl bg-secondary-container/20 border border-secondary/30 flex items-center justify-center shrink-0 text-secondary shadow-sm">
+<span class="material-symbols-outlined text-[26px]">front_hand</span>
+</div>
+<div class="flex flex-col gap-3 flex-1 min-w-0">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="tag-pill px-2.5 py-0.5 rounded-full bg-secondary-container/20 border border-secondary/30 font-label-sm text-label-sm font-semibold uppercase tracking-wider text-secondary">Statutory Compliance · Advisory Refusal</span>
+</div>
+<span class="sub-pill font-label-sm text-label-sm text-secondary bg-secondary-container/20 px-2.5 py-0.5 rounded-full border border-secondary/30 font-medium">Mandatory SEBI Guardrail</span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">I can only share factual information about HDFC Mutual Fund schemes, so I can't advise whether you should invest or which scheme to choose. For guidance on choosing mutual funds, see AMFI's investor education resources.</p>
+<div class="pt-0.5 flex flex-wrap items-center gap-3">
+<a class="link-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container border border-surface-container-highest text-label-md text-label-md text-secondary hover:bg-surface-container-high transition-all group hairline-card" href="#">
+<span class="material-symbols-outlined text-[16px]">school</span>
+<span>AMFI – Investor Corner</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-outline group-hover:text-secondary">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-2 pt-2 text-label-sm text-label-sm text-outline border-t border-surface-container-highest/60">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- Turn 7: User Question 4 -->
+<div class="flex justify-end w-full">
+<div class="flex items-end gap-2.5 max-w-xl">
+<div class="user-bubble bg-surface-container border border-surface-container-highest px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm text-on-surface hairline-card">
+<p class="font-body-md text-body-md">What returns will it give in 3 years?</p>
+</div>
+<div class="user-avatar w-7 h-7 rounded-full bg-primary-container flex items-center justify-center shrink-0 shadow-sm mb-0.5">
+<span class="material-symbols-outlined text-on-primary-container text-[15px]">person</span>
+</div>
+</div>
+</div>
+<!-- Turn 8: Card 4: Forecast Policy / Non-Predictive Guard (1px hairline) -->
+<article class="card-forecast bg-surface-container-low p-5 rounded-2xl border border-secondary/40 hairline-card flex gap-4 transition-all">
+<div class="badge-icon w-12 h-12 rounded-xl bg-secondary-container/20 border border-secondary/30 flex items-center justify-center shrink-0 text-secondary shadow-sm">
+<span class="material-symbols-outlined text-[26px]">show_chart</span>
+</div>
+<div class="flex flex-col gap-3 flex-1 min-w-0">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="tag-pill px-2.5 py-0.5 rounded-full bg-secondary-container/20 border border-secondary/30 font-label-sm text-label-sm font-semibold uppercase tracking-wider text-secondary">Forecast Guard · Non-Predictive Policy</span>
+</div>
+<span class="sub-pill px-2.5 py-0.5 rounded-full bg-surface-container text-outline border border-surface-container-highest font-label-sm text-label-sm font-medium">Zero Speculation</span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">I don't share returns or performance figures. You can see the historical performance of HDFC Mid Cap Fund in HDFC Mutual Fund's official monthly factsheet.</p>
+<div class="pt-0.5 flex flex-wrap items-center gap-3">
+<a class="link-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container border border-surface-container-highest text-label-md text-label-md text-secondary hover:bg-surface-container-high transition-all group hairline-card" href="#">
+<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+<span>HDFC Mutual Fund Monthly Factsheet (PDF)</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-outline group-hover:text-secondary">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-2 pt-2 text-label-sm text-label-sm text-outline border-t border-surface-container-highest/60">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- Turn 9: User Question 5 -->
+<div class="flex justify-end w-full">
+<div class="flex items-end gap-2.5 max-w-xl">
+<div class="user-bubble bg-surface-container border border-surface-container-highest px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm text-on-surface hairline-card">
+<p class="font-body-md text-body-md">My PAN is <code class="bg-surface-container-highest px-1.5 py-0.5 rounded text-error font-mono text-[13px] border border-outline-variant">ABCDE1234F</code>, can you check my folio?</p>
+</div>
+<div class="user-avatar w-7 h-7 rounded-full bg-primary-container flex items-center justify-center shrink-0 shadow-sm mb-0.5">
+<span class="material-symbols-outlined text-on-primary-container text-[15px]">person</span>
+</div>
+</div>
+</div>
+<!-- Turn 10: Card 5: Privacy Safeguard / PII Redaction (1px hairline) -->
+<article class="card-privacy bg-surface-container-low p-5 rounded-2xl border border-error/40 hairline-card flex gap-4 transition-all">
+<div class="badge-icon w-12 h-12 rounded-xl bg-error-container/20 border border-error/30 flex items-center justify-center shrink-0 text-error shadow-sm">
+<span class="material-symbols-outlined text-[26px]">lock</span>
+</div>
+<div class="flex flex-col gap-3 flex-1 min-w-0">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="tag-pill px-2.5 py-0.5 rounded-full bg-error-container/20 border border-error/30 font-label-sm text-label-sm font-semibold uppercase tracking-wider text-error">Privacy Safeguard · PII Redacted</span>
+</div>
+<span class="sub-pill font-label-sm text-label-sm text-error bg-error-container/30 px-2.5 py-0.5 rounded-full border border-error/25 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">shield</span>Sensitive Token
+                </span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">Please don't share personal details such as PAN, Aadhaar, account or folio numbers, phone numbers or OTPs: BoloSIP doesn't need them and doesn't store them.</p>
+<div class="pt-0.5 flex flex-wrap items-center gap-3">
+<a class="link-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container border border-surface-container-highest text-label-md text-label-md text-error hover:bg-surface-container-high transition-all group hairline-card" href="#">
+<span class="material-symbols-outlined text-[16px]">security</span>
+<span>SEBI Investor Protection Guidelines</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-outline group-hover:text-error">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-2 pt-2 text-label-sm text-label-sm text-outline border-t border-surface-container-highest/60">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- Turn 11: User Question 6 -->
+<div class="flex justify-end w-full">
+<div class="flex items-end gap-2.5 max-w-xl">
+<div class="user-bubble bg-surface-container border border-surface-container-highest px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm text-on-surface hairline-card">
+<p class="font-body-md text-body-md">Tell me about HDFC Cap Fund</p>
+</div>
+<div class="user-avatar w-7 h-7 rounded-full bg-primary-container flex items-center justify-center shrink-0 shadow-sm mb-0.5">
+<span class="material-symbols-outlined text-on-primary-container text-[15px]">person</span>
+</div>
+</div>
+</div>
+<!-- Turn 12: Card 6: Disambiguation Multi-Scheme Selection (1px hairline) -->
+<article class="card-disambiguation bg-surface-container-low p-5 rounded-2xl border border-tertiary/40 hairline-card flex gap-4 transition-all">
+<div class="badge-icon w-12 h-12 rounded-xl bg-tertiary-container/20 border border-tertiary/30 flex items-center justify-center shrink-0 text-tertiary shadow-sm">
+<span class="material-symbols-outlined text-[26px]">alt_route</span>
+</div>
+<div class="flex flex-col gap-3 flex-1 min-w-0">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="tag-pill px-2.5 py-0.5 rounded-full bg-tertiary-container/20 border border-tertiary/30 font-label-sm text-label-sm font-semibold uppercase tracking-wider text-tertiary">Disambiguation · Multiple Matches</span>
+</div>
+<span class="sub-pill px-2.5 py-0.5 rounded-full bg-surface-container text-outline border border-surface-container-highest font-label-sm text-label-sm font-medium">Select one to continue</span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">That name matches more than one scheme. Which one do you mean?</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+<button class="option-btn flex flex-col items-start p-3.5 rounded-xl bg-surface-container border border-surface-container-highest hover:border-tertiary outline-none transition-all group text-left shadow-sm hairline-card" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="title font-label-md text-label-md font-semibold text-on-surface group-hover:text-tertiary transition-colors">HDFC Flexi Cap Fund</span>
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-tertiary transition-colors">arrow_forward</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline mt-1">Equity: Flexi Cap · Broad Market</span>
+</button>
+<button class="option-btn flex flex-col items-start p-3.5 rounded-xl bg-surface-container border border-surface-container-highest hover:border-tertiary outline-none transition-all group text-left shadow-sm hairline-card" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="title font-label-md text-label-md font-semibold text-on-surface group-hover:text-tertiary transition-colors">HDFC Small Cap Fund</span>
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-tertiary transition-colors">arrow_forward</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline mt-1">Equity: Small Cap · High Volatility</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Turn 13: User Question 7 -->
+<div class="flex justify-end w-full">
+<div class="flex items-end gap-2.5 max-w-xl">
+<div class="user-bubble bg-surface-container border border-surface-container-highest px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm text-on-surface hairline-card">
+<p class="font-body-md text-body-md">What is the crypto allocation in HDFC Balanced?</p>
+</div>
+<div class="user-avatar w-7 h-7 rounded-full bg-primary-container flex items-center justify-center shrink-0 shadow-sm mb-0.5">
+<span class="material-symbols-outlined text-on-primary-container text-[15px]">person</span>
+</div>
+</div>
+</div>
+<!-- Turn 14: Card 7: Information Horizon / Zero Guesswork (1px hairline) -->
+<article class="card-notfound bg-surface-container-low p-5 rounded-2xl border border-outline/30 hairline-card flex gap-4 transition-all">
+<div class="badge-icon w-12 h-12 rounded-xl bg-surface-container-highest/70 border border-outline/30 flex items-center justify-center shrink-0 text-outline shadow-sm">
+<span class="material-symbols-outlined text-[26px]">search_off</span>
+</div>
+<div class="flex flex-col gap-3 flex-1 min-w-0">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="tag-pill px-2.5 py-0.5 rounded-full bg-surface-container-highest border border-outline/30 font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Information Horizon · Zero Guesswork</span>
+</div>
+<span class="sub-pill px-2.5 py-0.5 rounded-full bg-surface-container text-outline border border-surface-container-highest font-label-sm text-label-sm font-medium">Official Disclosures Only</span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">I couldn't find that in BoloSIP's sources, so I won't guess.</p>
+<div class="pt-0.5 flex flex-wrap items-center gap-3">
+<a class="link-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container border border-surface-container-highest text-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all group hairline-card" href="#">
+<span class="material-symbols-outlined text-[16px]">folder_open</span>
+<span>HDFC Balanced Advantage Scheme Information Document</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-outline group-hover:text-on-surface">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-2 pt-2 text-label-sm text-label-sm text-outline border-t border-surface-container-highest/60">
+<span class="material-symbols-outlined text-[15px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- Turn 15: Assistant Loading State (1px hairline) -->
+<div class="flex items-center gap-3 pt-1">
+<div class="loading-bot-icon w-8 h-8 rounded-lg bg-surface-container border border-surface-container-highest flex items-center justify-center text-primary-container shrink-0 hairline-card">
+<span class="material-symbols-outlined text-[18px]">smart_toy</span>
+</div>
+<div class="loading-bubble bg-surface-container-low border border-surface-container-highest rounded-2xl px-4 py-3 inline-flex items-center gap-2 shadow-sm hairline-card">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse [animation-delay:200ms]"></span>
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse [animation-delay:400ms]"></span>
+<span class="font-label-sm text-label-sm text-outline ml-2">Consulting verified AMFI indexes...</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Persistent Docked Query Input Box (1px hairline everywhere) -->
+<div class="docked-input-container fixed bottom-0 left-0 md:left-[280px] right-0 z-40 bg-surface-container-low/95 backdrop-blur-md border-t border-surface-container-highest py-3 px-4 sm:px-6 lg:px-8 flex justify-center transition-colors">
+<div class="w-full max-w-[760px] flex flex-col gap-2">
+<div class="docked-input-box relative flex items-center bg-surface-container rounded-2xl border border-surface-container-highest focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container/40 transition-all shadow-xl p-1.5 hairline-card">
+<div class="flex items-center pl-2 pr-1 text-outline">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</div>
+<input class="flex-1 bg-transparent border-0 px-3 py-2 font-body-md text-body-md text-on-surface cursor-not-allowed outline-none focus:ring-0 placeholder:text-outline font-medium" disabled="" placeholder="Ask fact-checked questions about HDFC Mutual Funds..." type="text" value="Comparing exit loads with HDFC Large Cap Direct..."/>
+<div class="flex items-center gap-2 px-2 shrink-0">
+<span class="token-counter font-label-sm text-label-sm text-outline tabular-nums select-none bg-surface-container-low px-2 py-1 rounded-md border border-surface-container-highest hairline-card">48 / 500</span>
+<button aria-label="Send message" class="w-9 h-9 rounded-xl bg-surface-container-highest text-outline flex items-center justify-center opacity-60 cursor-not-allowed transition-colors" disabled="" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+<!-- Regulatory Compliance Footer Notes -->
+<div class="flex items-center justify-between px-2 font-label-sm text-label-sm text-outline select-none">
+<div class="flex items-center gap-1.5 text-error font-medium">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+<span>Don't share PAN, Aadhaar, phone or OTP</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant/80">
+<span class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>AMFI / SEBI Strict Fact-Finder</span>
+</span>
+<span>·</span>
+<span>Zero Commission / Non-Distributor</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Dynamic Dual Theme Controller Script -->
+<script>
+  (function () {
+    const lightBtn = document.getElementById('theme-btn-light');
+    const darkBtn = document.getElementById('theme-btn-dark');
+    const htmlElem = document.documentElement;
+
+    function applyTheme(isLight) {
+      if (isLight) {
+        htmlElem.classList.remove('dark');
+        htmlElem.classList.add('light');
+
+        // Light mode button highlighted
+        lightBtn.className = "w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center text-amber-500 shadow-sm border border-amber-400/40 transition-all focus:outline-none";
+        lightBtn.setAttribute('aria-checked', 'true');
+
+        darkBtn.className = "w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 transition-all focus:outline-none";
+        darkBtn.setAttribute('aria-checked', 'false');
+
+        localStorage.setItem('boloSipTheme', 'light');
+      } else {
+        htmlElem.classList.remove('light');
+        htmlElem.classList.add('dark');
+
+        // Dark mode button highlighted
+        lightBtn.className = "w-7 h-7 rounded-full flex items-center justify-center text-outline hover:text-on-surface transition-all focus:outline-none";
+        lightBtn.setAttribute('aria-checked', 'false');
+
+        darkBtn.className = "w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center text-primary-container border border-primary-container/30 shadow-sm transition-all focus:outline-none";
+        darkBtn.setAttribute('aria-checked', 'true');
+
+        localStorage.setItem('boloSipTheme', 'dark');
+      }
+    }
+
+    // Toggle button clicks
+    lightBtn.addEventListener('click', () => applyTheme(true));
+    darkBtn.addEventListener('click', () => applyTheme(false));
+
+    // Keyboard Accessibility (Enter & Space)
+    [lightBtn, darkBtn].forEach((btn) => {
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          btn.click();
+        }
+      });
+    });
+
+    // Delete popover toggle handler
+    const toggleDeleteBtn = document.getElementById('toggle-delete-btn');
+    const deleteModal = document.getElementById('delete-modal');
+    if (toggleDeleteBtn && deleteModal) {
+      toggleDeleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteModal.classList.toggle('hidden');
+      });
+    }
+
+    // Initialize with saved preference or default dark
+    const savedTheme = localStorage.getItem('boloSipTheme');
+    if (savedTheme === 'light') {
+      applyTheme(true);
+    } else {
+      applyTheme(false);
+    }
+  })();
+</script>
+</body></html>

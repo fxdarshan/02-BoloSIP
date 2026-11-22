@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<meta content="mobile_blank" name="shell-type"/>
+<title>BoloSIP - Research Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "var(--color-surface)",
+            "surface-dim": "var(--color-surface-dim)",
+            "surface-bright": "var(--color-surface-bright)",
+            "surface-container-lowest": "var(--color-surface-container-lowest)",
+            "surface-container-low": "var(--color-surface-container-low)",
+            "surface-container": "var(--color-surface-container)",
+            "surface-container-high": "var(--color-surface-container-high)",
+            "surface-container-highest": "var(--color-surface-container-highest)",
+            "surface-variant": "var(--color-surface-variant)",
+            "on-surface": "var(--color-on-surface)",
+            "on-surface-variant": "var(--color-on-surface-variant)",
+            "outline": "var(--color-outline)",
+            "outline-variant": "var(--color-outline-variant)",
+            "primary": "var(--color-primary)",
+            "on-primary": "var(--color-on-primary)",
+            "primary-container": "var(--color-primary-container)",
+            "on-primary-container": "var(--color-on-primary-container)",
+            "secondary": "var(--color-secondary)",
+            "secondary-container": "var(--color-secondary-container)",
+            "tertiary": "#ffd57b",
+            "tertiary-container": "#e8b846",
+            "error": "var(--color-error)",
+            "error-container": "var(--color-error-container)",
+            "on-error-container": "var(--color-on-error-container)",
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            "headline-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "headline-lg-mobile": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "label-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "title-md": ["Inter"],
+          },
+          fontSize: {
+            "label-sm": ["11px", { lineHeight: "15px", letterSpacing: "0.03em", fontWeight: "600" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+            "body-md": ["13px", { lineHeight: "20px", fontWeight: "400" }],
+            "body-lg": ["15px", { lineHeight: "22px", fontWeight: "400" }],
+            "title-md": ["16px", { lineHeight: "22px", fontWeight: "600" }],
+            "headline-sm": ["18px", { lineHeight: "24px", fontWeight: "600" }],
+            "headline-lg-mobile": ["20px", { lineHeight: "26px", fontWeight: "700" }],
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    :root {
+      /* Light Mode ('Luminous Ledger') */
+      --color-surface: #f8fafc;
+      --color-surface-dim: #f1f5f9;
+      --color-surface-bright: #ffffff;
+      --color-surface-container-lowest: #ffffff;
+      --color-surface-container-low: #f8fafc;
+      --color-surface-container: #ffffff;
+      --color-surface-container-high: #f1f5f9;
+      --color-surface-container-highest: #e2e8f0;
+      --color-surface-variant: #e2e8f0;
+      --color-on-surface: #0f172a;
+      --color-on-surface-variant: #475569;
+      --color-outline: #64748b;
+      --color-outline-variant: #e2e8f0;
+      --color-primary: #059669;
+      --color-on-primary: #ffffff;
+      --color-primary-container: #10b981;
+      --color-on-primary-container: #064e3b;
+      --color-secondary: #0284c7;
+      --color-secondary-container: #e0f2fe;
+      --color-error: #dc2626;
+      --color-error-container: #fee2e2;
+      --color-on-error-container: #991b1b;
+      --color-backdrop: rgba(15, 23, 42, 0.45);
+
+      /* Card themes in light mode - delicate 1px border */
+      --card-factual-bg: #fafffc;
+      --card-factual-border: #bbf7d0;
+      --card-factual-accent: #059669;
+      --card-factual-text: #14532d;
+      --card-factual-chip: #ecfdf5;
+
+      --card-advisory-bg: #f8faff;
+      --card-advisory-border: #bfdbfe;
+      --card-advisory-accent: #2563eb;
+      --card-advisory-text: #1e3a8a;
+      --card-advisory-chip: #eff6ff;
+
+      --card-forecast-bg: #f8f9ff;
+      --card-forecast-border: #c7d2fe;
+      --card-forecast-accent: #4f46e5;
+      --card-forecast-text: #312e81;
+      --card-forecast-chip: #eef2ff;
+
+      --card-privacy-bg: #fffafa;
+      --card-privacy-border: #fecdd3;
+      --card-privacy-accent: #e11d48;
+      --card-privacy-text: #881337;
+      --card-privacy-chip: #fff1f2;
+
+      --card-disamb-bg: #fffdf5;
+      --card-disamb-border: #fde68a;
+      --card-disamb-accent: #d97706;
+      --card-disamb-text: #78350f;
+      --card-disamb-chip: #fefce8;
+
+      --card-notfound-bg: #f8fafc;
+      --card-notfound-border: #cbd5e1;
+      --card-notfound-accent: #64748b;
+      --card-notfound-text: #334155;
+      --card-notfound-chip: #f1f5f9;
+    }
+
+    html.dark {
+      /* Dark Mode ('Calm Financial Terminal') */
+      --color-surface: #111319;
+      --color-surface-dim: #111319;
+      --color-surface-bright: #36393f;
+      --color-surface-container-lowest: #0b0e13;
+      --color-surface-container-low: #15181f;
+      --color-surface-container: #1b1e25;
+      --color-surface-container-high: #242730;
+      --color-surface-container-highest: #2e323b;
+      --color-surface-variant: #282b33;
+      --color-on-surface: #e1e2e9;
+      --color-on-surface-variant: #9aa2b1;
+      --color-outline: #6d7685;
+      --color-outline-variant: #262932;
+      --color-primary: #3dd6a3;
+      --color-on-primary: #003827;
+      --color-primary-container: #3dd6a3;
+      --color-on-primary-container: #005840;
+      --color-secondary: #9bcaff;
+      --color-secondary-container: #006cb0;
+      --color-error: #ffb4ab;
+      --color-error-container: #93000a;
+      --color-on-error-container: #ffdad6;
+      --color-backdrop: rgba(11, 14, 19, 0.72);
+
+      /* Card themes in dark mode - delicate 1px border */
+      --card-factual-bg: #161a22;
+      --card-factual-border: rgba(61, 214, 163, 0.28);
+      --card-factual-accent: #3dd6a3;
+      --card-factual-text: #e1e2e9;
+      --card-factual-chip: rgba(61, 214, 163, 0.12);
+
+      --card-advisory-bg: #161a24;
+      --card-advisory-border: rgba(155, 202, 255, 0.28);
+      --card-advisory-accent: #9bcaff;
+      --card-advisory-text: #e1e2e9;
+      --card-advisory-chip: rgba(155, 202, 255, 0.12);
+
+      --card-forecast-bg: #181926;
+      --card-forecast-border: rgba(129, 140, 248, 0.28);
+      --card-forecast-accent: #818cf8;
+      --card-forecast-text: #e1e2e9;
+      --card-forecast-chip: rgba(129, 140, 248, 0.12);
+
+      --card-privacy-bg: #1f1618;
+      --card-privacy-border: rgba(255, 138, 128, 0.28);
+      --card-privacy-accent: #ff8a80;
+      --card-privacy-text: #e1e2e9;
+      --card-privacy-chip: rgba(255, 138, 128, 0.12);
+
+      --card-disamb-bg: #1d1a16;
+      --card-disamb-border: rgba(255, 213, 123, 0.28);
+      --card-disamb-accent: #ffd57b;
+      --card-disamb-text: #e1e2e9;
+      --card-disamb-chip: rgba(255, 213, 123, 0.12);
+
+      --card-notfound-bg: #181a20;
+      --card-notfound-border: rgba(148, 163, 184, 0.25);
+      --card-notfound-accent: #94a3b8;
+      --card-notfound-text: #e1e2e9;
+      --card-notfound-chip: rgba(148, 163, 184, 0.12);
+    }
+
+    @layer base {
+      html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: var(--color-surface);
+        color: var(--color-on-surface);
+        font-family: 'Inter', sans-serif;
+        transition: background-color 0.2s ease, color 0.2s ease;
+      }
+      body {
+        overscroll-behavior: none;
+      }
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      .pt-safe {
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen pt-safe pb-safe selection:bg-primary/20 selection:text-primary">
+<main class="flex flex-col relative w-full bg-surface min-h-screen">
+<div class="flex flex-col w-full relative overflow-x-hidden">
+<!-- TOP APP BAR -->
+<header class="sticky top-0 left-0 right-0 w-full bg-surface-container-low/95 backdrop-blur-md px-3.5 py-2.5 flex items-center justify-between z-30 border-b border-outline-variant/60 shadow-sm transition-colors">
+<!-- Left: Drawer Hamburger & Brand Logo -->
+<div class="flex items-center gap-2">
+<button aria-label="Open navigation drawer" class="p-1.5 -ml-1 text-on-surface-variant hover:text-on-surface rounded-xl hover:bg-surface-container active:scale-95 transition-all flex items-center justify-center cursor-pointer" id="toggleDrawerBtn" type="button">
+<span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[17px]" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-[16px] text-on-surface font-bold tracking-tight">Bolo<span class="text-primary">SIP</span></span>
+<span class="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant border border-outline-variant/60 uppercase">Research Engine</span>
+</div>
+</div>
+</div>
+<!-- Right: Compliance Indicator, Sun/Moon Pill, Avatar -->
+<div class="flex items-center gap-1.5">
+<!-- Compliance Notice Badge (Desktop parity) -->
+<div class="hidden xs:flex sm:flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded-full border border-outline-variant/50 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[13px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant truncate max-w-[100px]">Facts-only</span>
+</div>
+<!-- Interactive Sun / Moon Segmented Pill Toggle -->
+<div aria-label="Theme switcher" class="flex items-center p-0.5 rounded-full bg-surface-container-lowest border border-outline-variant/70 shadow-sm" role="radiogroup">
+<button aria-checked="false" aria-label="Switch to Light Theme" class="w-6 h-6 rounded-full flex items-center justify-center text-outline hover:text-on-surface transition-all focus:outline-none cursor-pointer" id="theme-btn-light" role="radio" type="button">
+<span class="material-symbols-outlined text-[15px]">light_mode</span>
+</button>
+<button aria-checked="true" aria-label="Switch to Dark Theme" class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-primary border border-primary/30 shadow-sm transition-all focus:outline-none cursor-pointer" id="theme-btn-dark" role="radio" type="button">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">dark_mode</span>
+</button>
+</div>
+<!-- User Profile Avatar Circle -->
+<div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-on-primary shrink-0 shadow-sm ml-0.5">
+<span class="material-symbols-outlined text-[16px]">person</span>
+</div>
+</div>
+</header>
+<!-- RATE LIMIT NOTIFICATION BANNER (1px hairline border) -->
+<div class="mx-3.5 mt-3 mb-1 p-3 rounded-2xl bg-surface-container border border-error/35 shadow-sm flex items-start gap-2.5 transition-all duration-300" id="rate-limit-banner">
+<div class="w-8 h-8 rounded-xl bg-error-container/25 border border-error/30 flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-error text-[18px]">warning</span>
+</div>
+<div class="flex-1 min-w-0 pr-1">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Rate Limit Exceeded</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-error-container text-on-error-container border border-error/30">429 Wait</span>
+</div>
+<p class="font-body-md text-[12px] text-on-surface-variant leading-snug mt-0.5">Too many messages in window. Please wait a moment.</p>
+</div>
+<button aria-label="Dismiss warning" class="w-7 h-7 rounded-lg text-outline hover:text-on-surface flex items-center justify-center active:scale-95 transition-all cursor-pointer" onclick="document.getElementById('rate-limit-banner').remove()" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<!-- MAIN CONVERSATION STREAM -->
+<section class="flex flex-col w-full px-3.5 pt-2 pb-36 space-y-4" id="conversationStream">
+<!-- Active Session Header Pill (1px delicate border) -->
+<div class="flex items-center justify-between py-2 px-3 rounded-xl bg-surface-container border border-outline-variant/60 text-on-surface-variant shadow-sm">
+<div class="flex items-center gap-1.5 truncate">
+<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider text-outline font-bold">ACTIVE:</span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold truncate">HDFC Mutual Fund Database</span>
+</div>
+<div class="flex items-center gap-1 text-outline font-label-sm text-[10px] shrink-0 ml-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span>Snapshot v4.8</span>
+</div>
+</div>
+<!-- REPLY 1: Scheme Metric · TER (Delicate 1px hairline border everywhere, NO thick left border) -->
+<article class="p-3.5 rounded-2xl border shadow-sm flex items-start gap-3 transition-all" style="background-color: var(--card-factual-bg); border-color: var(--card-factual-border);">
+<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm" style="background-color: var(--card-factual-chip); border: 1px solid var(--card-factual-border); color: var(--card-factual-accent);">
+<span class="material-symbols-outlined text-[22px]">check_circle</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0 space-y-2">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase font-bold tracking-wider" style="background-color: var(--card-factual-chip); color: var(--card-factual-accent); border: 1px solid var(--card-factual-border);">Scheme Metric · TER</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-outline border border-outline-variant/50 font-label-sm text-[10px]">Direct Plan</span>
+</div>
+<span class="font-label-sm text-[11px] font-semibold flex items-center gap-1" style="color: var(--card-factual-accent);">
+<span class="w-1.5 h-1.5 rounded-full bg-current"></span>Fact Checked
+              </span>
+</div>
+<p class="font-body-md text-on-surface leading-relaxed">
+              The expense ratio (TER) of HDFC Mid Cap Fund (Direct Growth) is <strong class="font-semibold px-1.5 py-0.5 rounded border inline-block" style="background-color: var(--card-factual-chip); border-color: var(--card-factual-border); color: var(--card-factual-accent);">0.73% per annum</strong>, as on 17 Nov 2026.
+            </p>
+<div class="pt-0.5">
+<a class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container border border-outline-variant/60 text-label-md text-[12px] font-medium transition-all group" href="#" style="color: var(--card-factual-accent);">
+<span class="material-symbols-outlined text-[15px]">link</span>
+<span class="truncate">HDFC Mid Cap Fund – Groww scheme page</span>
+<span class="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-1.5 pt-1 text-label-sm text-[10px] text-outline border-t border-outline-variant/40">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- USER QUERY 1 -->
+<div class="flex justify-end w-full pl-6">
+<div class="flex items-end gap-2 max-w-[85%]">
+<div class="bg-surface-container border border-outline-variant/60 px-3.5 py-2.5 rounded-2xl rounded-tr-xs shadow-sm text-on-surface">
+<p class="font-body-md text-[14px]">What about its exit load?</p>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mb-1 shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-[14px]">person</span>
+</div>
+</div>
+</div>
+<!-- REPLY 2: Exit Conditions (1px hairline border) -->
+<article class="p-3.5 rounded-2xl border shadow-sm flex items-start gap-3 transition-all" style="background-color: var(--card-factual-bg); border-color: var(--card-factual-border);">
+<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm" style="background-color: var(--card-factual-chip); border: 1px solid var(--card-factual-border); color: var(--card-factual-accent);">
+<span class="material-symbols-outlined text-[22px]">check_circle</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0 space-y-2">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase font-bold tracking-wider" style="background-color: var(--card-factual-chip); color: var(--card-factual-accent); border: 1px solid var(--card-factual-border);">Scheme Rules · Exit Conditions</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-outline border border-outline-variant/50 font-label-sm text-[10px]">SEBI Filing</span>
+</div>
+<span class="font-label-sm text-[11px] font-semibold flex items-center gap-1" style="color: var(--card-factual-accent);">
+<span class="w-1.5 h-1.5 rounded-full bg-current"></span>Verified
+              </span>
+</div>
+<p class="font-body-md text-on-surface leading-relaxed">
+              HDFC Mid Cap Fund (Direct Growth) has an exit load of <strong class="font-semibold text-on-surface bg-surface-container px-1.5 py-0.5 rounded border border-outline-variant/60 inline-block">1% if redeemed within 1 year</strong>.
+            </p>
+<div class="pt-0.5">
+<a class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container border border-outline-variant/60 text-label-md text-[12px] font-medium transition-all group" href="#" style="color: var(--card-factual-accent);">
+<span class="material-symbols-outlined text-[15px]">description</span>
+<span class="truncate">HDFC Mutual Fund SID / Factsheet</span>
+<span class="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-1.5 pt-1 text-label-sm text-[10px] text-outline border-t border-outline-variant/40">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- USER QUERY 2 -->
+<div class="flex justify-end w-full pl-6">
+<div class="flex items-end gap-2 max-w-[85%]">
+<div class="bg-surface-container border border-outline-variant/60 px-3.5 py-2.5 rounded-2xl rounded-tr-xs shadow-sm text-on-surface">
+<p class="font-body-md text-[14px]">Should I invest in HDFC Mid Cap or HDFC Top 100?</p>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mb-1 shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-[14px]">person</span>
+</div>
+</div>
+</div>
+<!-- REPLY 3: Statutory Refusal (1px hairline border) -->
+<article class="p-3.5 rounded-2xl border shadow-sm flex items-start gap-3 transition-all" style="background-color: var(--card-advisory-bg); border-color: var(--card-advisory-border);">
+<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm" style="background-color: var(--card-advisory-chip); border: 1px solid var(--card-advisory-border); color: var(--card-advisory-accent);">
+<span class="material-symbols-outlined text-[22px]">front_hand</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0 space-y-2">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase font-bold tracking-wider" style="background-color: var(--card-advisory-chip); color: var(--card-advisory-accent); border: 1px solid var(--card-advisory-border);">Statutory Compliance · Advisory Refusal</span>
+<span class="font-label-sm text-[10px] px-2 py-0.5 rounded-full border font-semibold" style="background-color: var(--card-advisory-chip); border-color: var(--card-advisory-border); color: var(--card-advisory-accent);">Mandatory SEBI Guardrail</span>
+</div>
+<p class="font-body-md text-on-surface leading-relaxed">
+              I can only share factual information about HDFC Mutual Fund schemes, so I can't advise whether you should invest or which scheme to choose. For guidance on choosing mutual funds, see AMFI's investor education resources.
+            </p>
+<div class="pt-0.5">
+<a class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container border border-outline-variant/60 text-label-md text-[12px] font-medium transition-all group" href="#" style="color: var(--card-advisory-accent);">
+<span class="material-symbols-outlined text-[15px]">school</span>
+<span class="truncate">AMFI – Investor Corner</span>
+<span class="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-1.5 pt-1 text-label-sm text-[10px] text-outline border-t border-outline-variant/40">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- USER QUERY 3 -->
+<div class="flex justify-end w-full pl-6">
+<div class="flex items-end gap-2 max-w-[85%]">
+<div class="bg-surface-container border border-outline-variant/60 px-3.5 py-2.5 rounded-2xl rounded-tr-xs shadow-sm text-on-surface">
+<p class="font-body-md text-[14px]">What returns will it give in 3 years?</p>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mb-1 shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-[14px]">person</span>
+</div>
+</div>
+</div>
+<!-- REPLY 4: Forecast Guard (1px hairline border) -->
+<article class="p-3.5 rounded-2xl border shadow-sm flex items-start gap-3 transition-all" style="background-color: var(--card-forecast-bg); border-color: var(--card-forecast-border);">
+<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm" style="background-color: var(--card-forecast-chip); border: 1px solid var(--card-forecast-border); color: var(--card-forecast-accent);">
+<span class="material-symbols-outlined text-[22px]">show_chart</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0 space-y-2">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase font-bold tracking-wider" style="background-color: var(--card-forecast-chip); color: var(--card-forecast-accent); border: 1px solid var(--card-forecast-border);">Forecast Guard · Non-Predictive Policy</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-outline border border-outline-variant/50 font-label-sm text-[10px] font-medium">Zero Speculation</span>
+</div>
+<p class="font-body-md text-on-surface leading-relaxed">
+              I don't share returns or performance figures. You can see the historical performance of HDFC Mid Cap Fund in HDFC Mutual Fund's official monthly factsheet.
+            </p>
+<div class="pt-0.5">
+<a class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container border border-outline-variant/60 text-label-md text-[12px] font-medium transition-all group" href="#" style="color: var(--card-forecast-accent);">
+<span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
+<span class="truncate">HDFC Mutual Fund Monthly Factsheet (PDF)</span>
+<span class="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-1.5 pt-1 text-label-sm text-[10px] text-outline border-t border-outline-variant/40">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- USER QUERY 4 (PII Input) -->
+<div class="flex justify-end w-full pl-6">
+<div class="flex items-end gap-2 max-w-[85%]">
+<div class="bg-surface-container border border-outline-variant/60 px-3.5 py-2.5 rounded-2xl rounded-tr-xs shadow-sm text-on-surface">
+<p class="font-body-md text-[14px]">My PAN is <code class="px-1.5 py-0.5 rounded text-error bg-error/10 font-mono text-[12px] border border-error/25">ABCDE1234F</code>, can you check my folio?</p>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mb-1 shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-[14px]">person</span>
+</div>
+</div>
+</div>
+<!-- REPLY 5: Privacy Safeguard (1px hairline border) -->
+<article class="p-3.5 rounded-2xl border shadow-sm flex items-start gap-3 transition-all" style="background-color: var(--card-privacy-bg); border-color: var(--card-privacy-border);">
+<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm" style="background-color: var(--card-privacy-chip); border: 1px solid var(--card-privacy-border); color: var(--card-privacy-accent);">
+<span class="material-symbols-outlined text-[22px]">lock</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0 space-y-2">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase font-bold tracking-wider" style="background-color: var(--card-privacy-chip); color: var(--card-privacy-accent); border: 1px solid var(--card-privacy-border);">Privacy Safeguard · PII Redacted</span>
+<span class="font-label-sm text-[10px] px-2 py-0.5 rounded-full border font-semibold flex items-center gap-1" style="background-color: var(--card-privacy-chip); border-color: var(--card-privacy-border); color: var(--card-privacy-accent);">
+<span class="material-symbols-outlined text-[13px]">shield</span>Sensitive Token
+              </span>
+</div>
+<p class="font-body-md text-on-surface leading-relaxed">
+              Please don't share personal details such as PAN, Aadhaar, account or folio numbers, phone numbers or OTPs: BoloSIP doesn't need them and doesn't store them.
+            </p>
+<div class="pt-0.5">
+<a class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container border border-outline-variant/60 text-label-md text-[12px] font-medium transition-all group" href="#" style="color: var(--card-privacy-accent);">
+<span class="material-symbols-outlined text-[15px]">security</span>
+<span class="truncate">SEBI Investor Protection Guidelines</span>
+<span class="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-1.5 pt-1 text-label-sm text-[10px] text-outline border-t border-outline-variant/40">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- USER QUERY 5 -->
+<div class="flex justify-end w-full pl-6">
+<div class="flex items-end gap-2 max-w-[85%]">
+<div class="bg-surface-container border border-outline-variant/60 px-3.5 py-2.5 rounded-2xl rounded-tr-xs shadow-sm text-on-surface">
+<p class="font-body-md text-[14px]">Tell me about HDFC Cap Fund</p>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mb-1 shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-[14px]">person</span>
+</div>
+</div>
+</div>
+<!-- REPLY 6: Disambiguation (1px hairline border) -->
+<article class="p-3.5 rounded-2xl border shadow-sm flex items-start gap-3 transition-all" style="background-color: var(--card-disamb-bg); border-color: var(--card-disamb-border);">
+<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm" style="background-color: var(--card-disamb-chip); border: 1px solid var(--card-disamb-border); color: var(--card-disamb-accent);">
+<span class="material-symbols-outlined text-[22px]">alt_route</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0 space-y-2">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase font-bold tracking-wider" style="background-color: var(--card-disamb-chip); color: var(--card-disamb-accent); border: 1px solid var(--card-disamb-border);">Disambiguation · Multiple Matches</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-outline border border-outline-variant/50 font-label-sm text-[10px] font-medium">Select one</span>
+</div>
+<p class="font-body-md text-on-surface leading-relaxed">
+              That name matches more than one scheme. Which one do you mean?
+            </p>
+<div class="flex flex-col gap-2 pt-1">
+<button class="flex flex-col items-start p-2.5 rounded-xl bg-surface-container border border-outline-variant/60 hover:border-tertiary active:scale-[0.99] transition-all text-left shadow-sm group cursor-pointer" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="font-label-md text-label-md font-semibold text-on-surface group-hover:text-tertiary transition-colors">HDFC Flexi Cap Fund</span>
+<span class="material-symbols-outlined text-[16px] text-outline group-hover:text-tertiary transition-colors">arrow_forward</span>
+</div>
+<span class="font-label-sm text-[11px] text-outline mt-0.5">Equity: Flexi Cap · Broad Market</span>
+</button>
+<button class="flex flex-col items-start p-2.5 rounded-xl bg-surface-container border border-outline-variant/60 hover:border-tertiary active:scale-[0.99] transition-all text-left shadow-sm group cursor-pointer" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="font-label-md text-label-md font-semibold text-on-surface group-hover:text-tertiary transition-colors">HDFC Small Cap Fund</span>
+<span class="material-symbols-outlined text-[16px] text-outline group-hover:text-tertiary transition-colors">arrow_forward</span>
+</div>
+<span class="font-label-sm text-[11px] text-outline mt-0.5">Equity: Small Cap · High Volatility</span>
+</button>
+</div>
+<footer class="flex items-center gap-1.5 pt-1 text-label-sm text-[10px] text-outline border-t border-outline-variant/40">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- USER QUERY 6 -->
+<div class="flex justify-end w-full pl-6">
+<div class="flex items-end gap-2 max-w-[85%]">
+<div class="bg-surface-container border border-outline-variant/60 px-3.5 py-2.5 rounded-2xl rounded-tr-xs shadow-sm text-on-surface">
+<p class="font-body-md text-[14px]">What is the crypto allocation in HDFC Balanced?</p>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mb-1 shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-[14px]">person</span>
+</div>
+</div>
+</div>
+<!-- REPLY 7: Zero Guesswork / Not Found (1px hairline border) -->
+<article class="p-3.5 rounded-2xl border shadow-sm flex items-start gap-3 transition-all" style="background-color: var(--card-notfound-bg); border-color: var(--card-notfound-border);">
+<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm" style="background-color: var(--card-notfound-chip); border: 1px solid var(--card-notfound-border); color: var(--card-notfound-accent);">
+<span class="material-symbols-outlined text-[22px]">search_off</span>
+</div>
+<div class="flex flex-col flex-1 min-w-0 space-y-2">
+<div class="flex items-center justify-between flex-wrap gap-1.5">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-[10px] uppercase font-bold tracking-wider" style="background-color: var(--card-notfound-chip); color: var(--card-notfound-accent); border: 1px solid var(--card-notfound-border);">Information Horizon · Zero Guesswork</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-outline border border-outline-variant/50 font-label-sm text-[10px] font-medium">Official Disclosures Only</span>
+</div>
+<p class="font-body-md text-on-surface leading-relaxed">
+              I couldn't find that in BoloSIP's sources, so I won't guess.
+            </p>
+<div class="pt-0.5">
+<a class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container border border-outline-variant/60 text-label-md text-[12px] font-medium transition-all group" href="#" style="color: var(--card-notfound-accent);">
+<span class="material-symbols-outlined text-[15px]">folder_open</span>
+<span class="truncate">HDFC Balanced Advantage Scheme Information Document</span>
+<span class="material-symbols-outlined text-[14px] group-hover:translate-x-0.5 transition-transform">north_east</span>
+</a>
+</div>
+<footer class="flex items-center gap-1.5 pt-1 text-label-sm text-[10px] text-outline border-t border-outline-variant/40">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Last updated from sources: 19 Nov 2026</span>
+</footer>
+</div>
+</article>
+<!-- ASSISTANT LIVE AMFI INDEXING INDICATOR -->
+<div class="flex items-center gap-2.5 pt-1">
+<div class="w-7 h-7 rounded-lg bg-surface-container border border-outline-variant/60 flex items-center justify-center text-primary shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[17px]">smart_toy</span>
+</div>
+<div class="bg-surface-container border border-outline-variant/60 rounded-xl px-3 py-2 inline-flex items-center gap-2 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse [animation-delay:200ms]"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse [animation-delay:400ms]"></span>
+<span class="font-label-sm text-[11px] text-outline ml-1 font-medium">Consulting verified AMFI indexes...</span>
+</div>
+</div>
+</section>
+<!-- PERSISTENT DOCKED BOTTOM SEARCH BAR -->
+<footer class="fixed bottom-0 left-0 right-0 w-full bg-surface-container-low/95 backdrop-blur-md px-3.5 pt-2 pb-3 border-t border-outline-variant/60 z-20 space-y-2 shadow-2xl transition-colors">
+<!-- Input Box with Character Counter & Send Button -->
+<div class="flex items-center bg-surface-container rounded-2xl border border-outline-variant/70 p-1.5 focus-within:border-primary shadow-sm transition-all">
+<div class="flex items-center pl-2 text-outline">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</div>
+<input class="bg-transparent flex-1 font-body-md text-[13px] text-on-surface placeholder:text-outline px-2 py-1 outline-none border-0 focus:ring-0" placeholder="Comparing exit loads with HDFC Large Cap Direct..." type="text" value="Comparing exit loads with HDFC Large Cap Direct..."/>
+<div class="flex items-center gap-1.5 shrink-0 pr-1">
+<span class="font-label-sm text-[10px] text-outline tabular-nums bg-surface-container-high px-1.5 py-0.5 rounded border border-outline-variant/50">48 / 500</span>
+<button aria-label="Send message" class="w-8 h-8 rounded-xl bg-primary text-on-primary flex items-center justify-center active:scale-95 transition-transform shadow-md cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[17px]">arrow_upward</span>
+</button>
+</div>
+</div>
+<!-- Compliance Subtext Strip -->
+<div class="flex items-center justify-between text-[10px] text-outline px-1">
+<div class="flex items-center gap-1 text-error font-medium truncate max-w-[50%]">
+<span class="material-symbols-outlined text-[13px] shrink-0">shield</span>
+<span class="truncate">Don't share PAN, OTP</span>
+</div>
+<div class="flex items-center gap-1 truncate text-on-surface-variant/80 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block shrink-0"></span>
+<span class="truncate">AMFI Strict Fact-Finder</span>
+</div>
+</div>
+</footer>
+<!-- MOBILE DRAWER BACKDROP -->
+<div class="fixed inset-0 bg-[var(--color-backdrop)] z-40 transition-opacity backdrop-blur-[2px] opacity-0 pointer-events-none duration-250" id="drawerBackdrop"></div>
+<!-- RECENT THREADS OFF-CANVAS SLIDE-OVER DRAWER -->
+<aside aria-label="Recent threads navigation" class="fixed top-0 bottom-0 left-0 w-[310px] max-w-[85vw] bg-surface-container-low z-50 flex flex-col justify-between shadow-2xl transition-transform duration-300 -translate-x-full border-r border-outline-variant/60 pt-safe pb-safe" id="threadDrawer">
+<!-- Drawer Header & Content -->
+<div class="flex flex-col w-full p-4 space-y-4 overflow-y-auto">
+<!-- Drawer Top Action -->
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-2.5">
+<div class="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-sm shrink-0">
+<span class="material-symbols-outlined text-primary text-[24px]">forum</span>
+</div>
+<div>
+<span class="font-headline-sm text-[16px] text-on-surface block leading-tight font-bold">Recent Threads</span>
+<span class="font-label-sm text-[11px] text-outline">Saved sessions</span>
+</div>
+</div>
+<button aria-label="Close drawer" class="w-8 h-8 rounded-xl bg-surface-container border border-outline-variant/60 flex items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-95 transition-all shadow-sm cursor-pointer" id="closeDrawerBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- + Start New Inquiry Button -->
+<button class="w-full bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-label-md p-2.5 pr-3.5 rounded-2xl flex items-center justify-between shadow-md active:scale-98 transition-all group cursor-pointer" id="newInquiryBtn" type="button">
+<div class="flex items-center gap-2.5">
+<div class="w-10 h-10 rounded-xl bg-on-primary/15 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform shrink-0">
+<span class="material-symbols-outlined text-on-primary text-[22px]" style="font-variation-settings: 'FILL' 1;">add</span>
+</div>
+<div class="flex flex-col text-left">
+<span class="text-on-primary font-bold text-[14px] leading-tight">Start New Inquiry</span>
+<span class="text-on-primary/80 text-[10px] font-medium">Search fund facts &amp; TER</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-primary/90 text-[18px]">arrow_forward</span>
+</button>
+<!-- Thread List -->
+<div class="flex flex-col space-y-2 pt-1" id="drawerThreadList">
+<!-- Active Thread: HDFC Mid Cap exit load -->
+<div class="bg-surface-container border border-primary/40 p-2.5 rounded-2xl flex items-center justify-between shadow-sm relative overflow-hidden transition-colors cursor-pointer group">
+<div class="flex items-center gap-2.5 min-w-0 pr-1">
+<div class="w-10 h-10 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center shrink-0 relative">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary ring-surface-container animate-pulse"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface truncate font-semibold">HDFC Mid Cap exit load</span>
+<span class="font-label-sm text-[11px] text-primary flex items-center gap-1 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>10m ago · Active
+                  </span>
+</div>
+</div>
+<div class="w-7 h-7 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</div>
+</div>
+<!-- Thread 2: Download CAS Statement with Safety Confirmation Popover -->
+<div class="bg-surface-container border border-outline-variant/60 p-2.5 rounded-2xl flex flex-col space-y-2 shadow-sm transition-colors" id="threadWithDelete">
+<div class="flex items-center justify-between min-w-0">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container-high border border-outline-variant/60 flex items-center justify-center shrink-0 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">description</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface truncate font-medium">Download CAS Statement</span>
+<span class="font-label-sm text-[11px] text-outline">Yesterday</span>
+</div>
+</div>
+</div>
+<!-- Popover for Deletion Safety -->
+<div class="bg-surface-container-high border border-error/35 p-2 rounded-xl flex items-center justify-between gap-1.5 mt-0.5 shadow-sm" id="deleteConfirmPopover">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="material-symbols-outlined text-error text-[16px] shrink-0">delete</span>
+<span class="font-label-sm text-[11px] text-on-surface truncate font-medium">Delete thread?</span>
+</div>
+<div class="flex items-center gap-1 shrink-0">
+<button class="px-2 py-1 rounded-lg bg-surface-container border border-outline-variant/60 text-on-surface font-label-sm text-[11px] hover:bg-surface-bright active:scale-95 transition-all cursor-pointer" id="keepThreadBtn" type="button">Keep</button>
+<button class="px-2.5 py-1 rounded-lg bg-error-container text-on-error-container font-label-sm text-[11px] font-semibold active:scale-95 transition-all shadow-sm cursor-pointer" id="confirmDeleteBtn" type="button">Delete</button>
+</div>
+</div>
+</div>
+<!-- Thread 3: Flexi Cap -->
+<div class="bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/50 p-2.5 rounded-2xl flex items-center justify-between transition-all group cursor-pointer">
+<div class="flex items-center gap-2.5 min-w-0 pr-1">
+<div class="w-10 h-10 rounded-xl bg-surface-container border border-outline-variant/60 flex items-center justify-center shrink-0 text-outline group-hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">query_stats</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface truncate transition-colors">HDFC Flexi Cap TER</span>
+<span class="font-label-sm text-[11px] text-outline">3 days ago</span>
+</div>
+</div>
+<button aria-label="Delete thread" class="w-8 h-8 rounded-xl bg-surface-container/60 hover:bg-error-container/20 border border-outline-variant/40 text-outline hover:text-error flex items-center justify-center transition-all cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[16px]">delete_outline</span>
+</button>
+</div>
+<!-- Thread 4: Parag Parikh vs HDFC -->
+<div class="bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/50 p-2.5 rounded-2xl flex items-center justify-between transition-all group cursor-pointer">
+<div class="flex items-center gap-2.5 min-w-0 pr-1">
+<div class="w-10 h-10 rounded-xl bg-surface-container border border-outline-variant/60 flex items-center justify-center shrink-0 text-outline group-hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">compare_arrows</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-on-surface truncate transition-colors">Parag Parikh vs HDFC...</span>
+<span class="font-label-sm text-[11px] text-outline">5 days ago</span>
+</div>
+</div>
+<button aria-label="Delete thread" class="w-8 h-8 rounded-xl bg-surface-container/60 hover:bg-error-container/20 border border-outline-variant/40 text-outline hover:text-error flex items-center justify-center transition-all cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[16px]">delete_outline</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Drawer Footer / Feed Status -->
+<div class="p-3.5 bg-surface-container-lowest border-t border-outline-variant/60 flex flex-col space-y-2 shrink-0 transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+</div>
+<span class="font-label-sm text-[11px] text-on-surface tracking-wider uppercase font-bold">AMFI Live Feed</span>
+</div>
+<span class="font-label-sm text-[10px] text-primary px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 font-bold">SYNCED</span>
+</div>
+<p class="font-label-sm text-[10px] text-outline leading-tight">Data indexed strictly from official fund fact sheets. Certified objective disclosure.</p>
+</div>
+</aside>
+</div>
+</main>
+<!-- Interactive JavaScript: Drawer Controls & Complete Light/Dark Theme Switching -->
+<script>
+    (function () {
+      const htmlEl = document.documentElement;
+      const lightBtn = document.getElementById('theme-btn-light');
+      const darkBtn = document.getElementById('theme-btn-dark');
+
+      // 1. DYNAMIC THEME SWITCHING (Dark Mode vs Light Mode)
+      function applyTheme(isLight) {
+        if (isLight) {
+          htmlEl.classList.remove('dark');
+          htmlEl.classList.add('light');
+
+          // Light button active styling
+          if (lightBtn) {
+            lightBtn.className = "w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-primary border border-primary/30 shadow-sm transition-all focus:outline-none cursor-pointer";
+            lightBtn.setAttribute('aria-checked', 'true');
+          }
+
+          // Dark button inactive styling
+          if (darkBtn) {
+            darkBtn.className = "w-6 h-6 rounded-full flex items-center justify-center text-outline hover:text-on-surface transition-all focus:outline-none cursor-pointer";
+            darkBtn.setAttribute('aria-checked', 'false');
+          }
+
+          localStorage.setItem('boloSipMobileTheme', 'light');
+        } else {
+          htmlEl.classList.remove('light');
+          htmlEl.classList.add('dark');
+
+          // Light button inactive styling
+          if (lightBtn) {
+            lightBtn.className = "w-6 h-6 rounded-full flex items-center justify-center text-outline hover:text-on-surface transition-all focus:outline-none cursor-pointer";
+            lightBtn.setAttribute('aria-checked', 'false');
+          }
+
+          // Dark button active styling
+          if (darkBtn) {
+            darkBtn.className = "w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-primary border border-primary/30 shadow-sm transition-all focus:outline-none cursor-pointer";
+            darkBtn.setAttribute('aria-checked', 'true');
+          }
+
+          localStorage.setItem('boloSipMobileTheme', 'dark');
+        }
+      }
+
+      if (lightBtn && darkBtn) {
+        lightBtn.addEventListener('click', () => applyTheme(true));
+        darkBtn.addEventListener('click', () => applyTheme(false));
+      }
+
+      // Initial theme hydration (default to dark if not set, matching initial class)
+      const stored = localStorage.getItem('boloSipMobileTheme');
+      if (stored === 'light') {
+        applyTheme(true);
+      } else {
+        applyTheme(false);
+      }
+
+      // 2. MOBILE DRAWER INTERACTION
+      const drawer = document.getElementById('threadDrawer');
+      const backdrop = document.getElementById('drawerBackdrop');
+      const openBtn = document.getElementById('toggleDrawerBtn');
+      const closeBtn = document.getElementById('closeDrawerBtn');
+      const newInquiryBtn = document.getElementById('newInquiryBtn');
+
+      function openDrawer() {
+        if (!drawer || !backdrop) return;
+        drawer.classList.remove('-translate-x-full');
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+        backdrop.classList.add('opacity-100');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeDrawer() {
+        if (!drawer || !backdrop) return;
+        drawer.classList.add('-translate-x-full');
+        backdrop.classList.remove('opacity-100');
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+        document.body.style.overflow = '';
+      }
+
+      if (openBtn) openBtn.addEventListener('click', openDrawer);
+      if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+      if (backdrop) backdrop.addEventListener('click', closeDrawer);
+      if (newInquiryBtn) {
+        newInquiryBtn.addEventListener('click', () => {
+          closeDrawer();
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        });
+      }
+
+      // 3. DELETE CONFIRMATION INTERACTION IN DRAWER
+      const keepBtn = document.getElementById('keepThreadBtn');
+      const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+      const threadWithDelete = document.getElementById('threadWithDelete');
+      const popover = document.getElementById('deleteConfirmPopover');
+
+      if (keepBtn && popover) {
+        keepBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          popover.style.display = 'none';
+        });
+      }
+
+      if (confirmDeleteBtn && threadWithDelete) {
+        confirmDeleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          threadWithDelete.style.transition = 'all 0.2s ease';
+          threadWithDelete.style.opacity = '0';
+          threadWithDelete.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            threadWithDelete.remove();
+          }, 210);
+        });
+      }
+    })();
+  </script>
+</body></html>
