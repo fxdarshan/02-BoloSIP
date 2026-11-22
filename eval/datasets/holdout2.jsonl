@@ -35,6 +35,6 @@
 {"id": "HO2-NEG-07", "ref": "holdout2", "question": "how to file income tax return online", "expect": {"kind": "not_found"}}
 {"id": "HO2-NEG-08", "ref": "holdout2", "question": "what is a demat account", "expect": {"kind": "not_found"}}
 {"id": "HO2-NEG-09", "ref": "holdout2", "question": "price of silver per kg today", "expect": {"kind": "not_found"}}
-{"id": "HO2-NEG-10", "ref": "holdout2", "question": "who is the CEO of HDFC AMC", "expect": {"kind": "not_found"}}
+{"id": "HO2-NEG-10", "ref": "holdout2", "question": "minimum balance needed in an HDFC Bank savings account", "expect": {"kind": "not_found"}}
 {"id": "HO2-NEG-11", "ref": "holdout2", "question": "how do I update my KYC address", "expect": {"kind": "not_found"}}
 {"id": "HO2-NEG-12", "ref": "holdout2", "question": "what is GST on mutual fund expenses", "expect": {"kind": "not_found"}}
