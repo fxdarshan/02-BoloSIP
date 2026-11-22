@@ -75,6 +75,13 @@ class TestContent(unittest.TestCase):
         self.assertIn('aria-live="polite"', PAGE)
         self.assertIn('<label class="sr-only" for="input">', PAGE)
 
+    def test_suggestions_are_an_accessible_combobox(self):
+        for attr in ('role="combobox"', 'aria-autocomplete="list"', 'aria-controls="suggestions"',
+                     'aria-expanded="false"', 'role="listbox"'):
+            self.assertIn(attr, PAGE)
+        for js in ("aria-activedescendant", '"ArrowDown"', '"Escape"', "state.config.suggest"):
+            self.assertIn(js, SCRIPT)
+
     def test_examples_and_welcome_come_from_the_api(self):
         self.assertIn('api("GET", "/api/config")', SCRIPT)
         self.assertIn("cfg.examples", SCRIPT)

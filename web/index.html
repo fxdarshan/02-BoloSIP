@@ -273,6 +273,36 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
 .hint { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center; }
 .hint svg { color: var(--k-privacy); font-size: 14px; }
 
+/* Typing suggestions (combobox list above the input) */
+.composer-inner { position: relative; }
+.suggest {
+  position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 20;
+  list-style: none; margin: 0; padding: 6px; max-height: min(320px, 45vh); overflow-y: auto;
+  background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--r-lg); box-shadow: var(--shadow);
+}
+.suggest[hidden] { display: none; }
+.suggest-head { padding: 4px 10px 6px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.suggest li[role="option"] {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+  font-size: 15px; line-height: 1.35; cursor: pointer; overflow-wrap: anywhere;
+}
+.suggest li[role="option"] svg { flex: none; color: var(--accent); font-size: 17px; }
+.suggest li[role="option"]:hover, .suggest li[aria-selected="true"] { background: var(--card-hi); }
+.suggest mark { background: none; color: var(--accent-hi); font-weight: 650; }
+[data-theme="light"] .suggest mark { color: var(--accent); }
+
+/* Next-step chips under the latest reply */
+.nextsteps { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -6px 0 2px 4px; }
+.nextsteps-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-right: 2px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+  padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card);
+  font-size: 14px; font-weight: 550; color: var(--text); text-align: left; overflow-wrap: anywhere;
+}
+.chip svg { color: var(--accent); font-size: 15px; flex: none; }
+.chip:hover { border-color: var(--accent); background: var(--card-hi); }
+.capability-note { margin: 0 0 2px 4px; font-size: 14px; color: var(--muted); max-width: 640px; }
+
 /* Toast */
 .toast {
   position: fixed; left: 50%; top: calc(var(--header-h) + 12px); z-index: 60; transform: translateX(-50%);
@@ -361,9 +391,11 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
       </div>
       <form class="composer" id="composer" autocomplete="off">
         <div class="composer-inner">
+          <ul class="suggest" id="suggestions" role="listbox" aria-label="Suggested questions" hidden></ul>
           <div class="inputbox">
             <label class="sr-only" for="input">Ask a factual question about HDFC Mutual Fund schemes</label>
-            <textarea id="input" rows="1" maxlength="500" placeholder="Ask a factual question…" enterkeyhint="send"></textarea>
+            <textarea id="input" rows="1" maxlength="500" placeholder="Ask a factual question…" enterkeyhint="send"
+                      role="combobox" aria-autocomplete="list" aria-controls="suggestions" aria-expanded="false"></textarea>
             <span class="count" id="count" aria-live="off">0 / 500</span>
             <button class="send" id="send" type="submit" aria-label="Send" disabled></button>
           </div>
@@ -450,7 +482,10 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   $("toastClose").appendChild(icon("close"));
   document.querySelector(".toast .lead-wrap, .toast svg").classList?.add("lead");
 
-  const state = { config: null, threads: [], active: null, pending: new Set(), confirming: null };
+  // lastScheme: scheme of the thread's latest answer (for next-step chips);
+  // misses: "not found" replies in a row in this thread (fallback layer 2 after two).
+  const state = { config: null, threads: [], active: null, pending: new Set(), confirming: null,
+                  lastScheme: null, misses: 0 };
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } },
@@ -605,6 +640,7 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
 
   function startNew() {
     setActive(null);
+    state.lastScheme = null; state.misses = 0;
     renderWelcome();
     ui.input.focus();
   }
@@ -623,11 +659,13 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     setActive(id);
     ui.messages.replaceChildren();
     if (!msgs.length) { renderWelcome(); return; }
-    let lastQuestion = "";
+    let lastQuestion = "", lastReply = null;
+    state.lastScheme = null; state.misses = 0;
     for (const m of msgs) {
       if (m.role === "user") { lastQuestion = m.text; addUser(m.text); }
-      else addReply(m, lastQuestion);
+      else { addReply(m, lastQuestion); trackReply(m); lastReply = m; }
     }
+    if (lastReply) addNextSteps(lastReply, lastQuestion);
     scrollDown(false);
   }
 
@@ -745,6 +783,175 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   }
 
   // -------------------------------------------------------------------------
+  // Question suggestions. The index comes once from /api/config (bolosip/suggest.py);
+  // every question it can build is tested to get a correct, cited answer.
+  // -------------------------------------------------------------------------
+  const STOP = new Set(("a an the of for to in on is are was be it its this that what which who how do does did i my me " +
+                        "can could would should will there any by with at from as and or about tell please hdfc fund funds " +
+                        "scheme mutual mf direct growth plan").split(" "));
+  const norm = s => (s || "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
+  let CANDS = null;
+
+  function buildCandidates() {
+    const ix = state.config && state.config.suggest;
+    if (!ix) return [];
+    const out = [];
+    ix.general.forEach((q, gi) => out.push({ text: q, scheme: [], topic: norm(q).split(" "), words: [], rank: gi }));
+    ix.topics.forEach((t, ti) => ix.schemes.forEach((s, si) => {
+      const text = t.template.replace("{name}", s.name);
+      // words: the template's own words only ("who manages"), not the scheme name
+      out.push({ text, scheme: s.keys.split(" "), topic: t.keys.split(" "),
+                 words: norm(t.template.replace("{name}", "")).split(" "), rank: 1000 + ti * 100 + si });
+    }));
+    return out;
+  }
+
+  // Every typed word must start a word of the scheme name / aliases, the topic and its
+  // synonyms, or the question itself; the last word may be half typed.
+  function suggestionsFor(input, limit = 6) {
+    if (!CANDS) CANDS = buildCandidates();
+    const toks = norm(input).split(" ").filter(t => t && !STOP.has(t));
+    if (!toks.length || norm(input).length < 2) return [];
+    const last = toks.length - 1, found = [];
+    for (const c of CANDS) {
+      let score = 0;
+      for (let i = 0; i < toks.length && score >= 0; i++) {
+        const t = toks[i];
+        const hit = w => (i === last ? w.startsWith(t) : (w === t || (t.length >= 3 && w.startsWith(t))));
+        // Whole-word matches outrank prefixes ("ter" is the expense ratio, not "Term"),
+        // and a scheme-name match outranks a topic match ("small cap" is the Small Cap
+        // scheme, not "smallest amount" for Large Cap).
+        if (c.scheme.includes(t) || c.topic.includes(t)) score += 5;
+        else if (c.scheme.some(hit)) score += 4;
+        else if (c.topic.some(hit)) score += 3;
+        else if (c.words.some(hit)) score += 1;
+        else { score = -1; break; }
+        if (c.words.some(hit)) score += 1;               // also in the visible question ("who man…")
+      }
+      if (score > 0) found.push({ c, score });
+    }
+    found.sort((a, b) => b.score - a.score || a.c.rank - b.c.rank);
+    const typed = norm(input), seen = new Set();
+    return found.map(f => f.c.text)
+                .filter(text => norm(text) !== typed && !seen.has(text) && seen.add(text))
+                .slice(0, limit);
+  }
+
+  // Bold the parts of a suggestion that match what was typed (text nodes only).
+  function markMatches(li, text, input) {
+    const toks = norm(input).split(" ").filter(t => t.length >= 2 && !STOP.has(t));
+    const re = toks.length ? new RegExp("\\b(" + toks.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")", "gi") : null;
+    let lastIdx = 0;
+    if (re) for (const m of text.matchAll(re)) {
+      if (m.index > lastIdx) li.appendChild(document.createTextNode(text.slice(lastIdx, m.index)));
+      li.appendChild(el("mark", null, m[0]));
+      lastIdx = m.index + m[0].length;
+    }
+    li.appendChild(document.createTextNode(text.slice(lastIdx)));
+  }
+
+  const sug = { list: $("suggestions"), items: [], active: -1 };
+  function closeSuggest() {
+    sug.items = []; sug.active = -1;
+    sug.list.hidden = true; sug.list.replaceChildren();
+    ui.input.setAttribute("aria-expanded", "false");
+    ui.input.removeAttribute("aria-activedescendant");
+  }
+  function renderSuggest() {
+    const value = ui.input.value;
+    sug.items = value.includes("\n") ? [] : suggestionsFor(value);
+    sug.active = -1;
+    if (!sug.items.length || document.activeElement !== ui.input) { closeSuggest(); return; }
+    sug.list.replaceChildren(el("li", "suggest-head", "Suggested questions"));
+    sug.list.firstChild.setAttribute("role", "presentation");
+    sug.items.forEach((text, i) => {
+      const li = el("li");
+      li.id = `sug-${i}`; li.setAttribute("role", "option"); li.setAttribute("aria-selected", "false");
+      li.appendChild(icon("sparkchat"));
+      const span = el("span"); markMatches(span, text, value); li.appendChild(span);
+      li.addEventListener("mousedown", e => { e.preventDefault(); pickSuggestion(i, true); });
+      sug.list.appendChild(li);
+    });
+    sug.list.hidden = false;
+    ui.input.setAttribute("aria-expanded", "true");
+  }
+  function moveSuggestion(delta) {
+    if (!sug.items.length) return;
+    const n = sug.items.length + 1;                     // positions: none, item 0 … item n-2
+    sug.active = (sug.active + 1 + delta + n) % n - 1;  // -1 = nothing highlighted
+    sug.list.querySelectorAll('[role="option"]').forEach((li, i) => li.setAttribute("aria-selected", String(i === sug.active)));
+    if (sug.active >= 0) {
+      ui.input.setAttribute("aria-activedescendant", `sug-${sug.active}`);
+      $(`sug-${sug.active}`).scrollIntoView({ block: "nearest" });
+    } else ui.input.removeAttribute("aria-activedescendant");
+  }
+  function pickSuggestion(i, sendNow) {
+    const text = sug.items[i];
+    closeSuggest();
+    if (sendNow) { send(text); return; }
+    ui.input.value = text; autosize(); updateSend();
+  }
+
+  // -------------------------------------------------------------------------
+  // Next steps after a reply (chatbot-flow-design: branch with value; layered
+  // fallback with suggested intents; never a dead end).
+  // -------------------------------------------------------------------------
+  function schemeName(id) {
+    const s = state.config && state.config.suggest && state.config.suggest.schemes.find(x => x.id === id);
+    return s ? s.name : null;
+  }
+  function trackReply(r) {
+    if (r.kind === "answer" && r.scheme_id) state.lastScheme = r.scheme_id;
+    state.misses = r.kind === "not_found" ? state.misses + 1 : (r.kind === "answer" ? 0 : state.misses);
+  }
+  function topicAsked(t, question) {
+    const q = ` ${norm(question)} `;
+    return [t.label, ...t.keys.split(" ").filter(k => k.length >= 4)].some(k => q.includes(` ${norm(k)} `));
+  }
+  function schemeChips(schemeId, question, n) {
+    const ix = state.config.suggest, name = schemeName(schemeId);
+    if (!name) return [];
+    const order = ix.topics.slice(0, ix.core).concat(ix.topics.filter(t => t.id === "fund_manager" || t.id === "nav"));
+    return order.filter(t => !topicAsked(t, question)).slice(0, n)
+                .map(t => ({ label: t.label, text: t.template.replace("{name}", name) }));
+  }
+  function addNextSteps(r, question) {
+    const ix = state.config && state.config.suggest;
+    if (!ix) return;
+    let label = null, chips = [];
+    if (r.kind === "answer" && r.scheme_id) {
+      // Skip topics already asked anywhere in this thread, not just the last question.
+      const asked = [...ui.messages.querySelectorAll(".msg-user")].map(u => u.textContent).join(" | ");
+      label = "Ask next:"; chips = schemeChips(r.scheme_id, `${asked} | ${question}`, 3);
+    } else if (["not_found", "refusal", "performance"].includes(r.kind)) {
+      label = "Try instead:";
+      const sid = r.scheme_id || state.lastScheme;
+      // Name the scheme on the chip: after a refusal the context isn't obvious.
+      chips = sid ? schemeChips(sid, "", 3).map(c => ({ ...c, label: `${c.label} of ${schemeName(sid)}` }))
+                  : ix.general.slice(0, 3).map(q => ({ label: q, text: q }));
+    }
+    if (chips.length) {
+      const row = el("div", "nextsteps");
+      row.appendChild(el("span", "nextsteps-label", label));
+      for (const c of chips) {
+        const b = el("button", "chip");
+        b.type = "button"; b.title = c.text;
+        b.setAttribute("aria-label", `Ask: ${c.text}`);
+        b.append(icon("arrow"), el("span", null, c.label));
+        b.addEventListener("click", () => send(c.text));
+        row.appendChild(b);
+      }
+      ui.messages.appendChild(row);
+    }
+    if (r.kind === "not_found" && state.misses >= 2) {                    // repeated fallback
+      ui.messages.appendChild(el("p", "capability-note",
+        "I answer facts about 27 HDFC Mutual Fund schemes (expense ratio, exit load, minimum SIP, riskometer, " +
+        "benchmark, fund managers, NAV, fund size, lock-in, launch date) and how to get statements, capital gains " +
+        "reports and the ELSS rule. Start typing a scheme name to see questions I can answer."));
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Sending
   // -------------------------------------------------------------------------
   function updateSend() {
@@ -771,7 +978,8 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
       setActive(tid);
       ui.messages.replaceChildren();
     }
-    ui.input.value = ""; autosize(); updateSend();
+    ui.input.value = ""; autosize(); updateSend(); closeSuggest();
+    ui.messages.querySelectorAll(".nextsteps, .capability-note").forEach(n => n.remove());
     const bubble = addUser(text);
     const typing = el("div", "typing");
     typing.setAttribute("aria-label", "BoloSIP is looking this up");
@@ -796,6 +1004,8 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
       await openThread(tid);
     } else {
       addReply(reply, text);
+      trackReply(reply);
+      addNextSteps(reply, text);
     }
     scrollDown();
     loadThreads();
@@ -805,9 +1015,19 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     ui.input.style.height = "auto";
     ui.input.style.height = Math.min(ui.input.scrollHeight, 160) + "px";
   }
-  ui.input.addEventListener("input", () => { autosize(); updateSend(); });
+  ui.input.addEventListener("input", () => { autosize(); updateSend(); renderSuggest(); });
+  ui.input.addEventListener("focus", renderSuggest);
+  ui.input.addEventListener("blur", () => setTimeout(closeSuggest, 120));
   ui.input.addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!ui.send.disabled) send(ui.input.value); }
+    const open = !sug.list.hidden && sug.items.length;
+    if (open && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); moveSuggestion(e.key === "ArrowDown" ? 1 : -1); return; }
+    if (open && e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeSuggest(); return; }
+    if (open && e.key === "Tab" && sug.active >= 0 && !e.shiftKey) { e.preventDefault(); pickSuggestion(sug.active, false); return; }
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      if (open && sug.active >= 0) { pickSuggestion(sug.active, true); return; }
+      if (!ui.send.disabled) send(ui.input.value);
+    }
   });
   ui.composer.addEventListener("submit", e => { e.preventDefault(); if (!ui.send.disabled) send(ui.input.value); });
   $("newChat").addEventListener("click", () => { startNew(); if (narrow.matches) setDrawer(false); });

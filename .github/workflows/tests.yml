@@ -68,3 +68,26 @@ jobs:
 
       - name: Evaluation gates (dense)
         run: python -m eval.run --all --no-write
+
+  ui:
+    # The chat page in a real browser (Playwright + headless Chromium): examples, chips,
+    # typing suggestions with the keyboard, fallback, XSS, phone drawer, overflow scan.
+    name: Browser tests (Playwright, Chromium)
+    runs-on: ubuntu-latest
+    env:
+      BOLOSIP_UI_TESTS: "1"             # fail instead of skipping if the browser is missing
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Playwright and Chromium
+        run: |
+          pip install "playwright>=1.49,<2"
+          python -m playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: python -m unittest tests.test_ui_browser -v

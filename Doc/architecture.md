@@ -503,7 +503,7 @@ All responses are JSON, and errors look like `{"error": "<message>"}`.
 |---|---|---|---|
 | `GET` | `/` | — | `web/index.html` |
 | `GET` | `/api/health` | — | `{status, llm_enabled, corpus_built_on, schemes}` |
-| `GET` | `/api/config` | — | `{welcome, examples[3], disclaimer}` for the UI |
+| `GET` | `/api/config` | — | `{welcome, examples[3], disclaimer, privacy_hint, max_chars, suggest}` for the UI; `suggest` is the 5 KB question index (`bolosip/suggest.py`) matched in the browser for typing suggestions |
 | `GET` | `/api/threads` | — | `[{id, title, updated_at}]`, newest first, at most 100 |
 | `POST` | `/api/threads` | `{}` (JSON) | `201 {id, title}` (new empty thread, title "New chat") |
 | `GET` | `/api/threads/{id}/messages` | — | `[{role, text, kind, source, footer, candidates, scheme_id, created_at}]`, latest 200 |
@@ -548,6 +548,7 @@ All responses are JSON, and errors look like `{"error": "<message>"}`.
 - **Safe rendering:** all message text is inserted with `textContent`, never `innerHTML`. Source links get `rel="noopener noreferrer"` and `target="_blank"`.
 - **Remembered thread and theme:** the active thread ID and the light/dark choice are kept in `localStorage`, wrapped in try/catch. All other state lives on the server.
 - **Narrow screens:** below 700 px the thread list becomes a drawer and the disclaimer moves to its own row of the sticky header. The same components and 1px hairline borders are used at every width.
+- **Suggestions:** typing suggestions in an accessible combobox (arrows, Enter sends, Tab fills, Esc closes), matched in the browser from the `/api/config` index, offering only questions tested to get a correct answer; "Ask next" chips after an answer (the same scheme's other key facts), "Try instead" chips after not found / refusal / returns replies, and a short capability note after two misses in a row (layered fallback, see [design/chatbot-audit.md](design/chatbot-audit.md)).
 - **Look:** dark theme by default ("Calm Financial Terminal" palette), light theme on request; each reply kind has its own big icon, colour and label; values such as "0.73% per annum" are highlighted by splitting the text into spans, still with `textContent`. Every text and icon colour meets WCAG AA in both themes. Design review: [design/ui-review.md](design/ui-review.md).
 
 ## 15. Ingestion pipeline

@@ -4,6 +4,14 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Improved (after Phase 6, 22 Nov 2026), from the chatbot-flow-design audit
+- Typing suggestions in the input (accessible combobox), matched in the browser from a 5 KB index in `/api/config` (`bolosip/suggest.py`); only questions tested to get a correct answer are offered.
+- "Ask next" chips after an answer; "Try instead" chips after not found, refusal and returns replies; a capability note after two misses in a row.
+- Follow-ups only with a signal (ISS-039: on BM25, "bitcoin price" in a Mid Cap thread was answered with the NAV); stamp-duty synonyms (paraphrases 96.3% → 97.5%).
+- `scripts/usage_report.py`: reply mix, fallback rate, answers per topic and scheme, repeated misses; question text only with `--show-unanswered`.
+- `tests/test_ui_browser.py` (Playwright, the `webapp-testing` approach) and a CI `ui` job; `tests/test_suggest.py`, `tests/test_usage_report.py`; CONV-28.
+- `Doc/issues.md` (every issue, open and fixed) and `Doc/design/chatbot-audit.md`.
+
 ### Added (Phase 6: web UI, milestone M2, 20 Nov 2026)
 - `web/index.html`: one self-contained page (inline CSS, inline SVG icons, no external scripts or fonts): sticky header with the disclaimer, chat list (drawer below 700 px), welcome with 3 example cards, one card per reply kind with a big icon, highlighted values, source link and footer, clarify and help buttons, typing indicator, toasts for rate limits and network errors, 500-character input with counter, dark and light themes.
 - Design: Google Stitch export reviewed in `Doc/design/ui-review.md` (screens and design notes in `Doc/design/stitch/`). Fixed the thick light borders and missing replies on mobile, the overflowing header and the broken logo; removed claims the project can't back (SEBI-compliant, AMFI live feed, verified snapshot) and every external dependency.

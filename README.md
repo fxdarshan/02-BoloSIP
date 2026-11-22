@@ -84,7 +84,15 @@ Run `python -m bolosip` with no question for an interactive prompt, or add `--js
 python server.py
 ```
 
-Open http://127.0.0.1:8000 for the chat page: dark theme by default (sun/moon button for light), a list of chats on the left (a drawer on phones), and three example questions to start. The JSON API is under `/api/`. For example, `GET /api/health` reports the 27 schemes and which search is in use. Conversations are kept in `data/bolosip.sqlite3` (git-ignored); personal details are replaced with `[redacted]` before anything is saved. Start it with the Python 3.12 environment (`.venv/Scripts/python.exe server.py`) to use the embedding search.
+Open http://127.0.0.1:8000 for the chat page: dark theme by default (sun/moon button for light), a list of chats on the left (a drawer on phones), and three example questions to start. Start typing a scheme or a topic ("mid cap exit", "ter", "statement") for suggested questions; after each answer, chips offer the next questions. The JSON API is under `/api/`.
+
+To see how people use it (reply mix, "not found" rate, answers per topic), run:
+
+```bash
+python scripts/usage_report.py
+```
+
+Add `--show-unanswered` to list the (redacted) questions that got "not found". For example, `GET /api/health` reports the 27 schemes and which search is in use. Conversations are kept in `data/bolosip.sqlite3` (git-ignored); personal details are replaced with `[redacted]` before anything is saved. Start it with the Python 3.12 environment (`.venv/Scripts/python.exe server.py`) to use the embedding search.
 
 ## Settings and the Groq API key
 

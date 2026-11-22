@@ -38,6 +38,8 @@ _ABOUT_BOT = re.compile(
 
 # --- Follow-ups and plan variants --------------------------------------------
 _REFERS_BACK = re.compile(r"\b(?:its|it s|it)\b|\b(?:this|that|the same|same|the) (?:fund|scheme|one)\b")
+# Words that open a follow-up ("and for the regular plan?", "what about direct?").
+_FOLLOW_CUE = re.compile(r"^(?:and|also|what about|how about|same for|and for)\b")
 _VARIANT = re.compile(r"\b(regular|idcw|dividend|payout|reinvestment|reinvest)\b")
 _DEFINITION = re.compile(
     r"\b(?:what (?:is|are) (?:a|an)|what s (?:a|an)|define|definition of|meaning of|what is meant by|"
@@ -126,10 +128,13 @@ def _answer_or_not(r: Retriever, text: str, norm: str, last: str | None, rephras
         top_topic = hits_all[0].topic if r.is_confident(hits_all) else None
         if definition:
             topic = "definition"                      # never a follow-up: "what is a riskometer?"
-        elif named or refers_back:
-            topic = None                              # "what about its exit load?", "exit load?"
+        elif named or refers_back or _FOLLOW_CUE.search(norm) or _VARIANT.search(norm):
+            topic = None                              # "what about its exit load?", "and for the regular plan?"
         else:
-            topic = top_topic
+            # No pronoun and no named topic: a follow-up only if the question itself
+            # confidently matches a scheme fact. An unrecognised question ("bitcoin price")
+            # never borrows the thread's scheme (ISS-039).
+            topic = top_topic if top_topic is not None else "unrecognised"
         res_ctx = resolve(text, last, topic)
         if res_ctx.kind == "one":
             scheme_id, via_context = res_ctx.scheme_id, True
@@ -166,7 +171,9 @@ def _answer_or_not(r: Retriever, text: str, norm: str, last: str | None, rephras
     own = next((h for h in hits if h.scheme_id == scheme_id), None) if scheme_id and named else None
     if own is not None and own.topic in named and not definition:
         top = own
-    elif not r.is_confident(hits, scheme_id):
+    elif not hits or hits[0].score < r.min_score(scheme_named=scheme_id is not None and not (via_context and not named)):
+        # A scheme taken only from the thread, with no topic named ("and bitcoin price?"),
+        # must clear the stricter no-scheme bar: the filtered search alone is too lenient.
         return composer.not_found(meta, _closest_official(r, text)), scheme_id
     else:
         top = hits[0]

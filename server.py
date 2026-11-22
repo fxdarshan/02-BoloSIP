@@ -21,7 +21,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from bolosip import __version__ as VERSION
-from bolosip import config, guards, pipeline
+from bolosip import config, guards, pipeline, suggest
 from bolosip.retriever import Retriever, get_retriever
 from bolosip.store import Store, ThreadNotFound
 
@@ -151,7 +151,8 @@ class Handler(BaseHTTPRequestHandler):
             self._allow(method, "GET")
             return self._json(200, {"welcome": config.WELCOME_TEXT, "examples": list(config.EXAMPLE_QUESTIONS),
                                     "disclaimer": config.DISCLAIMER, "privacy_hint": config.PRIVACY_HINT,
-                                    "max_chars": config.MAX_TEXT_CHARS})
+                                    "max_chars": config.MAX_TEXT_CHARS,
+                                    "suggest": suggest.suggestion_index(self.server.retriever)})
         if path == "/api/threads":
             self._allow(method, "GET", "POST")
             if method == "GET":
