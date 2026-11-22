@@ -87,6 +87,17 @@ class TestChatPageInBrowser(unittest.TestCase):
         self.assertEqual(self.dialogs, [], "a dialog opened (script ran?)")
 
     # --- helpers --------------------------------------------------------------
+    # No page.wait_for_function: it evaluates a string, which the page's Content-Security-
+    # Policy (no 'unsafe-eval') rightly blocks. Poll with evaluate() instead.
+    def wait_until(self, js_function, timeout_s=5.0):
+        import time
+        end = time.monotonic() + timeout_s
+        while time.monotonic() < end:
+            if self.page.evaluate(js_function):
+                return
+            self.page.wait_for_timeout(50)
+        self.fail(f"timed out waiting for {js_function}")
+
     def replies(self):
         return self.page.locator(".reply")
 
@@ -95,7 +106,7 @@ class TestChatPageInBrowser(unittest.TestCase):
         self.page.fill("#input", text)
         self.page.press("#input", "Escape")              # close suggestions so Enter sends the text
         self.page.press("#input", "Enter")
-        self.page.wait_for_function(f"document.querySelectorAll('.reply').length > {before}")
+        self.replies().nth(before).wait_for()
         return self.replies().last
 
     # --- tests ----------------------------------------------------------------
@@ -115,7 +126,7 @@ class TestChatPageInBrowser(unittest.TestCase):
         self.assertEqual(chips.count(), 3)
         before = self.replies().count()
         chips.first.click()
-        self.page.wait_for_function(f"document.querySelectorAll('.reply').length > {before}")
+        self.replies().nth(before).wait_for()
         self.assertIn("HDFC Mid Cap Fund", self.replies().last.inner_text())
         self.assertEqual(self.page.locator(".nextsteps").count(), 1)        # only under the latest reply
 
@@ -130,7 +141,7 @@ class TestChatPageInBrowser(unittest.TestCase):
         self.assertEqual(self.page.get_attribute("#input", "aria-activedescendant"), "sug-0")
         before = self.replies().count()
         self.page.keyboard.press("Enter")
-        self.page.wait_for_function(f"document.querySelectorAll('.reply').length > {before}")
+        self.replies().nth(before).wait_for()
         self.assertIn("HDFC Liquid Fund", self.replies().last.inner_text())
         self.assertTrue(listbox.is_hidden())
         # Escape closes the list without sending; Tab fills without sending.
@@ -162,22 +173,25 @@ class TestChatPageInBrowser(unittest.TestCase):
     def test_no_overflow_at_any_width(self):
         self.page.locator(".example").first.click()
         self.page.wait_for_selector(".nextsteps .chip")
-        for width, height in ((1440, 900), (768, 1024), (375, 812), (320, 640)):
-            with self.subTest(width=width):
-                self.page.set_viewport_size({"width": width, "height": height})
-                self.page.fill("#input", "small cap")
-                self.page.locator("#suggestions").wait_for(state="visible")
-                result = self.page.evaluate(OVERFLOW_SCAN)
-                self.assertFalse(result["sideways"])
-                self.assertEqual(result["issues"], [])
-                self.page.fill("#input", "")
+        # Also with a wide font: DejaVu Sans (Linux) once pushed the 320 px page sideways (ISS-041).
+        for font in (None, 'Verdana, "DejaVu Sans", sans-serif'):
+            if font:
+                self.page.evaluate(f"() => document.documentElement.style.setProperty('--font', '{font}')")
+            for width, height in ((1440, 900), (768, 1024), (375, 812), (320, 640)):
+                with self.subTest(width=width, font=font or "default"):
+                    self.page.set_viewport_size({"width": width, "height": height})
+                    self.page.fill("#input", "small cap")
+                    self.page.locator("#suggestions").wait_for(state="visible")
+                    result = self.page.evaluate(OVERFLOW_SCAN)
+                    self.assertEqual((result["sideways"], result["issues"]), (False, []))
+                    self.page.fill("#input", "")
 
     def test_phone_drawer(self):                                          # UI-06
         self.page.set_viewport_size({"width": 375, "height": 812})
         self.page.locator(".example").first.click()
         self.page.wait_for_selector(".reply")
         self.page.click("#menuBtn")
-        self.page.wait_for_function("document.getElementById('sidebar').getBoundingClientRect().left >= 0")
+        self.wait_until("() => document.getElementById('sidebar').getBoundingClientRect().left >= 0")
         self.assertEqual(self.page.get_attribute("#menuBtn", "aria-expanded"), "true")
         self.assertGreaterEqual(self.page.locator(".thread").count(), 1)
         self.page.keyboard.press("Escape")
