@@ -12,6 +12,7 @@ Every error and issue found while building BoloSIP: what happened, why, how it w
 
 | ID | Status | Found | Area | Issue | Notes / next step |
 |---|---|---|---|---|---|
+| ISS-045 | 🟡 | 22 Nov 2026 | Data refresh | Each daily refresh commit adds about 0.37 MB to the repository once compressed (the first one: 32 files, 15 MB of raw blobs, mostly the 27 saved HTML pages and `data/corpus.json`), so about 135 MB a year | Measured with `git pack-objects --thin` on 5db17bb. Acceptable for now; if it matters, stop committing `data/raw/*.html` (keep `fetched.json`) or squash old refresh commits. Recheck after a month |
 | ISS-033 | 🔴 | 22 Nov 2026 | CI | One unit test failed once on the Windows / Python 3.13 job only (passed in every other job and in the same job minutes earlier); the gate did not say which test | Gate now names failing tests (`eval/run.py` phase 0). Identify and fix if it recurs |
 | ISS-020 | 🟡 | 19 Nov 2026 | Process | Human checks still to do: M1 review of 30 answers (Phase 4 gate report), Edge pass, Lighthouse score ≥ 90, screen-reader pass, 3-person usability check (Phase 6) | Owner |
 | ISS-016 | 🟡 | 19 Nov 2026 | Retrieval | Three near-threshold misses on the dense path with no scheme named: "Where can I download the monthly factsheet?" (0.70), "where do I download my transaction history" (0.66), "what is ELSS" (0.70, answered correctly by the pipeline's ELSS rule) | Lowering the 0.70 bar would let out-of-scope questions through (highest out-of-scope score 0.695). Re-tune in Phase 9 |

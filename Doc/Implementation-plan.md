@@ -499,11 +499,11 @@ Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (
 **Files:** `.github/workflows/refresh-data.yml`, `scripts/data_diff.py`, `bolosip/embedder.py`, `bolosip/vectorstore.py`, `bolosip/retriever.py`, `ingest.py`, `server.py`, `tests/test_data_diff.py`, `tests/test_retrieval.py`, `.github/workflows/tests.yml`, `README.md`, `Doc/issues.md`
 
 **Exit criteria**
-- [ ] A manual dry run completes every step (scrape, parse, validate, chunk, embed, ChromaDB, tests, gates) and commits nothing.
-- [ ] A scheduled run at 10:00 IST commits refreshed data when facts changed and nothing when they didn't, on two consecutive days; the footer date of a fresh answer equals the run date after `git pull` and a server restart.
+- [x] A manual dry run completes every step (scrape, parse, validate, chunk, embed, ChromaDB, tests, gates) and commits nothing. *(Run 45033364556, 22 Nov 2026: all 27 pages live, 54 facts changed, 249 tests OK, gates PASS, no commit.)*
+- [ ] A scheduled run at 10:00 IST commits refreshed data when facts changed and nothing when they didn't, on two consecutive days; the footer date of a fresh answer equals the run date after `git pull` and a server restart. *(First manual real run 45033734142 committed 5db17bb "Data refresh 22 Nov 2026: 54 facts changed"; after `git pull` and a restart, `/api/health` shows `data_age_days` 0 and answers carry "Last updated from sources: 22 Nov 2026". The two scheduled days are still to watch.)*
 - [ ] A day when only NAV and fund size changed leaves `data/embeddings.npy` unchanged.
 - [ ] A forced failure (a gate failure, and a blocked stable-fact change) commits nothing and opens the `data-refresh` issue; the next good run closes it.
-- [ ] Every evaluation gate still passes on the refreshed data.
+- [x] Every evaluation gate still passes on the refreshed data. *(Both runs on 22 Nov 2026.)*
 
 **Covers:** PS §8 (data freshness); arch §15 (ingestion), §8.4 (ChromaDB rebuild); risks R8, R13, R14, R15
 
