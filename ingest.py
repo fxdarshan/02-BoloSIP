@@ -547,16 +547,16 @@ def build_embeddings(corpus_path: Path | None = None, *, log=print) -> str:
     corpus_path = corpus_path or CORPUS
     corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
     chunks = corpus["chunks"]
-    sha = embedder.corpus_hash(corpus_path)
+    sha = embedder.texts_hash(chunks)            # embedded texts, not the whole file (Phase 7)
     model_name = config.SETTINGS.embed_model
     try:
         import chromadb  # noqa: F401
-        import numpy  # noqa: F401
+        import numpy as np
     except ImportError:
         return "skipped: the 'embed' extra is not installed (needs Python 3.10–3.14; see README)"
 
     vectors, meta = vectorstore.load_vectors()
-    if (vectors is not None and meta.get("corpus_sha256") == sha and meta.get("model") == model_name
+    if (vectors is not None and meta.get("texts_sha256") == sha and meta.get("model") == model_name
             and vectorstore.mismatch(vectors, meta, chunks) is None):     # damaged metadata → re-embed (ISS-024)
         # Still make sure the model is cached: queries need it even when the vectors don't
         # (a fresh clone or CI has the committed vectors but not the 550 MB model).
@@ -567,21 +567,37 @@ def build_embeddings(corpus_path: Path | None = None, *, log=print) -> str:
         model = embedder.load(model_name, allow_download=True)
         if model is None:
             return f"skipped: could not load {model_name} (no network on first run?)"
-        log(f"Embedding {len(chunks)} chunks with {model_name} (about a minute on CPU)...")
-        vectors = model.embed_documents([embedder.document_text(c) for c in chunks])
+        # Reuse the saved vector of every chunk whose embedded text is unchanged; embed the rest.
+        hashes = [embedder.text_hash(c) for c in chunks]
+        old = {}
+        if (vectors is not None and meta and meta.get("model") == model_name
+                and len(meta.get("chunk_ids") or []) == len(vectors) == len(meta.get("text_sha256") or [])):
+            old = {(cid, h): row for cid, h, row in zip(meta["chunk_ids"], meta["text_sha256"], vectors)}
+        todo = [i for i, c in enumerate(chunks) if (c["id"], hashes[i]) not in old]
+        log(f"Embedding {len(todo)} of {len(chunks)} chunks with {model_name}"
+            + (" (about a minute on CPU)..." if len(todo) > 100 else "..."))
+        fresh = model.embed_documents([embedder.document_text(chunks[i]) for i in todo]) if todo else None
+        rows, k = [], 0
+        for i, c in enumerate(chunks):
+            if fresh is not None and k < len(todo) and todo[k] == i:
+                rows.append(fresh[k]); k += 1
+            else:
+                rows.append(old[(c["id"], hashes[i])])
+        vectors = np.asarray(rows, dtype=np.float32)
         meta = {
             "model": model_name,
             "doc_prefix": config.EMBED_DOC_PREFIX,
             "query_prefix": config.EMBED_QUERY_PREFIX,
-            "embedded_text": "text + keywords",
+            "embedded_text": "text (daily values masked) + keywords",
             "dims": int(vectors.shape[1]),
             "count": int(vectors.shape[0]),
             "chunk_ids": [c["id"] for c in chunks],
-            "corpus_sha256": sha,
+            "text_sha256": hashes,
+            "texts_sha256": sha,
             "built_on": today(),
         }
         vectorstore.save_vectors(vectors, meta)
-        status = "built"
+        status = f"built ({len(todo)} re-embedded)"
     vectorstore.reset_cache()
     store = vectorstore.build(vectors, chunks, meta)
     log(f"ChromaDB collection '{config.CHROMA_COLLECTION}': {store.count} vectors in "

@@ -58,8 +58,8 @@ class VectorStore:
         return self._col.count()
 
     @property
-    def corpus_sha256(self) -> str | None:
-        return (self._col.metadata or {}).get("corpus_sha256")
+    def texts_sha256(self) -> str | None:
+        return (self._col.metadata or {}).get("texts_sha256")
 
     def query(self, vector, scheme_id: str | None = None, n: int = 5) -> list[tuple[str, float]]:
         """[(chunk_id, cosine_score)], best first. With a scheme, only that scheme's facts
@@ -90,7 +90,7 @@ def build(vectors, chunks: list[dict], meta: dict, chroma_dir: Path | None = Non
         pass
     col = client.create_collection(
         config.CHROMA_COLLECTION, embedding_function=None,
-        metadata={"hnsw:space": "cosine", "corpus_sha256": meta["corpus_sha256"],
+        metadata={"hnsw:space": "cosine", "texts_sha256": meta["texts_sha256"],
                   "model": meta["model"]})
     by_id = {c["id"]: c for c in chunks}
     ids = meta["chunk_ids"]
@@ -122,27 +122,27 @@ def mismatch(vectors, meta: dict | None, chunks: list[dict]) -> str | None:
     return None
 
 
-def open_store(chunks: list[dict], corpus_sha256: str, chroma_dir: Path | None = None) -> VectorStore | None:
+def open_store(chunks: list[dict], texts_sha256: str, chroma_dir: Path | None = None) -> VectorStore | None:
     """Open the collection for this corpus, rebuilding it from the committed vectors if it
     is missing or stale. None if Chroma isn't installed or the vectors don't match."""
     chroma_dir = Path(chroma_dir or config.SETTINGS.chroma_dir)
-    key = f"{chroma_dir}|{corpus_sha256}"
+    key = f"{chroma_dir}|{texts_sha256}"
     with _store_lock:
         if key in _store_cache:
             return _store_cache[key]
-        _store_cache[key] = _open(chunks, corpus_sha256, chroma_dir)
+        _store_cache[key] = _open(chunks, texts_sha256, chroma_dir)
         return _store_cache[key]
 
 
-def _open(chunks, corpus_sha256, chroma_dir) -> VectorStore | None:
+def _open(chunks, texts_sha256, chroma_dir) -> VectorStore | None:
     try:
         import chromadb  # noqa: F401
     except ImportError:
         log.info("vector store unavailable: chromadb is not installed")
         return None
     vectors, meta = load_vectors()
-    if vectors is None or meta.get("corpus_sha256") != corpus_sha256:
-        log.info("vector store unavailable: data/embeddings.npy is missing or doesn't match corpus.json")
+    if vectors is None or meta.get("texts_sha256") != texts_sha256:
+        log.info("vector store unavailable: data/embeddings.npy is missing or doesn't match the corpus texts")
         return None
     problem = mismatch(vectors, meta, chunks)
     if problem:
@@ -151,7 +151,7 @@ def _open(chunks, corpus_sha256, chroma_dir) -> VectorStore | None:
     try:
         col = _client(chroma_dir).get_collection(config.CHROMA_COLLECTION)
         store = VectorStore(col)
-        if store.corpus_sha256 == corpus_sha256 and store.count == len(meta["chunk_ids"]):
+        if store.texts_sha256 == texts_sha256 and store.count == len(meta["chunk_ids"]):
             return store
     except Exception:
         pass   # missing or unreadable: rebuild below

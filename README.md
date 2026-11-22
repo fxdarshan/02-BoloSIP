@@ -96,6 +96,30 @@ Add `--show-unanswered` to list the (redacted) questions that got "not found".
 
 `GET /api/health` reports the 27 schemes and which search is in use. Conversations are kept in `data/bolosip.sqlite3` (git-ignored); personal details are replaced with `[redacted]` before anything is saved. Start the server with the Python 3.12 environment (`.venv/Scripts/python.exe server.py`) to use the embedding search.
 
+## Daily data refresh (GitHub Actions)
+
+Every day at **10:00 IST**, the `refresh-data` workflow on GitHub rebuilds BoloSIP's data from the 27 Groww pages: it scrapes them, parses and cleans the facts, chunks them, embeds the chunks and rebuilds ChromaDB, then runs every test and evaluation gate. Only if all of that passes does it commit the new data to `main` (as `github-actions[bot]`), and the run's summary page shows a change report. A failed or suspicious run (a missing scheme, or more than 5 stable facts changing at once) commits nothing and opens a GitHub issue labelled `data-refresh`.
+
+Because the workflow commits every morning, **start local work with**:
+
+```bash
+git pull --rebase
+```
+
+Then restart the server to load the new data; it rebuilds its local ChromaDB collection from the new vectors by itself. `GET /api/health` shows `corpus_built_on` and `data_age_days`, and the server warns at start-up when the data is more than 3 days old. Never edit files under `data/` by hand; regenerate them with `python ingest.py`.
+
+To run the refresh by hand (for example to try it without committing):
+
+```bash
+gh workflow run refresh-data.yml -f dry_run=true
+```
+
+To see what changed between two corpus versions:
+
+```bash
+python scripts/data_diff.py old_corpus.json data/corpus.json
+```
+
 ## Browser tests (optional)
 
 `tests/test_ui_browser.py` drives the chat page in headless Chromium with Playwright: examples, suggestions with the keyboard, chips, fallback, script text, the phone drawer, and an overflow scan at four widths. Without Playwright these tests are skipped; CI always runs them. To run them locally (Chromium is about 150 MB, downloaded once):

@@ -35,7 +35,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | **Phase 5: Thread store and HTTP API** | **Done** (19 Nov 2026): `bolosip/store.py` (SQLite, WAL), `server.py` (stdlib JSON API, Host/Origin/JSON checks, per-IP rate limit); dense gate: API parity 838/838, context over HTTP 63/63, 0 leaks, 0 personal data stored, p50 25 ms / p95 ≤ 46 ms; 213 tests |
 | **Phase 6: Web UI, M2** | **Done** (20 Nov 2026): `web/index.html`, one self-contained file built from the reviewed Google Stitch design ([ui-review.md](design/ui-review.md)); dark (default) and light themes; 15 browser checks recorded (incl. an overflow scan at 6 widths); 225 tests. By hand still: Edge, Lighthouse, screen reader, 3-person usability check |
 | **Improvements after Phase 6** | **Done** (22 Nov 2026): chatbot design audit ([design/chatbot-audit.md](design/chatbot-audit.md)); typing suggestions, "Ask next" / "Try instead" chips, capability note after two misses; follow-ups only with a signal (ISS-039); stamp-duty synonyms; `scripts/usage_report.py`; Playwright browser tests in a CI `ui` job. Issues log: [issues.md](issues.md) |
-| **Phase 7: Scheduled daily data refresh** | Planned (added 22 Nov 2026): GitHub Actions at 10:00 IST rebuilds and checks the data, commits only when every check passes |
+| **Phase 7: Scheduled daily data refresh** | **Built** (22 Nov 2026): `.github/workflows/refresh-data.yml` (10:00 IST), `scripts/data_diff.py`, stable embeddings (only changed rows re-embedded; NAV/fund-size changes leave the vectors alone), `data_age_days` in `/api/health`. Exit criteria below show what is verified |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview

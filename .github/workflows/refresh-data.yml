@@ -1,0 +1,121 @@
+name: refresh-data
+
+# Phase 7: rebuild BoloSIP's data from the live sources every day at 10:00 IST
+# (scrape -> parse and normalise -> clean and validate -> chunk -> embed -> ChromaDB),
+# check it with the full test suite and evaluation gates, and commit it to main only
+# if every check passes. A failed or blocked run commits nothing and keeps one GitHub
+# issue labelled "data-refresh" open until the next good run. See Doc/Implementation-plan.md.
+
+on:
+  schedule:
+    - cron: "30 4 * * *"          # 04:30 UTC = 10:00 IST, every day
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run every step but commit nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write                  # push the refreshed data
+  issues: write                    # open / close the data-refresh issue
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Daily data refresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BOLOSIP_RETRIEVER: embed      # the dense path must work; never fall back silently
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install BoloSIP with the embed extra
+        run: pip install -e ".[embed]"
+
+      - name: Cache the embedding model
+        uses: actions/cache@v4
+        with:
+          path: .cache/models
+          key: models-nomic-embed-text-v1.5-fastembed-0.9
+
+      - name: Keep the current corpus for the change report
+        run: cp data/corpus.json "$RUNNER_TEMP/corpus.before.json"
+
+      # Exit codes: 0 all pages live, 1 some served from their last snapshot (continue,
+      # reported), 2 a scheme missing or the corpus invalid (stop; nothing is written).
+      - name: Scrape, parse, clean, chunk, embed and build ChromaDB
+        id: ingest
+        run: |
+          set +e
+          python ingest.py
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -ge 2 ]; then echo "::error::ingest.py exited with $code"; exit "$code"; fi
+          exit 0
+
+      - name: Independent truth from the new snapshots
+        run: python -m eval.build_truth
+
+      - name: Change report (blocks on a missing scheme or > 5 stable-fact changes)
+        id: diff
+        run: >-
+          python scripts/data_diff.py "$RUNNER_TEMP/corpus.before.json" data/corpus.json
+          --summary "$GITHUB_STEP_SUMMARY" --github-output "$GITHUB_OUTPUT"
+
+      - name: Unit tests (real model)
+        run: python -m unittest discover tests
+
+      - name: Evaluation gates
+        run: python -m eval.run --all --no-write
+
+      - name: Commit and push the refreshed data
+        if: env.DRY_RUN != 'true' && steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/corpus.json data/raw data/embeddings.npy data/embeddings.json eval/datasets/facts.jsonl
+          if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
+          git commit -m "Data refresh $(TZ=Asia/Kolkata date '+%d %b %Y'): ${{ steps.diff.outputs.facts_changed }} facts changed" \
+                     -m "Automated by .github/workflows/refresh-data.yml (Phase 7). Tests and evaluation gates passed before this commit."
+          git pull --rebase origin main      # main may have moved during the run
+          git push origin HEAD:main
+          echo "Committed: $(git log -1 --format='%h %s')" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dry run note
+        if: env.DRY_RUN == 'true'
+        run: echo "**Dry run:** every step ran; nothing was committed." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Note pages taken from snapshots
+        if: steps.ingest.outputs.exit_code == '1'
+        run: |
+          gh label create data-refresh --color D93F0B --description "Daily data refresh needs attention" 2>/dev/null || true
+          n=$(gh issue list --label data-refresh --state open --json number -q '.[0].number')
+          body="Run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}: some pages could not be fetched live and their last snapshot was used: ${{ steps.diff.outputs.snapshot_schemes }}. The rest of the data was refreshed."
+          if [ -n "$n" ]; then gh issue comment "$n" --body "$body"; else gh issue create --title "Daily data refresh needs attention" --label data-refresh --body "$body"; fi
+
+      - name: Close the data-refresh issue after a fully live, successful run
+        if: success() && env.DRY_RUN != 'true' && steps.ingest.outputs.exit_code == '0'
+        run: |
+          for n in $(gh issue list --label data-refresh --state open --json number -q '.[].number'); do
+            gh issue close "$n" --comment "Resolved: the refresh of ${{ github.run_id }} fetched every page live and passed every check."
+          done
+
+      - name: Open or update the data-refresh issue
+        if: failure()
+        run: |
+          gh label create data-refresh --color D93F0B --description "Daily data refresh needs attention" 2>/dev/null || true
+          n=$(gh issue list --label data-refresh --state open --json number -q '.[0].number')
+          body="The daily data refresh failed or was blocked, so nothing was committed and BoloSIP keeps the previous data. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} (the run summary has the change report)."
+          if [ -n "$n" ]; then gh issue comment "$n" --body "$body"; else gh issue create --title "Daily data refresh needs attention" --label data-refresh --body "$body"; fi

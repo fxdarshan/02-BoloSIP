@@ -861,11 +861,13 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     ui.input.setAttribute("aria-expanded", "false");
     ui.input.removeAttribute("aria-activedescendant");
   }
-  function renderSuggest() {
+  // fromTyping: called by an input event, so the user is in the box whatever
+  // document.activeElement says at that instant (ISS-043).
+  function renderSuggest(fromTyping = false) {
     const value = ui.input.value;
     sug.items = value.includes("\n") ? [] : suggestionsFor(value);
     sug.active = -1;
-    if (!sug.items.length || document.activeElement !== ui.input) { closeSuggest(); return; }
+    if (!sug.items.length || (!fromTyping && document.activeElement !== ui.input)) { closeSuggest(); return; }
     sug.list.replaceChildren(el("li", "suggest-head", "Suggested questions"));
     sug.list.firstChild.setAttribute("role", "presentation");
     sug.items.forEach((text, i) => {
@@ -1019,9 +1021,12 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     ui.input.style.height = "auto";
     ui.input.style.height = Math.min(ui.input.scrollHeight, 160) + "px";
   }
-  ui.input.addEventListener("input", () => { autosize(); updateSend(); renderSuggest(); });
-  ui.input.addEventListener("focus", renderSuggest);
-  ui.input.addEventListener("blur", () => setTimeout(closeSuggest, 120));
+  // The list closes shortly after the box loses focus (so a click on an option still lands),
+  // but a pending close is cancelled as soon as the user is back in the box (ISS-043).
+  let blurTimer = null;
+  ui.input.addEventListener("input", () => { clearTimeout(blurTimer); autosize(); updateSend(); renderSuggest(true); });
+  ui.input.addEventListener("focus", () => { clearTimeout(blurTimer); renderSuggest(); });
+  ui.input.addEventListener("blur", () => { clearTimeout(blurTimer); blurTimer = setTimeout(closeSuggest, 120); });
   ui.input.addEventListener("keydown", e => {
     const open = !sug.list.hidden && sug.items.length;
     if (open && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); moveSuggestion(e.key === "ArrowDown" ? 1 : -1); return; }

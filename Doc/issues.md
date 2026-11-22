@@ -26,6 +26,8 @@ Every error and issue found while building BoloSIP: what happened, why, how it w
 
 | ID | Issue | Cause | Fix |
 |---|---|---|---|
+| ISS-044 | Masking daily values with words ("₹ (latest value)") cost retrieval: paraphrases 97.5% → 93.8%, held-out 50 → 49 ("price of one unit", "how many crores") | The model relies on a money amount in NAV / fund-size texts | Mask with a fixed amount of the same shape ("₹1,000.00", "₹1,000.00 crore"): back to 97.5% and 50/50 |
+| ISS-043 | Browser test: the suggestion list sometimes never opened when the whole suite ran | A pending close-on-blur timer could fire just after the list opened, and the list required `document.activeElement` to be the input at that instant | Typing always renders the list; focus and typing cancel a pending close. 3 full-suite runs in a row pass |
 | ISS-038 | "what tax do I pay when I buy HDFC Gilt Fund units" refused as advice | Blanket `buy` advice rule | "when/if/once/after I buy" no longer counts as a buy decision ("can I buy…" still refused); stamp-duty purchase-tax phrases; 5 guard cases added |
 | ISS-024 | `embeddings.json` with a mangled chunk id crashed the Chroma rebuild | Root cause still unknown | `vectorstore.mismatch()` checks chunk ids and row count; the server falls back to BM25 with a reason and `ingest --embed-only` re-embeds; regression test |
 | ISS-015 | BM25 fallback: definition questions ("what is an exit load?") got `not_found`, also inside a thread | BM25's no-scheme bar is high | Definition questions with no scheme that would get `not_found` are answered by the official note whose own term is in the question (`topics.OFFICIAL_TERMS`); out-of-scope answered stays 0 on both backends |

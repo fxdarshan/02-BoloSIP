@@ -4,6 +4,14 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (Phase 7: scheduled daily data refresh, 22 Nov 2026)
+- `.github/workflows/refresh-data.yml`: every day at 10:00 IST (and on demand, with a dry-run option) scrape, parse, clean, chunk, embed and build ChromaDB; the independent truth parser, all tests and every gate run before anything is committed; commit as `github-actions[bot]` only when data changed; one `data-refresh` issue opened on failure and closed after the next fully live run.
+- `scripts/data_diff.py`: change report (daily / minor expense ratio / stable / official) in the run summary; blocks the commit on a missing scheme or more than 5 stable-fact changes.
+- Stable embeddings: daily values (NAV, fund size, "as on" dates) are masked in the embedded text with a fixed amount of the same shape, vectors are keyed to the embedded texts (`texts_sha256`, per-row `text_sha256`) and only changed rows are re-embedded. Retrieval unchanged (paraphrases 97.5%, held-out 50/50, out-of-scope answered 0); a word mask had cost 3.7 pp and was replaced.
+- `/api/health` adds `data_age_days`; the server warns at start-up when the data is more than 3 days old.
+- Fixed a race in the typing suggestions (a pending close-on-blur could hide the list just after it opened), found by the browser tests in the full suite (ISS-043).
+- Tests: `tests/test_data_diff.py` (8), daily-values test in `test_retrieval.py`, data-age test in `test_api.py`.
+
 ### Planned (22 Nov 2026)
 - New **Phase 7: scheduled daily data refresh** (GitHub Actions at 10:00 IST: scrape, parse, clean, chunk, embed, ChromaDB, tests and gates, commit only if all pass; change report, blocking rules, `data-refresh` issue on failure; stable embeddings so daily NAV changes don't rewrite the vectors). Former Phases 7–9 (LLM rephrasing, acceptance, release) are now 8–10 across all docs and code comments. Problem statement v2.3 (§8), architecture v1.5 (§15.1), plan v1.5, eval v1.2.
 

@@ -171,12 +171,33 @@ class TestBackendSelection(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             changed = Path(tmp) / "corpus.json"
             data = json.loads(config.SETTINGS.corpus_path.read_text(encoding="utf-8"))
-            data["built_on"] = "01 Jan 2000"          # any change alters the corpus hash
+            # A changed fact text makes the vectors stale. (A new build date or NAV doesn't:
+            # daily values are masked in the embedded text, see the test below.)
+            fact = next(c for c in data["chunks"] if c["id"] == "hdfc-mid-cap:exit_load")
+            fact["text"] = fact["text"].replace("1 year", "2 years")
             changed.write_text(json.dumps(data), encoding="utf-8")
             r = Retriever(corpus_path=changed, mode="auto")
             self.assertEqual(r.backend_name(), "bm25")
             if _dense_available():
                 self.assertIn("stale", r.reason)
+
+    def test_daily_values_dont_change_the_vectors(self):
+        """Phase 7: a new NAV, fund size or 'as on' date keeps every embedded text, and so
+        every vector; a real fact change (exit load) does not."""
+        chunks = json.loads(json.dumps(CORPUS["chunks"]))
+        before = embedder.texts_hash(chunks)
+        for c in chunks:
+            c["text"] = re.sub(r"\d{1,2} [A-Z][a-z]{2} \d{4}", "31 Dec 2099", c["text"]) if "as on" in c["text"] else c["text"]
+            if c["topic"] in ("nav", "aum"):
+                c["text"] = re.sub(r"₹\s?[\d,]+(?:\.\d+)?", "₹9,99,999.99", c["text"])
+        self.assertEqual(embedder.texts_hash(chunks), before)
+        launch = next(c for c in chunks if c["id"] == "hdfc-mid-cap:scheme_details")
+        min_sip = next(c for c in chunks if c["id"] == "hdfc-mid-cap:min_investment")
+        self.assertIn("01 Jan 2013", embedder.document_text(launch))      # stable dates kept
+        self.assertIn("₹100", embedder.document_text(min_sip))             # stable amounts kept
+        exit_load = next(c for c in chunks if c["id"] == "hdfc-mid-cap:exit_load")
+        exit_load["text"] = exit_load["text"].replace("1%", "2%")
+        self.assertNotEqual(embedder.texts_hash(chunks), before)
 
     def test_damaged_vector_metadata_is_detected(self):
         """ISS-024: a mangled chunk id in embeddings.json passed the hash check and crashed
@@ -306,7 +327,7 @@ class TestRealModel(unittest.TestCase):
         # ignore_cleanup_errors: on Windows Chroma keeps its index file open for the process.
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
             vectorstore.reset_cache()
-            sha = embedder.corpus_hash(config.SETTINGS.corpus_path)
+            sha = embedder.texts_hash(CORPUS["chunks"])
             start = time.perf_counter()
             store = vectorstore.open_store(CORPUS["chunks"], sha, Path(tmp) / "chroma")
             self.assertLess(time.perf_counter() - start, 2.0)     # exit criterion: < 2 s

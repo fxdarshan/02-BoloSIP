@@ -129,9 +129,9 @@ class Retriever:
             return None, None, "data/embeddings.npy missing (run ingest.py --embed-only)"
         if meta.get("model") != emb.model_name:
             return None, None, f"vectors were built with {meta.get('model')}, not {emb.model_name}"
-        sha = embedder_mod.corpus_hash(self.corpus_path)
-        if meta.get("corpus_sha256") != sha:
-            return None, None, "vectors are stale: corpus.json changed since they were built"
+        sha = embedder_mod.texts_hash(self.chunks)       # embedded texts (daily values masked)
+        if meta.get("texts_sha256") != sha:
+            return None, None, "vectors are stale: the corpus texts changed since they were built"
         problem = vectorstore.mismatch(vectors, meta, self.chunks)
         if problem:                                   # ISS-024: never crash on a damaged file
             return None, None, f"{problem} (run ingest.py --embed-only)"

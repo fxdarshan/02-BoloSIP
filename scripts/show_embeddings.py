@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     # ---- Summary ------------------------------------------------------------
     cmeta = col.metadata or {}
     from bolosip import embedder
-    current_sha = embedder.corpus_hash(corpus_path)
+    current_sha = embedder.texts_hash(corpus["chunks"])
     data = col.get(include=["embeddings", "metadatas"])
     ids, metas = data["ids"], data["metadatas"]
     vecs = np.asarray(data["embeddings"], dtype=np.float32)
@@ -95,8 +95,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"ChromaDB folder : {chroma_dir}")
     print(f"Collection      : {col.name}   records: {col.count()}   dims: {vecs.shape[1]}")
     print(f"Model           : {cmeta.get('model')}   distance: {cmeta.get('hnsw:space')}")
-    print(f"Corpus hash     : {str(cmeta.get('corpus_sha256'))[:16]}…  "
-          f"({'matches' if cmeta.get('corpus_sha256') == current_sha else 'STALE: differs from'} data/corpus.json)")
+    print(f"Texts hash      : {str(cmeta.get('texts_sha256'))[:16]}…  "
+          f"({'matches' if cmeta.get('texts_sha256') == current_sha else 'STALE: differs from'} the corpus texts)")
     print(f"Vector norms    : min {norms.min():.4f}  max {norms.max():.4f}  (1.0 = L2-normalised)")
     kinds = {}
     for m in metas:

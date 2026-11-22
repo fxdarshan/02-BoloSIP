@@ -129,6 +129,14 @@ class TestSecurity(ApiCase):
         self.assertEqual(b["examples"], list(config.EXAMPLE_QUESTIONS))
         self.assertEqual(b["disclaimer"], "Facts-only. No investment advice.")
 
+    def test_data_age(self):                                                 # Phase 7
+        import datetime as dt
+        self.assertEqual(server.data_age_days("20 Nov 2026", dt.date(2026, 11, 22)), 2)
+        self.assertIsNone(server.data_age_days("not a date"))
+        b = self.api.request("GET", "/api/health")[1]
+        self.assertIn("data_age_days", b)
+        self.assertGreaterEqual(b["data_age_days"], 0)
+
     def test_logs_have_no_message_text(self):                               # arch §17
         self.post_msg({"text": "secret words about HDFC Mid Cap exit load"})
         logs = self.api.log.getvalue()

@@ -9,6 +9,7 @@ POST and DELETE also need a same-origin `Origin` (when sent) and POST needs a JS
 """
 from __future__ import annotations
 
+import datetime as dt
 import json
 import logging
 import sys
@@ -206,7 +207,8 @@ class Handler(BaseHTTPRequestHandler):
     def _health(self) -> dict:
         r = self.server.retriever
         return {"status": "ok", "version": VERSION, "llm_enabled": False, "retriever": r.backend_name(),
-                "corpus_built_on": r.meta.get("built_on"), "schemes": len(r.meta.get("schemes", {}))}
+                "corpus_built_on": r.meta.get("built_on"), "data_age_days": data_age_days(r.meta.get("built_on")),
+                "schemes": len(r.meta.get("schemes", {}))}
 
     def _index(self) -> int:
         if not INDEX_HTML.is_file():
@@ -301,6 +303,18 @@ class Handler(BaseHTTPRequestHandler):
         return status
 
 
+STALE_AFTER_DAYS = 3
+
+
+def data_age_days(built_on: str | None, today: dt.date | None = None) -> int | None:
+    """Days since the corpus was built ("22 Nov 2026"), or None if unknown (Phase 7)."""
+    try:
+        built = dt.datetime.strptime(built_on or "", "%d %b %Y").date()
+    except ValueError:
+        return None
+    return ((today or dt.date.today()) - built).days
+
+
 def make_server(host: str | None = None, port: int | None = None, *, store: Store | None = None,
                 retriever: Retriever | None = None, rate_msg: int | None = None,
                 rate_all: int | None = None) -> BoloSIPServer:
@@ -326,6 +340,11 @@ def main(argv: list[str] | None = None) -> int:
     httpd = make_server(retriever=retriever)
     log.info("BoloSIP %s on http://%s:%d (retriever: %s). %s", VERSION, s.host, httpd.server_address[1],
              retriever.backend_name(), config.DISCLAIMER)
+    age = data_age_days(retriever.meta.get("built_on"))
+    if age is not None and age > STALE_AFTER_DAYS:
+        log.warning("The data is %d days old (built %s). The daily refresh may have stopped: run "
+                    "`git pull` and restart, or check the refresh-data workflow on GitHub.",
+                    age, retriever.meta.get("built_on"))
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

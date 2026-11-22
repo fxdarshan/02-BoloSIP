@@ -11,6 +11,7 @@ callers fall back to BM25. Only ingestion is allowed to download the model.
 from __future__ import annotations
 
 import hashlib
+import re
 import logging
 import threading
 from pathlib import Path
@@ -21,12 +22,46 @@ from bolosip import config
 log = logging.getLogger("bolosip.embedder")
 
 
+# Values that change every day (Phase 7, daily refresh). They are masked in the embedded
+# text so a new NAV or fund size doesn't change the vector: retrieval finds "the NAV of
+# HDFC Mid Cap" by its words, not by today's number. The answer still shows the real value.
+_AS_ON_DATE = re.compile(r"\bas on \d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}\b")
+_AMOUNT = re.compile(r"₹\s?[\d,]+(?:\.\d+)?(?:\s?(?:crore|lakh))?")
+_DAILY_TOPICS = frozenset({"nav", "aum"})
+
+
+def mask_daily_values(chunk: dict) -> str:
+    """The chunk text with its daily-changing values replaced by stable words."""
+    text = _AS_ON_DATE.sub("as on the latest date", chunk["text"])
+    if chunk.get("topic") in _DAILY_TOPICS:
+        # A fixed amount of the same shape, not words: "price of one unit" and "how many
+        # crores" still match a money value, but the vector no longer changes every day.
+        text = _AMOUNT.sub(lambda m: "₹1,000.00" + (" crore" if "crore" in m.group(0) else ""), text)
+    return text
+
+
 def document_text(chunk: dict) -> str:
-    """The text embedded for a chunk: the fact plus its topic keywords (research §5.2)."""
-    return f"{chunk['text']} {chunk.get('keywords', '')}".strip()
+    """The text embedded for a chunk: the fact (daily values masked) plus its topic
+    keywords (research §5.2)."""
+    return f"{mask_daily_values(chunk)} {chunk.get('keywords', '')}".strip()
+
+
+def text_hash(chunk: dict) -> str:
+    """Short hash of one chunk's embedded text: the vector is reused while it is equal."""
+    return hashlib.sha256(document_text(chunk).encode("utf-8")).hexdigest()[:16]
+
+
+def texts_hash(chunks: Iterable[dict]) -> str:
+    """Hash of every chunk id and embedded text, in order. Vectors are keyed to this, not to
+    the whole corpus.json, which changes every day (fetch dates, NAV)."""
+    h = hashlib.sha256()
+    for c in chunks:
+        h.update(f"{c['id']}\t{document_text(c)}\n".encode("utf-8"))
+    return h.hexdigest()
 
 
 def corpus_hash(path: Path) -> str:
+    """Hash of the whole corpus file (kept for tools; the vectors use texts_hash)."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
