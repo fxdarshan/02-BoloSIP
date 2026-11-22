@@ -39,5 +39,5 @@
 
 ## 4. Not changed, on purpose
 
-- **Lowering the confidence bar** to catch "where do I download my transaction history" (0.66) would let out-of-scope questions through (highest out-of-scope score 0.695). Kept as ISS-016 for Phase 8 tuning.
+- **Lowering the confidence bar** to catch "where do I download my transaction history" (0.66) would let out-of-scope questions through (highest out-of-scope score 0.695). Kept as ISS-016 for Phase 9 tuning.
 - **Speed:** already p50 25–32 ms, p95 ≤ 46 ms per message on a laptop; suggestions run in the browser with no network round trip.

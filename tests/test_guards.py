@@ -104,7 +104,7 @@ class TestRedaction(unittest.TestCase):
 
 
 class TestCorpusAndFacts(unittest.TestCase):
-    """Stored facts must never trip a guard: Phase 7 runs is_advisory() on LLM output."""
+    """Stored facts must never trip a guard: Phase 8 runs is_advisory() on LLM output."""
 
     def test_corpus_chunks_are_clean(self):
         corpus = json.loads((ROOT / "data" / "corpus.json").read_text(encoding="utf-8"))

@@ -4,6 +4,9 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Planned (22 Nov 2026)
+- New **Phase 7: scheduled daily data refresh** (GitHub Actions at 10:00 IST: scrape, parse, clean, chunk, embed, ChromaDB, tests and gates, commit only if all pass; change report, blocking rules, `data-refresh` issue on failure; stable embeddings so daily NAV changes don't rewrite the vectors). Former Phases 7–9 (LLM rephrasing, acceptance, release) are now 8–10 across all docs and code comments. Problem statement v2.3 (§8), architecture v1.5 (§15.1), plan v1.5, eval v1.2.
+
 ### Improved (after Phase 6, 22 Nov 2026), from the chatbot-flow-design audit
 - Typing suggestions in the input (accessible combobox), matched in the browser from a 5 KB index in `/api/config` (`bolosip/suggest.py`); only questions tested to get a correct answer are offered.
 - "Ask next" chips after an answer; "Try instead" chips after not found, refusal and returns replies; a capability note after two misses in a row.
@@ -24,11 +27,11 @@ All notable changes to BoloSIP. Newest first.
 - Tests: `test_threads.py` (15), `test_api.py` (21); 213 tests.
 - Fixed after CI: listen backlog raised from 5 to 128 (connection resets under 20 parallel requests); latency target enforced locally, reported on CI.
 - Retriever: query embeddings are cached (one question can need three searches).
-- Groq default model is now `openai/gpt-oss-120b`; the account's rate limits are in `config.GROQ_LIMITS` for Phase 7.
+- Groq default model is now `openai/gpt-oss-120b`; the account's rate limits are in `config.GROQ_LIMITS` for Phase 8.
 
 ### Added (Phase 4: answer pipeline, milestone M1, 19 Nov 2026)
 - `bolosip/formatter.py`: `Reply` (+ `to_dict`, `render`), URL stripping, 3-sentence limit, footer, `validate()`.
-- `bolosip/composer.py`: extractive answers with a Phase 7 `rephrase` hook; fixed replies for refusal (AMFI), performance (factsheet, no figures), privacy (SEBI), clarify (≤ 5 candidates), help (3 examples), not found (closest official page), other fund house, non-fund HDFC, HDFC scheme not covered, Direct-Growth-only (GAP-05).
+- `bolosip/composer.py`: extractive answers with a Phase 8 `rephrase` hook; fixed replies for refusal (AMFI), performance (factsheet, no figures), privacy (SEBI), clarify (≤ 5 candidates), help (3 examples), not found (closest official page), other fund house, non-fund HDFC, HDFC scheme not covered, Direct-Growth-only (GAP-05).
 - `bolosip/pipeline.py`: `handle(text, ctx) -> (Reply, ctx)`, rules 1–6 in order; follow-ups, definitions, scheme-only questions, plan variants, ELSS, two-topic questions.
 - `python -m bolosip`: ask from the terminal (several questions share a thread; `--json`; interactive mode).
 - Sets: `help.jsonl`, `variants.jsonl`, `conversations.jsonl`; `eval/answer_eval.py`; Phase 4 gate (confusion matrix, samples per kind, 30 answers for human review).

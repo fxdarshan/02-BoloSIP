@@ -2,7 +2,7 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.1 · 16 Nov 2026 · Evaluates every phase of [Implementation-plan.md](Implementation-plan.md) v1.2, against [problem_statement.md](problem_statement.md) v2.2, [architecture.md](architecture.md) v1.2 and [edge-case.md](edge-case.md) v1.2 · LLM provider: Groq
+Version 1.2 · 22 Nov 2026 · Evaluates every phase of [Implementation-plan.md](Implementation-plan.md) v1.5, against [problem_statement.md](problem_statement.md) v2.3, [architecture.md](architecture.md) v1.5 · v1.2 adds the Phase 7 gate (scheduled daily data refresh); the LLM, acceptance and release gates are now Phases 8, 9 and 10 and [edge-case.md](edge-case.md) v1.2 · LLM provider: Groq
 
 ---
 
@@ -43,7 +43,7 @@ All sets live in `eval/datasets/` as JSON Lines: one case per line, versioned in
 | **General / process** | `general.jsonl` | ≥ 20 | Phase 2 | Statements, capital gains, ELSS, riskometer and definition questions (built early: the Phase 2 false-refusal check needs it) |
 | **Conversations** | `conversations.jsonl` | ≥ 25 | Phase 5 | Multi-turn scripts for CTX-01–11, including two interleaved threads |
 | **Help** | `help.jsonl` | ≥ 15 | Phase 4 | Greetings, "what can you do?", punctuation-only (GAP-02) |
-| **LLM stress** | `llm_stress.jsonl` | ≥ 30 | Phase 7 | Stub outputs: invented numbers, URLs, advice words, long answers, reformatted numbers (GAP-06) |
+| **LLM stress** | `llm_stress.jsonl` | ≥ 30 | Phase 8 | Stub outputs: invented numbers, URLs, advice words, long answers, reformatted numbers (GAP-06) |
 
 **Case format**
 
@@ -70,7 +70,7 @@ All sets live in `eval/datasets/` as JSON Lines: one case per line, versioned in
 **Dataset rules**
 
 - New edge cases found during the build are added to the right set with a new ID; existing cases are never edited to make a score pass.
-- The **held-out set** (`eval/datasets/holdout.jsonl`, about 50 mixed cases) is written once in Phase 3 and **not** used for tuning keywords or thresholds in Phase 8. It shows whether tuning overfitted.
+- The **held-out set** (`eval/datasets/holdout.jsonl`, about 50 mixed cases) is written once in Phase 3 and **not** used for tuning keywords or thresholds in Phase 9. It shows whether tuning overfitted.
 
 ## 4. Metrics
 
@@ -180,7 +180,7 @@ Each phase lists what is evaluated, the dataset, the metrics and the pass thresh
 | Clarify accuracy | `ambiguous.jsonl` ambiguous cases | **100%** (never a silent guess) |
 | Other-AMC rejection (GAP-01) | Other-AMC cases in `ambiguous.jsonl` + `out_of_corpus.jsonl` | **100%** |
 | Top-1 retrieval accuracy | `facts.jsonl` | ≥ **98%** |
-| Top-1 retrieval accuracy | `paraphrases.jsonl` | ≥ **90%** (first pass; raised in Phase 8) |
+| Top-1 retrieval accuracy | `paraphrases.jsonl` | ≥ **90%** (first pass; raised in Phase 9) |
 | MRR@5 | facts + paraphrases + general | ≥ **0.95** |
 | Not-found precision | `out_of_corpus.jsonl` | ≥ **95%** |
 | Wrong-scheme rate | All retrieval sets | **0** |
@@ -194,7 +194,7 @@ Each phase lists what is evaluated, the dataset, the metrics and the pass thresh
 
 | Metric | Dataset | Pass |
 |---|---|---|
-| **Fact accuracy (AC 1)** | 135 core fact questions | ≥ **98%** (100% required by Phase 8) |
+| **Fact accuracy (AC 1)** | 135 core fact questions | ≥ **98%** (100% required by Phase 9) |
 | Format compliance (AC 2) | All sets | **100%** |
 | Citation validity (AC 3) | All sets | **100%** |
 | Citation correctness | Facts | **100%** |
@@ -247,7 +247,22 @@ Each phase lists what is evaluated, the dataset, the metrics and the pass thresh
 
 **Usability check:** 3 people who haven't seen BoloSIP each get 5 tasks (e.g. "find the exit load of the liquid fund", "start a second chat about statements"). Pass: ≥ 13 of 15 tasks completed without help, and nobody believes BoloSIP gave them advice.
 
-### Phase 7: Optional LLM rephrasing
+### Phase 7: Scheduled daily data refresh
+
+**Evaluates:** the GitHub Actions workflow that rebuilds the data every day at 10:00 IST, and that it never commits bad data.
+
+| Metric | Method | Pass |
+|---|---|---|
+| End-to-end dry run | `workflow_dispatch` with `dry_run: true` | Every step (scrape, parse, validate, chunk, embed, ChromaDB build, tests, gates) succeeds; **0** commits |
+| Scheduled runs | Two consecutive days at 10:00 IST | Each commits refreshed data when facts changed and nothing otherwise; every gate passes on the new data |
+| Gates before push | Workflow log | Tests, `eval.build_truth` and `eval.run --all` ran **before** the push in every committing run |
+| Allow-list | Network log of the run | Requests only to the 27 Groww URLs (and the model cache / package index) |
+| Stable embeddings | A day with only NAV / fund-size changes | `data/embeddings.npy` unchanged; retrieval metrics within ±0.5 pp of the previous day |
+| Change report | `$GITHUB_STEP_SUMMARY` | Lists every changed fact; stable-fact changes flagged |
+| Blocking (hard gate) | Forced cases in `tests/test_data_diff.py` and one forced run: a failed gate, a missing scheme, more than 5 stable-fact changes | **0** commits; the `data-refresh` issue is opened, and closed by the next good run |
+| Freshness | `/api/health` after `git pull` and a restart | `corpus_built_on` equals the run date; `data_age_days` = 0 |
+
+### Phase 8: Optional LLM rephrasing
 
 **Evaluates:** that rephrasing never makes answers less correct or less safe.
 
@@ -277,7 +292,7 @@ Run the 135 core facts + 30 paraphrases through the real Groq model (`openai/gpt
 
 Live runs use the Groq API (costs money or free-tier quota), so they run only when someone chooses to, never in the default suite. They need `GROQ_API_KEY`.
 
-### Phase 8: Acceptance suite and tuning, milestone M3
+### Phase 9: Acceptance suite and tuning, milestone M3
 
 **Evaluates:** every acceptance criterion at final thresholds, plus whether tuning overfitted.
 
@@ -300,12 +315,12 @@ Live runs use the Groq API (costs money or free-tier quota), so they run only wh
 
 **Tuning rule:** weights and thresholds may change only in `config.py`, and only to fix a measured miss. Every change is logged in the report with before/after scores. Tuning never uses the held-out set.
 
-### Phase 9: Documentation and release, milestone M4
+### Phase 10: Documentation and release, milestone M4
 
 | Check | Method | Pass |
 |---|---|---|
 | Fresh-clone setup | New folder, follow only the README | Server runs; all tests and the eval pass |
-| Final full eval | `python -m eval.run --all` on the release commit | All Phase 8 thresholds |
+| Final full eval | `python -m eval.run --all` on the release commit | All Phase 9 thresholds |
 | Live re-ingest | `python ingest.py` (live), then the Phase 1 eval | All Phase 1 thresholds |
 | Deliverables | Checklist vs PS §9 | All 4 present |
 | Doc consistency | Version numbers and cross-links | No broken links; versions match |
@@ -325,7 +340,7 @@ python -m eval.run --all
 Live LLM evaluation (costs money; needs credentials):
 
 ```bash
-python -m eval.run --phase 7 --live
+python -m eval.run --phase 8 --live
 ```
 
 **Options:** `--phase N` (one phase's metrics), `--all` (everything up to the current phase), `--set advice` (one dataset), `--live` (real LLM), `--compare eval/reports/<previous>.json` (show score changes).
@@ -385,6 +400,7 @@ Any reply scored ≤ 2 on **Neutrality** by any reviewer is treated as a hard-ga
 | 4 | help | AC 1–5, 8 | FMT, IN-20–22, CTX (in memory) |
 | 5 | conversations | AC 6, 7 | THR, SEC, IN-01–12, CTX |
 | 6 | — (manual) | AC 9 | UI, CMP-05 |
-| 7 | llm_stress | — (no AC regression) | LLM |
-| 8 | — (all) | AC 1–8 | All automated |
-| 9 | — (all) | AC 1–9 | All |
+| 7 | — (refreshed data; all sets re-run) | AC 1, 3 (fresh data) | ING (scheduled) |
+| 8 | llm_stress | — (no AC regression) | LLM |
+| 9 | — (all) | AC 1–8 | All automated |
+| 10 | — (all) | AC 1–9 | All |

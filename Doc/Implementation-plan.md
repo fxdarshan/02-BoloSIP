@@ -2,13 +2,13 @@
 
 > **Facts-only. No investment advice.**
 
-Version 1.4 · 18 Nov 2026 · Builds what [architecture.md](architecture.md) v1.4 describes, to meet [problem_statement.md](problem_statement.md) v2.2 · LLM provider: **Groq**
+Version 1.5 · 22 Nov 2026 · Builds what [architecture.md](architecture.md) v1.5 describes, to meet [problem_statement.md](problem_statement.md) v2.3 · v1.5 adds Phase 7 (scheduled daily data refresh); the LLM, acceptance and release phases are now 8, 9 and 10 · LLM provider: **Groq**
 
 ---
 
 ## 1. How to read this plan
 
-The build is split into **10 phases (0–9)**. Each phase ends in something that runs and is tested, and is committed and pushed to GitHub before the next phase starts.
+The build is split into **11 phases (0–10)**. Each phase ends in something that runs and is tested, and is committed and pushed to GitHub before the next phase starts.
 
 Every phase lists:
 
@@ -20,7 +20,7 @@ Every phase lists:
 
 Section references such as "arch §8" point to [architecture.md](architecture.md), and "PS §4.2" points to [problem_statement.md](problem_statement.md).
 
-## 2. Current status (19 Nov 2026)
+## 2. Current status (22 Nov 2026)
 
 | Item | State |
 |---|---|
@@ -35,6 +35,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | **Phase 5: Thread store and HTTP API** | **Done** (19 Nov 2026): `bolosip/store.py` (SQLite, WAL), `server.py` (stdlib JSON API, Host/Origin/JSON checks, per-IP rate limit); dense gate: API parity 838/838, context over HTTP 63/63, 0 leaks, 0 personal data stored, p50 25 ms / p95 ≤ 46 ms; 213 tests |
 | **Phase 6: Web UI, M2** | **Done** (20 Nov 2026): `web/index.html`, one self-contained file built from the reviewed Google Stitch design ([ui-review.md](design/ui-review.md)); dark (default) and light themes; 15 browser checks recorded (incl. an overflow scan at 6 widths); 225 tests. By hand still: Edge, Lighthouse, screen reader, 3-person usability check |
 | **Improvements after Phase 6** | **Done** (22 Nov 2026): chatbot design audit ([design/chatbot-audit.md](design/chatbot-audit.md)); typing suggestions, "Ask next" / "Try instead" chips, capability note after two misses; follow-ups only with a signal (ISS-039); stamp-duty synonyms; `scripts/usage_report.py`; Playwright browser tests in a CI `ui` job. Issues log: [issues.md](issues.md) |
+| **Phase 7: Scheduled daily data refresh** | Planned (added 22 Nov 2026): GitHub Actions at 10:00 IST rebuilds and checks the data, commits only when every check passes |
 | Everything else in arch §3 | Not started |
 
 ## 3. Phase overview
@@ -48,10 +49,11 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | 4 | Answer pipeline (extractive) | `composer.py`, `formatter.py`, `pipeline.py` returning `Reply` | 2, 3 | 1.5 days |
 | 5 | Thread store and HTTP API | `store.py`, `server.py` | 4 | 1.5 days |
 | 6 | Web UI | `web/index.html` | 5 | 1 day |
-| 7 | Optional LLM rephrasing | `llm.py` + composer integration | 4 | 1 day |
-| 8 | Acceptance suite and tuning | `test_acceptance.py` passing all 135 fact checks and AC 1–8 | 5, 7 | 1.5 days |
-| 9 | Documentation and release | README, final docs, tagged release | 6, 8 | 0.5 day |
-| | | | **Total** | **≈ 12 days** |
+| 7 | Scheduled daily data refresh | `.github/workflows/refresh-data.yml` (10:00 IST), `scripts/data_diff.py`, stable embeddings | 1, 3 | 1 day |
+| 8 | Optional LLM rephrasing | `llm.py` + composer integration | 4 | 1 day |
+| 9 | Acceptance suite and tuning | `test_acceptance.py` passing all 135 fact checks and AC 1–8 | 5, 8 | 1.5 days |
+| 10 | Documentation and release | README, final docs, tagged release | 6, 7, 9 | 0.5 day |
+| | | | **Total** | **≈ 13 days** |
 
 ```mermaid
 flowchart LR
@@ -61,15 +63,17 @@ flowchart LR
     P2 --> P4[4 Answer pipeline]
     P3 --> P4
     P4 --> P5[5 Store + API]
-    P4 --> P7[7 LLM rephrasing]
+    P3 --> P7[7 Daily data refresh]
+    P4 --> P8[8 LLM rephrasing]
     P5 --> P6[6 Web UI]
-    P5 --> P8[8 Acceptance + tuning]
-    P7 --> P8
-    P6 --> P9[9 Docs + release]
+    P5 --> P9[9 Acceptance + tuning]
     P8 --> P9
+    P6 --> P10[10 Docs + release]
+    P7 --> P10
+    P9 --> P10
 ```
 
-**Can run in parallel:** Phases 1 and 2. Phase 7 can run alongside Phases 5 and 6, since it only plugs into the composer.
+**Can run in parallel:** Phases 1 and 2. Phase 8 can run alongside Phases 5 and 6, since it only plugs into the composer. Phase 7 only automates the existing ingestion, so it can run any time after Phase 3.
 
 **Milestones**
 
@@ -77,8 +81,8 @@ flowchart LR
 |---|---|---|
 | M1: Answers in the terminal | 4 | `python -m bolosip "expense ratio of hdfc mid cap"` prints a correct, cited, footed answer |
 | M2: Working chat app | 6 | Browser chat with multiple threads, refusals and the disclaimer |
-| M3: Accepted build | 8 | All automated acceptance checks green |
-| M4: Release | 9 | README complete; tagged `v1.0` on GitHub |
+| M3: Accepted build | 9 | All automated acceptance checks green |
+| M4: Release | 10 | README complete; tagged `v1.0` on GitHub |
 
 ---
 
@@ -230,7 +234,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 
 **Files:** `bolosip/guards.py`, `tests/test_guards.py`, `eval/datasets/advice.jsonl`, `eval/datasets/performance.jsonl`, `eval/datasets/pii.jsonl`, `eval/run.py` (Phase 2 gate)
 
-**What was built:** `check(text) -> GuardResult(kind, pii)` applies the rules in order (personal data → advice → returns) so later phases can't get the order wrong; `find_pii`, `redact`, `is_advisory`, `is_performance` stay available for tests and Phase 7 output checks.
+**What was built:** `check(text) -> GuardResult(kind, pii)` applies the rules in order (personal data → advice → returns) so later phases can't get the order wrong; `find_pii`, `redact`, `is_advisory`, `is_performance` stay available for tests and Phase 8 output checks.
 
 **Findings while building:**
 - The draft had 14 gaps (review in the commit history), e.g. no IFSC / landline / masked Aadhaar, "best" blocking "best way to download", "Total Return Index" counted as a returns question, "how is exit load calculated?" counted as performance.
@@ -261,7 +265,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 | Vector store | **Local ChromaDB** (owner's choice, arch §8.4): collection `bolosip_facts` in `data/chroma/` (git-ignored), cosine, metadata filter; rebuilt from committed `data/embeddings.npy` + `.json`; telemetry off |
 | Fallback | BM25 over `text + keywords` when embeddings are unavailable or stale |
 | Filter | Search only the resolved scheme's 12 facts + 10 official notes; never another scheme's fact |
-| Threshold | Two levels (arch §8.6): cosine 0.70 with no scheme named / 0.62 with a scheme named; BM25 15 / 3. Calibrated in Phase 3 (the 0.74 starting point rejected too many general questions); re-tuned in Phase 8 |
+| Threshold | Two levels (arch §8.6): cosine 0.70 with no scheme named / 0.62 with a scheme named; BM25 15 / 3. Calibrated in Phase 3 (the 0.74 starting point rejected too many general questions); re-tuned in Phase 9 |
 
 **Tasks**
 
@@ -294,7 +298,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
    - Chroma's top hits equal exact cosine search over `data/embeddings.npy` for every test question; the collection is rebuilt when deleted.
    - **Real-model tests** (`@skipUnless` fastembed and cached model): probe accuracy ≥ 90%, out-of-scope rejection 100%.
 9. **CI:** add a job on Python 3.12 that installs `.[embed]`, caches `.cache/models/`, and runs the real-model tests and the Phase 3 gate. The existing jobs stay dependency-free (BM25 path).
-10. **First pass at thresholds:** set `MIN_SCORE` (cosine 0.74) and the BM25 threshold so every test above passes. Final tuning happens in Phase 8 on the held-out set.
+10. **First pass at thresholds:** set `MIN_SCORE` (cosine 0.74) and the BM25 threshold so every test above passes. Final tuning happens in Phase 9 on the held-out set.
 
 **Files:** `bolosip/schemes.py`, `bolosip/embedder.py`, `bolosip/vectorstore.py`, `bolosip/retriever.py`, `bolosip/topics.py`, `bolosip/config.py`, `ingest.py`, `data/embeddings.npy`, `data/embeddings.json`, `pyproject.toml`, `.gitignore`, `.gitattributes`, `.github/workflows/tests.yml`, `eval/datasets/{paraphrases,ambiguous,out_of_corpus,holdout}.jsonl`, `tests/test_retrieval.py`
 
@@ -308,7 +312,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
 
 **Findings (19 Nov 2026)**
 - Added beyond the task list: `not_covered` for HDFC schemes outside the 27 (SCH-18); **weak aliases** that need a fund signal ("what is the Sensex today" had been answered as the Sensex Index Fund); a topic boost for ordering only when a scheme is named; narrower advice patterns after three false refusals ("compared against", "sell units within a year", "lose money to exit charge"), each added as a test case.
-- **Held-out disclosure:** the held-out set (committed in `b801197` before tuning) was run once before the weak-alias and topic-boost changes, and one of its misses ("Sensex today") motivated the weak aliases. The 100% figure is therefore slightly optimistic; Phase 8 should add fresh held-out cases.
+- **Held-out disclosure:** the held-out set (committed in `b801197` before tuning) was run once before the weak-alias and topic-boost changes, and one of its misses ("Sensex today") motivated the weak aliases. The 100% figure is therefore slightly optimistic; Phase 9 should add fresh held-out cases.
 - Remaining dense misses: GEN-22 (factsheet at 0.70, on the bar), PAR-ST-2 ("government duty" → category), PAR-GN-2 ("transaction history" at 0.66), PAR-GN-15 ("what is ELSS" at 0.70). All are refusals or near misses, never a wrong scheme.
 
 **Covers:** AC 1 (retrieval side), AC 7a, AC 8; arch §7, §8
@@ -326,7 +330,7 @@ Ingestion fetches **exactly** the 27 Groww HDFC scheme pages listed in PS §3.1,
    - Strip URLs from the body; split sentences without breaking decimals or `₹`; keep at most 3.
    - Attach the source and the `Last updated from sources: <as_of>` footer.
    - `validate(reply)`: 1–3 sentences, exactly one URL across body + source, footer present.
-3. **`bolosip/composer.py`:** extractive mode returns the top chunk's text unchanged. Leave a clear hook for the LLM (Phase 7).
+3. **`bolosip/composer.py`:** extractive mode returns the top chunk's text unchanged. Leave a clear hook for the LLM (Phase 8).
 4. **Fixed replies** for `refusal`, `performance`, `privacy`, `clarify`, `help` and `not_found`, using the wording in PS §4.2 and the links and dates in arch §10.1.
    - `performance` links the scheme's factsheet if one is resolved, otherwise the general HDFC factsheet page.
    - `clarify` lists at most 5 candidate scheme names. If no scheme was named at all, it asks the user to name one, giving 3 examples.
@@ -452,7 +456,60 @@ Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (
 
 ---
 
-## Phase 7: Optional LLM rephrasing
+## Phase 7: Scheduled daily data refresh (GitHub Actions)
+
+**Goal:** every day at **10:00 IST** a GitHub Actions workflow rebuilds the data from the live sources (scrape → parse and normalise → clean and validate → chunk → embed → store in ChromaDB), checks it with the full test suite and evaluation gates, and commits the refreshed data to `main` only if every check passes. A failed or suspicious run changes nothing and alerts the owner.
+
+**Why 10:00 IST:** AMFI publishes each business day's NAV in the evening, and the Groww pages are updated overnight, so a morning run picks up the previous day's NAV and any overnight changes. GitHub's cron runs in UTC, so the schedule is `30 4 * * *` (04:30 UTC = 10:00 IST). Scheduled runs can start some minutes late when GitHub is busy.
+
+**The pipeline it automates** (all steps already exist in `ingest.py`, Phase 1 and Phase 3):
+
+| Step | What runs | Notes |
+|---|---|---|
+| 1. Scrape | `fetch()` for the **27 allowed URLs only** (allow-list enforced, exit `2` on any other URL) | One request per page per day, sequential, with a short delay; a page that fails falls back to its last good snapshot (exit `1`) |
+| 2. Parse and normalise | `parse_page()`, `check_identity()`, `riskometer()` | Structured JSON only; ISIN and slug must match the registry |
+| 3. Clean and validate | `validate_corpus()` | Ranges (TER 0–3%, SEBI risk levels, minimum SIP), ≤ 3 sentences, sources, no return figures, no judgement words; the whole run stops on any failure |
+| 4. Chunk | `scheme_chunks()` + the official notes | 334 fact chunks with source URL and date |
+| 5. Embed | `build_embeddings()` | Re-embeds only chunks whose **embedded text** changed (see decision below) |
+| 6. Store in ChromaDB | `vectorstore.build()` | Built and queried in the run as a check. `data/chroma/` stays git-ignored: every machine that runs the server rebuilds its local collection from the committed vectors automatically when they change (`vectorstore.open_store`) |
+
+**Decisions**
+
+| Choice | Decision |
+|---|---|
+| Schedule | `cron: "30 4 * * *"` (10:00 IST daily) plus `workflow_dispatch` for manual runs, with a `dry_run` input that does everything except commit |
+| Where data lives | Refreshed `data/corpus.json`, `data/raw/*.html`, `data/raw/fetched.json`, `data/embeddings.npy` / `.json` and `eval/datasets/facts.jsonl` are committed by the workflow; nothing else is touched |
+| Daily vector churn | NAV and fund size change every day. The embedded text masks such fast-changing values (NAV, AUM, "as on" dates) and the vectors are keyed to a hash of the embedded texts instead of the whole `corpus.json`, so a NAV change updates `corpus.json` but not the 1 MB vector file. Measure retrieval before and after on all evaluation sets; keep the change only if every gate still passes |
+| Safety before commit | `python -m eval.build_truth` (independent parser) → full unit tests with embeddings → `python -m eval.run --all`. Pushes made with the workflow's `GITHUB_TOKEN` don't start other workflows, so all checks run inside this workflow, before the push |
+| Suspicious changes | A change report compares old and new facts. Values that change daily (NAV, fund size) are normal. A change to a **stable** fact (expense ratio by more than 0.25 percentage points, exit load, riskometer, benchmark, fund managers, minimum SIP, ISIN, launch date) is listed for review; more than 5 stable-fact changes in one run, or any scheme missing, blocks the commit (a parser or page-structure change is likelier than 5 real changes overnight) |
+| Failure handling | Exit `2`, a failed gate or a blocked change → no commit, the run fails (GitHub emails the owner) and one GitHub issue labelled `data-refresh` is opened or updated; the next successful run closes it. Exit `1` (some pages served from snapshots) commits the rest and notes the stale schemes in the run summary and the issue |
+| Overlap | `concurrency: data-refresh` so two runs never write at once |
+
+**Tasks**
+
+1. **`.github/workflows/refresh-data.yml`:** the schedule and manual trigger above; `permissions: contents: write, issues: write`; Python 3.12; `pip install -e ".[embed]"`; the cached embedding model (same cache key as the `embed` CI job); `python ingest.py` (live); `python -m eval.build_truth`; tests and gates with `BOLOSIP_RETRIEVER=embed`; change report into `$GITHUB_STEP_SUMMARY`; commit as `github-actions[bot]` with the message `Data refresh <DD Mon YYYY>: <n> facts changed` only when something changed and every check passed; push to `main`.
+2. **`scripts/data_diff.py`:** compares the committed and the new `corpus.json` per scheme and topic; classifies each change as daily (NAV, AUM, dates) or stable; prints the Markdown change report; exits non-zero when the commit must be blocked (rules above).
+3. **Stable embeddings:** mask fast-changing values in `embedder.document_text()`, key `embeddings.json` to a hash of the embedded texts, and re-embed only changed rows; update the staleness checks in `retriever.py`, `vectorstore.py` and `ingest.py` and the CI "committed vectors are up to date" step to match.
+4. **Failure alerts:** open, update or close the single `data-refresh` issue with `gh issue` in the workflow (no third-party actions).
+5. **Server freshness:** `/api/health` adds `data_age_days`; the server log warns when the corpus is more than 3 days old. A running server keeps the data it started with: after `git pull`, restart it (the README says so) and it rebuilds the local ChromaDB collection from the new vectors.
+6. **Laptop sync:** the workflow commits to `main` every day, so local work starts with `git pull --rebase`; data files under `data/` are never edited by hand (regenerate with `python ingest.py`). Add this to the working agreements and the README.
+7. **Tests:** `tests/test_data_diff.py` (daily vs stable changes, the blocking rules, a missing scheme, an unchanged corpus); a test that masked embedded texts don't change when only NAV, AUM or dates change; the gates on the refreshed data are the integration test.
+8. **Try it before scheduling:** run the workflow by hand with `dry_run: true`, then once for real, then let the schedule run on two consecutive days.
+
+**Files:** `.github/workflows/refresh-data.yml`, `scripts/data_diff.py`, `bolosip/embedder.py`, `bolosip/vectorstore.py`, `bolosip/retriever.py`, `ingest.py`, `server.py`, `tests/test_data_diff.py`, `tests/test_retrieval.py`, `.github/workflows/tests.yml`, `README.md`, `Doc/issues.md`
+
+**Exit criteria**
+- [ ] A manual dry run completes every step (scrape, parse, validate, chunk, embed, ChromaDB, tests, gates) and commits nothing.
+- [ ] A scheduled run at 10:00 IST commits refreshed data when facts changed and nothing when they didn't, on two consecutive days; the footer date of a fresh answer equals the run date after `git pull` and a server restart.
+- [ ] A day when only NAV and fund size changed leaves `data/embeddings.npy` unchanged.
+- [ ] A forced failure (a gate failure, and a blocked stable-fact change) commits nothing and opens the `data-refresh` issue; the next good run closes it.
+- [ ] Every evaluation gate still passes on the refreshed data.
+
+**Covers:** PS §8 (data freshness); arch §15 (ingestion), §8.4 (ChromaDB rebuild); risks R8, R13, R14, R15
+
+---
+
+## Phase 8: Optional LLM rephrasing
 
 **Goal:** when credentials are available, answers can be reworded to fit the question. Facts, links and limits stay exactly as in extractive mode.
 
@@ -488,7 +545,7 @@ Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (
 
 ---
 
-## Phase 8: Acceptance suite and tuning
+## Phase 9: Acceptance suite and tuning
 
 **Goal:** one command proves every acceptance criterion. **Milestone M3.**
 
@@ -523,7 +580,7 @@ Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (
 
 ---
 
-## Phase 9: Documentation and release
+## Phase 10: Documentation and release
 
 **Goal:** someone new can set up, run and understand BoloSIP from the README alone. **Milestone M4.**
 
@@ -557,16 +614,16 @@ Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (
 
 | AC | Criterion | Built in | Proven in |
 |---|---|---|---|
-| 1 | Correct facts | 1, 3 | 8 |
-| 2 | Answer format | 4 | 4, 8 |
-| 3 | Valid citations | 1, 4 | 8 |
-| 4 | Refusals | 2, 4 | 2, 8 |
-| 5 | Performance handling | 2, 4 | 2, 8 |
-| 6 | Privacy | 2, 5 | 5, 8 |
-| 7 | Threads | 5 | 5, 8 |
-| 7a | Similar names | 1, 3 | 3, 8 |
-| 8 | No guessing | 3, 4 | 3, 8 |
-| 9 | UI | 6 | 6, 9 (manual) |
+| 1 | Correct facts | 1, 3 | 9 |
+| 2 | Answer format | 4 | 4, 9 |
+| 3 | Valid citations | 1, 4 | 9 |
+| 4 | Refusals | 2, 4 | 2, 9 |
+| 5 | Performance handling | 2, 4 | 2, 9 |
+| 6 | Privacy | 2, 5 | 5, 9 |
+| 7 | Threads | 5 | 5, 9 |
+| 7a | Similar names | 1, 3 | 3, 9 |
+| 8 | No guessing | 3, 4 | 3, 9 |
+| 9 | UI | 6 | 6, 10 (manual) |
 
 ## 5. Risks and mitigations
 
@@ -574,14 +631,17 @@ Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (
 |---|---|---|---|---|---|
 | R1 | Groww blocks fetching entirely, or changes its page structure | Medium | High | Curl fallback + committed snapshots; validation stops a broken corpus being written; parser reads embedded JSON, not HTML | 1 |
 | R2 | Debt or hybrid schemes have fields that don't fit the equity templates (graded exit loads, no benchmark) | Medium | Medium | Review all 27 rendered chunks by hand; template handles "Nil" and long exit-load text | 1 |
-| R3 | Guards wrongly refuse factual questions ("best" in a scheme name, "returns" in "return of capital") | Medium | Medium | Large negative test set; refusing stays the safer error | 2, 8 |
+| R3 | Guards wrongly refuse factual questions ("best" in a scheme name, "returns" in "return of capital") | Medium | Medium | Large negative test set; refusing stays the safer error | 2, 9 |
 | R4 | Confusable names cause a confident wrong answer | Medium | High | Shared aliases mark ambiguity; one test per confusable group; never guess | 3 |
-| R5 | Retrieval misses paraphrases | Medium | Low | Local embeddings (93% vs 69% BM25 on user wording); keyword synonyms; held-out set; misses become `not_found`, never wrong answers | 3, 8 |
+| R5 | Retrieval misses paraphrases | Medium | Low | Local embeddings (93% vs 69% BM25 on user wording); keyword synonyms; held-out set; misses become `not_found`, never wrong answers | 3, 9 |
 | R11 | Embedding runtime unavailable (Python 3.15, no onnxruntime / chromadb build, model not downloaded) | High on this laptop | Low | Optional extra; automatic BM25 fallback; `uv` Python 3.12 environment documented; CI job on 3.12 | 3 |
 | R12 | Chroma data folder corrupted, from an older Chroma version, or out of date | Low | Low | Never committed; rebuilt from the committed `.npy` when missing or stale; telemetry off | 3 |
-| R6 | LLM adds a number or opinion | Low | High | Number-subset check, advice check, validator; extractive fallback | 7 |
+| R6 | LLM adds a number or opinion | Low | High | Number-subset check, advice check, validator; extractive fallback | 8 |
 | R7 | Personal data written to the DB or logs by mistake | Low | High | Redact at the API boundary; test that scans the DB file; body-free logging | 5 |
-| R8 | Facts go stale between ingestion runs | High | Low | Footer shows the date; scheduled ingestion in future work | 1, 9 |
+| R8 | Facts go stale between ingestion runs | High | Low | Daily refresh at 10:00 IST (Phase 7); every answer's footer shows its date; `/api/health` reports the data's age | 1, 7 |
+| R13 | The daily refresh commits wrong data (a page-structure change parsed into plausible values) | Low | High | Validation ranges, the independent truth parser, full tests and gates before any push; change report with a block on more than 5 stable-fact changes; every change is a git commit that can be reverted | 7 |
+| R14 | Groww blocks or rate-limits the GitHub runner | Medium | Medium | One request per page per day; failed pages fall back to their snapshot (exit 1) and are listed; repeated failure keeps the `data-refresh` issue open | 7 |
+| R15 | Daily bot commits and laptop work diverge | Medium | Low | `git pull --rebase` before work; data files are never edited by hand, only regenerated | 7 |
 | R9 | Another AMC's scheme answered with HDFC data ("SBI Small Cap") | Medium | High | Other-AMC name check before alias matching (GAP-01) | 3 |
 | R10 | A web page in the user's browser calls the local API | Low | Medium | Host/Origin checks, JSON-only POST, rate limit (GAP-08, GAP-09) | 5 |
 
@@ -589,13 +649,14 @@ Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (
 
 - **Commit and push after every phase**, and after any doc change, so GitHub (`fxdarshan/02-BoloSIP`) and the laptop stay in sync. Pull first if the remote moved.
 - **Commit messages** name the phase, e.g. `Phase 3: scheme resolution and retrieval`.
-- **No phase starts until the previous phase's exit criteria pass.** Parallel phases (1 ∥ 2, 7 ∥ 5–6) are the exception.
+- **No phase starts until the previous phase's exit criteria pass.** Parallel phases (1 ∥ 2, 8 ∥ 5–6, 7 any time after 3) are the exception.
+- **Pull before working.** From Phase 7 on, the refresh workflow commits to `main` every morning: start with `git pull --rebase`, and never edit files under `data/` by hand.
 - **Tests run offline.** Nothing in the default test run needs the network or an API key.
 - **Spec changes** go into `problem_statement.md` first (bump the version), then `architecture.md`, then this plan.
 
 ## 7. Definition of done (whole project)
 
-- [ ] All 10 phases' exit criteria checked off.
+- [ ] All 11 phases' exit criteria checked off.
 - [ ] `python -m unittest discover tests` is 100% green, offline, with and without the `groq` SDK installed.
 - [ ] Manual UI checklist done on desktop and mobile widths.
 - [ ] README complete; every PS §9 deliverable present.

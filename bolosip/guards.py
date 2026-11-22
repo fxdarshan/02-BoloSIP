@@ -8,7 +8,7 @@ These run before anything is retrieved, stored or sent to an LLM (architecture
     3. returns        -> "performance" (factsheet link only, no figures)
 
 Use ``check(text)`` for the ordered decision; the individual functions are for
-tests and for checking LLM output (Phase 7). All functions are pure and fast:
+tests and for checking LLM output (Phase 8). All functions are pure and fast:
 every pattern is linear-time on the 500-character input limit.
 
 Guiding rule (problem statement §1): when unsure, refuse. A factual question

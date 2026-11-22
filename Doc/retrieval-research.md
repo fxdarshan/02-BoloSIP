@@ -27,7 +27,7 @@ Everything here is reproducible: the scripts, question set and raw results are i
 | Retrieval | Dense cosine similarity, **filtered to the resolved scheme's 12 facts + the 10 official notes** | Same-topic chunks of different schemes are 50–70% identical, so scheme must come from the name resolver, not similarity |
 | Hybrid (BM25 + embeddings, RRF) | **Rejected** | Lowered general-question accuracy (100% → 83%) and out-of-scope rejection (100% → 79%) |
 | Vector store | Research recommended **no vector database** (1 MB numpy matrix, exact search). **Owner's decision (18 Nov 2026): local ChromaDB**, rebuilt from the committed `.npy` vectors (architecture §8.4) | 0.03 ms per exact search; Chroma's HNSW returns the same top hits at this size, so accuracy is unaffected |
-| Score threshold | Start at **cosine 0.74** (tune in Phase 8) | Highest out-of-scope score 0.73; 5th-percentile real question 0.76 |
+| Score threshold | Start at **cosine 0.74** (tune in Phase 9) | Highest out-of-scope score 0.73; 5th-percentile real question 0.76 |
 
 ## 3. What the data looks like
 

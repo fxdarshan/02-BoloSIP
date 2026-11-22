@@ -3,7 +3,7 @@ BOLOSIP — MUTUAL FUND FAQ ASSISTANT (FACTS-ONLY Q&A)
 
     Facts-only. No investment advice.
 
-Version 2.2 · 16 Nov 2026 · Corpus expanded from 5 to 27 schemes · Optional LLM provider: Groq · The original brief is kept unchanged in problem_statement_original.txt.
+Version 2.3 · 22 Nov 2026 · Daily scheduled data refresh · v2.2: corpus expanded from 5 to 27 schemes · Optional LLM provider: Groq · The original brief is kept unchanged in problem_statement_original.txt.
 
 1. Problem
 ==========
@@ -182,7 +182,7 @@ Also:
 8. Data freshness
 =================
 
-- Scheme facts are rebuilt by running the ingestion script, which re-fetches the 27 scheme pages.
+- Scheme facts are rebuilt by the ingestion script, which re-fetches the 27 scheme pages. A scheduled job runs it every day at 10:00 IST and publishes the new data only if every check passes; it can also be run by hand.
 - Each stored fact keeps its source URL and the date it was fetched. That date is what the answer footer shows.
 - Hand-curated notes from official sources carry a "reviewed on" date, updated whenever they are rechecked.
 

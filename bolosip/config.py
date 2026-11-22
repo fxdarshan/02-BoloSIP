@@ -6,7 +6,7 @@ Two kinds of settings live here:
   the app runs with no environment set at all. Read them with ``load_settings()``
   (or the module-level ``SETTINGS``).
 * **Constants** are fixed values: retrieval weights and thresholds (tuned in
-  Phase 8), request limits, the LLM call shape, and the official links used in
+  Phase 9), request limits, the LLM call shape, and the official links used in
   refusal / performance / privacy replies.
 
 Local settings and secrets (e.g. ``GROQ_API_KEY``) go in a ``.env`` file in the
@@ -170,19 +170,19 @@ MAX_TEXT_CHARS = 500
 THREAD_TITLE_CHARS = 60
 
 # ---------------------------------------------------------------------------
-# Retrieval (architecture §8). Starting values; tuned in Phase 8.
+# Retrieval (architecture §8). Starting values; tuned in Phase 9.
 # ---------------------------------------------------------------------------
 
 BM25_K1 = 1.5
 BM25_B = 0.75
 W_SCHEME = 3.0      # (BM25 v1 design; scheme is now a hard filter, see arch §8.1)
-W_TOPIC = 3.0       # (BM25 v1 design; kept for Phase 8 tuning experiments)
+W_TOPIC = 3.0       # (BM25 v1 design; kept for Phase 9 tuning experiments)
 W_OTHER = 5.0       # (BM25 v1 design; other schemes are filtered out entirely)
 # Answer only if the top candidate scores at least this much; else "not_found".
 # Two levels (Phase 3 calibration on facts + general + paraphrases + out_of_corpus):
 # when a scheme is named, the search is already limited to that scheme's facts, so a
 # lower bar is safe; with no scheme named, out-of-scope questions reach cosine 0.718.
-# Dense = cosine similarity; BM25 = raw BM25 score. Re-tuned in Phase 8.
+# Dense = cosine similarity; BM25 = raw BM25 score. Re-tuned in Phase 9.
 # Dense values chosen by a decision-level sweep on the tuning sets (98.5% correct, 0
 # out-of-scope answered); the closest out-of-scope question scored 0.695.
 MIN_SCORE = 0.70            # dense, no scheme named
@@ -214,7 +214,7 @@ LLM_TEMPERATURE = 0
 LLM_MAX_COMPLETION_TOKENS = 200
 
 # Groq rate limits of the project's account for the default model (owner, 19 Nov 2026).
-# Phase 7 enforces them in the client: over a limit, a reply simply stays extractive.
+# Phase 8 enforces them in the client: over a limit, a reply simply stays extractive.
 # Each rephrase is about 600 tokens (prompt + chunk + answer), so the token limits bind
 # first: about 13 rephrased answers a minute and 330 a day.
 GROQ_LIMITS = {

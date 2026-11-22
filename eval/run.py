@@ -297,7 +297,7 @@ def phase2_checks() -> list[dict]:
 
     corpus = json.loads((ROOT / "data" / "corpus.json").read_text(encoding="utf-8"))
     flagged = [c["id"] for c in corpus["chunks"] if guards.find_pii(c["text"]) or guards.is_advisory(c["text"])]
-    results.append(_check("No stored fact trips a guard (needed for Phase 7 output checks)", not flagged,
+    results.append(_check("No stored fact trips a guard (needed for Phase 8 output checks)", not flagged,
                           f"{len(flagged)} flagged" + (f": {flagged[:5]}" if flagged else "")))
 
     proc = subprocess.run([sys.executable, "-m", "unittest", "-q", "tests.test_guards.TestSpeed"],

@@ -1,8 +1,8 @@
 """Answer text and the fixed replies (architecture §9.1, §10.1; problem statement §4.2).
 
-Extractive mode (the default, and the only mode until Phase 7): the answer is the top
+Extractive mode (the default, and the only mode until Phase 8): the answer is the top
 chunk's text, unchanged. Chunks were written at ingest time to read as finished
-answers. `compose()` takes an optional `rephrase` hook so Phase 7 can plug in the Groq
+answers. `compose()` takes an optional `rephrase` hook so Phase 8 can plug in the Groq
 LLM without changing callers; whatever the hook returns is ignored unless it passes
 the output checks, so extractive text is always the fallback.
 
@@ -21,7 +21,7 @@ Rephrase = Callable[[str, str], "str | None"]
 
 
 def compose(question: str, chunk: dict, rephrase: Rephrase | None = None) -> str:
-    """Answer text for a chunk. Phase 7 passes `rephrase`; any failure keeps the chunk text."""
+    """Answer text for a chunk. Phase 8 passes `rephrase`; any failure keeps the chunk text."""
     text = chunk["text"]
     if rephrase is None:
         return text
@@ -33,7 +33,7 @@ def compose(question: str, chunk: dict, rephrase: Rephrase | None = None) -> str
 
 
 def accept_rephrase(candidate: str | None, chunk: dict) -> bool:
-    """Phase 7 output checks plug in here (numbers, URLs, advice). Until then: format only."""
+    """Phase 8 output checks plug in here (numbers, URLs, advice). Until then: format only."""
     if not candidate or candidate.strip() == "NOT_IN_SOURCE":
         return False
     probe = make("answer", candidate, url=chunk["source_url"], source_name=chunk["source_name"],
