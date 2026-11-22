@@ -86,7 +86,7 @@ jobs:
 
       - name: Install Playwright and Chromium
         run: |
-          pip install "playwright>=1.49,<2"
+          pip install -e ".[ui-tests]"
           python -m playwright install --with-deps chromium
 
       - name: Browser tests

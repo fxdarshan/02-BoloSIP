@@ -22,6 +22,9 @@ embed = [
 ]
 # Optional LLM rephrasing via Groq (Phase 7). Needs GROQ_API_KEY in .env.
 llm = ["groq"]
+# Browser tests of the chat page (tests/test_ui_browser.py). After installing, run
+# `python -m playwright install chromium` once.
+ui-tests = ["playwright>=1.49,<2"]
 
 [tool.setuptools]
 packages = ["bolosip"]

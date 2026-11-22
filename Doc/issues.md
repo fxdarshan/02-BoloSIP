@@ -13,7 +13,6 @@ Every error and issue found while building BoloSIP: what happened, why, how it w
 | ID | Status | Found | Area | Issue | Notes / next step |
 |---|---|---|---|---|---|
 | ISS-038 | 🟡 | 22 Nov 2026 | Guards | "what tax do I pay when I buy HDFC Gilt Fund units" is refused as advice; the stamp-duty fact (or `not_found`) would be better | Safe failure (no wrong fact). Revisit with the Phase 8 paraphrase set |
-| ISS-037 | 🟡 | 22 Nov 2026 | Tooling | Playwright isn't installed on the laptop, so the browser tests (`tests/test_ui_browser.py`) only run in the CI `ui` job | Install with `pip install playwright` and `python -m playwright install chromium` in `.venv` to run them locally |
 | ISS-033 | 🔴 | 22 Nov 2026 | CI | One unit test failed once on the Windows / Python 3.13 job only (passed in every other job and in the same job minutes earlier); the gate did not say which test | Gate now names failing tests (`eval/run.py` phase 0). Identify and fix if it recurs |
 | ISS-024 | 🔴 | 19 Nov 2026 | Data | `data/embeddings.json` was found with one chunk ID mangled (`hdfc-balanced-advantage:category` → `hdfcalanced-advantage:category`), breaking the Chroma rebuild. Nothing in the code writes that file outside ingestion | Restored from git; not seen again. Root cause unknown; the CI "committed vectors are up to date" check would catch a repeat |
 | ISS-020 | 🟡 | 19 Nov 2026 | Process | Human checks still to do: M1 review of 30 answers (Phase 4 gate report), Edge pass, Lighthouse score ≥ 90, screen-reader pass, 3-person usability check (Phase 6) | Owner |
@@ -30,6 +29,7 @@ Every error and issue found while building BoloSIP: what happened, why, how it w
 
 | ID | Issue | Cause | Fix |
 |---|---|---|---|
+| ISS-037 | Playwright wasn't installed on the laptop, so the browser tests only ran in CI | Optional tool, not part of the core setup | Installed in `.venv` (Playwright 1.65.2 + headless Chromium, 22 Nov 2026); all 7 browser tests pass locally. Documented as the `ui-tests` extra in `pyproject.toml` and in the README |
 | ISS-042 | CI: the first run of the Playwright browser tests failed in 5 of 7 tests | `page.wait_for_function` evaluates a string, which the page's Content-Security-Policy (no `unsafe-eval`) blocks: the policy working as intended | Tests poll with `page.evaluate()` and locator waits instead |
 | ISS-041 | At 320 px with a wide system font (DejaVu Sans on Linux, some Android fonts) the page scrolled sideways (337 px) | The disclaimer pill was set to never wrap, so one line was wider than the screen and pushed the header and page | The disclaimer may wrap on narrow screens; the browser test now also scans with a wide font. Found by the new CI `ui` job |
 | ISS-040 | Typing suggestions ranked badly while being built: a duplicate entry; "small cap" offered Large Cap's minimum SIP; "ter" offered Ultra Short **Ter**m first; "who man" offered expense ratio ("management fee") | Prefix matching treated all matches alike | Whole-word matches beat prefixes; scheme-name matches beat topic synonyms; template words add a bonus; duplicates removed |

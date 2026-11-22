@@ -92,7 +92,25 @@ To see how people use it (reply mix, "not found" rate, answers per topic), run:
 python scripts/usage_report.py
 ```
 
-Add `--show-unanswered` to list the (redacted) questions that got "not found". For example, `GET /api/health` reports the 27 schemes and which search is in use. Conversations are kept in `data/bolosip.sqlite3` (git-ignored); personal details are replaced with `[redacted]` before anything is saved. Start it with the Python 3.12 environment (`.venv/Scripts/python.exe server.py`) to use the embedding search.
+Add `--show-unanswered` to list the (redacted) questions that got "not found".
+
+`GET /api/health` reports the 27 schemes and which search is in use. Conversations are kept in `data/bolosip.sqlite3` (git-ignored); personal details are replaced with `[redacted]` before anything is saved. Start the server with the Python 3.12 environment (`.venv/Scripts/python.exe server.py`) to use the embedding search.
+
+## Browser tests (optional)
+
+`tests/test_ui_browser.py` drives the chat page in headless Chromium with Playwright: examples, suggestions with the keyboard, chips, fallback, script text, the phone drawer, and an overflow scan at four widths. Without Playwright these tests are skipped; CI always runs them. To run them locally (Chromium is about 150 MB, downloaded once):
+
+```bash
+uv pip install --python .venv/Scripts/python.exe -e ".[ui-tests]"
+```
+
+```bash
+.venv/Scripts/python.exe -m playwright install chromium
+```
+
+```bash
+.venv/Scripts/python.exe -m unittest tests.test_ui_browser -v
+```
 
 ## Settings and the Groq API key
 
