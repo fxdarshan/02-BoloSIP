@@ -7,7 +7,7 @@ All notable changes to BoloSIP. Newest first.
 ### Added (Phase 6: web UI, milestone M2, 20 Nov 2026)
 - `web/index.html`: one self-contained page (inline CSS, inline SVG icons, no external scripts or fonts): sticky header with the disclaimer, chat list (drawer below 700 px), welcome with 3 example cards, one card per reply kind with a big icon, highlighted values, source link and footer, clarify and help buttons, typing indicator, toasts for rate limits and network errors, 500-character input with counter, dark and light themes.
 - Design: Google Stitch export reviewed in `Doc/design/ui-review.md` (screens and design notes in `Doc/design/stitch/`). Fixed the thick light borders and missing replies on mobile, the overflowing header and the broken logo; removed claims the project can't back (SEBI-compliant, AMFI live feed, verified snapshot) and every external dependency.
-- `tests/test_web.py` (12): self-contained page, no `innerHTML`, safe links, optional storage, disclaimer, WCAG AA contrast in both themes, 1px borders only, security headers. `eval/manual/phase6_ui_check.json` (14 browser checks); Phase 6 gate. 225 tests.
+- `tests/test_web.py` (12): self-contained page, no `innerHTML`, safe links, optional storage, disclaimer, WCAG AA contrast in both themes, 1px borders only, security headers. `eval/manual/phase6_ui_check.json` (15 browser checks, incl. an overflow scan at 6 widths); Phase 6 gate. 225 tests.
 
 ### Added (Phase 5: thread store and HTTP API, 19 Nov 2026)
 - `bolosip/store.py`: SQLite threads and messages (WAL, `synchronous=NORMAL`, foreign keys, busy timeout); one transaction per exchange; redacts again before storing; titles from the redacted first question; schema re-created if the file is deleted.

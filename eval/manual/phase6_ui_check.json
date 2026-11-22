@@ -16,6 +16,7 @@
     {"id": "PRIVACY", "check": "A message with personal data is shown redacted after the reply", "result": "pass", "notes": "\"my PAN is ABCDE1234F, check my folio\" re-rendered as \"my PAN is [redacted], check my folio\" from the stored history"},
     {"id": "DELETE", "check": "Deleting the open chat returns to the welcome screen and forgets it", "result": "pass", "notes": "Thread list empty, welcome shown, saved thread id cleared"},
     {"id": "THEME", "check": "Light / dark toggle applies and is remembered", "result": "pass", "notes": "data-theme and localStorage both 'light' after toggling; dark is the default"},
+    {"id": "OVERFLOW", "check": "No box overflows its parent or the screen, at any width (22 Nov 2026)", "result": "pass", "notes": "Script scan of every element (off-screen, outside its parent box, content spilling) at 1440, 1024, 768, 719, 375 (drawer closed and open, delete confirmation shown) and 320 px, welcome and conversation screens, with worst-case content: every reply kind, a 6-step graded exit load, a long thread title and a 490-character unbroken word. 0 issues; the page never scrolls sideways"},
     {"id": "CONTRAST", "check": "WCAG AA contrast for text and icons, both themes", "result": "pass", "notes": "Checked by tests/test_web.py; dark 'faint' text raised from #7f8a85 (4.02:1 on raised cards) to #8d9893 (>= 4.83:1)"}
   ],
   "pending": [
