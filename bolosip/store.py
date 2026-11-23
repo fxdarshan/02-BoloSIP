@@ -8,6 +8,10 @@
 * The schema is (re)created on every connection with IF NOT EXISTS, so a deleted
   database file is simply recreated on the next request (THR-05).
 * Only parameterised queries (SEC-02).
+* Each thread belongs to one browser (`owner`, a SHA-256 of the browser's cookie token;
+  the token itself is never stored). The server passes `owner=` to every call, and a
+  thread of another owner behaves exactly like a missing one (deployment plan B1).
+  `owner=None` means unscoped (scripts and tests).
 """
 from __future__ import annotations
 
@@ -15,7 +19,7 @@ import json
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from bolosip import config, guards
@@ -31,7 +35,8 @@ CREATE TABLE IF NOT EXISTS threads (
   title       TEXT NOT NULL,
   created_at  TEXT NOT NULL,
   updated_at  TEXT NOT NULL,
-  last_scheme TEXT
+  last_scheme TEXT,
+  owner       TEXT
 );
 CREATE TABLE IF NOT EXISTS messages (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,6 +54,8 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id, id);
 CREATE INDEX IF NOT EXISTS idx_threads_updated ON threads(updated_at);
 """
+# Created after the migration below, so an old database gets the column first.
+OWNER_INDEX = "CREATE INDEX IF NOT EXISTS idx_threads_owner ON threads(owner, updated_at);"
 
 
 class ThreadNotFound(LookupError):
@@ -70,8 +77,11 @@ class Store:
     def __init__(self, path: Path | str | None = None):
         self.path = Path(path or config.SETTINGS.db_path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect():
-            pass
+        with self._connect() as c:                     # databases from before B1 lack `owner`
+            cols = {r["name"] for r in c.execute("PRAGMA table_info(threads)")}
+            if "owner" not in cols:
+                c.execute("ALTER TABLE threads ADD COLUMN owner TEXT")
+            c.execute(OWNER_INDEX)
 
     @contextmanager
     def _connect(self):
@@ -90,38 +100,59 @@ class Store:
             conn.close()
 
     # --- threads -------------------------------------------------------------
-    def create_thread(self) -> dict:
+    def create_thread(self, *, owner: str | None = None) -> dict:
         tid, now = str(uuid.uuid4()), _now()
         with self._connect() as c:
-            c.execute("INSERT INTO threads (id, title, created_at, updated_at) VALUES (?, ?, ?, ?)",
-                      (tid, NEW_TITLE, now, now))
+            c.execute("INSERT INTO threads (id, title, created_at, updated_at, owner) VALUES (?, ?, ?, ?, ?)",
+                      (tid, NEW_TITLE, now, now, owner))
         return {"id": tid, "title": NEW_TITLE, "created_at": now, "updated_at": now}
 
-    def list_threads(self, limit: int = MAX_THREADS_LISTED) -> list[dict]:
+    def list_threads(self, limit: int = MAX_THREADS_LISTED, *, owner: str | None = None) -> list[dict]:
+        where, args = ("WHERE owner = ? ", (owner,)) if owner is not None else ("", ())
         with self._connect() as c:
-            rows = c.execute("SELECT id, title, updated_at FROM threads ORDER BY updated_at DESC, rowid DESC "
-                             "LIMIT ?", (limit,)).fetchall()
+            rows = c.execute(f"SELECT id, title, updated_at FROM threads {where}"
+                             "ORDER BY updated_at DESC, rowid DESC LIMIT ?", (*args, limit)).fetchall()
         return [dict(r) for r in rows]
 
-    def get_thread(self, thread_id: str) -> dict | None:
+    def claim_unowned(self, owner: str) -> int:
+        """Give threads saved before B1 (owner NULL) to `owner`. Laptop only: the server
+        calls this only when it is not public, so old local chats stay visible."""
+        with self._connect() as c:
+            return c.execute("UPDATE threads SET owner = ? WHERE owner IS NULL", (owner,)).rowcount
+
+    def get_thread(self, thread_id: str, *, owner: str | None = None) -> dict | None:
         with self._connect() as c:
             row = c.execute("SELECT * FROM threads WHERE id = ?", (thread_id,)).fetchone()
-        return dict(row) if row else None
+        if row is None or (owner is not None and row["owner"] != owner):
+            return None
+        return dict(row)
 
-    def get_ctx(self, thread_id: str) -> dict:
-        t = self.get_thread(thread_id)
+    def get_ctx(self, thread_id: str, *, owner: str | None = None) -> dict:
+        t = self.get_thread(thread_id, owner=owner)
         if t is None:
             raise ThreadNotFound(thread_id)
         return {"last_scheme": t["last_scheme"]} if t["last_scheme"] else {}
 
-    def delete_thread(self, thread_id: str) -> bool:
+    def delete_thread(self, thread_id: str, *, owner: str | None = None) -> bool:
         with self._connect() as c:
-            cur = c.execute("DELETE FROM threads WHERE id = ?", (thread_id,))
+            if owner is None:
+                cur = c.execute("DELETE FROM threads WHERE id = ?", (thread_id,))
+            else:
+                cur = c.execute("DELETE FROM threads WHERE id = ? AND owner = ?", (thread_id, owner))
         return cur.rowcount > 0
 
+    def purge_older_than(self, days: int, *, now: datetime | None = None) -> int:
+        """Delete threads not updated for `days` days (B7). Messages go with them (cascade)."""
+        if days <= 0:
+            return 0
+        cutoff = ((now or datetime.now(timezone.utc)) - timedelta(days=days)).isoformat(timespec="microseconds")
+        with self._connect() as c:
+            return c.execute("DELETE FROM threads WHERE updated_at < ?", (cutoff,)).rowcount
+
     # --- messages ------------------------------------------------------------
-    def get_messages(self, thread_id: str, limit: int = MAX_MESSAGES_RETURNED) -> list[dict]:
-        if self.get_thread(thread_id) is None:
+    def get_messages(self, thread_id: str, limit: int = MAX_MESSAGES_RETURNED, *,
+                     owner: str | None = None) -> list[dict]:
+        if self.get_thread(thread_id, owner=owner) is None:
             raise ThreadNotFound(thread_id)
         with self._connect() as c:
             rows = c.execute("SELECT * FROM (SELECT * FROM messages WHERE thread_id = ? ORDER BY id DESC LIMIT ?) "
@@ -137,7 +168,8 @@ class Store:
             })
         return out
 
-    def add_exchange(self, thread_id: str, user_text: str, reply: Reply, last_scheme: str | None) -> None:
+    def add_exchange(self, thread_id: str, user_text: str, reply: Reply, last_scheme: str | None, *,
+                     owner: str | None = None) -> None:
         """Store the (redacted) question and its reply, and the thread's new context, atomically."""
         safe = guards.redact(user_text)                       # second line of defence (AC 6)
         as_of = reply.footer.split(": ", 1)[1] if reply.footer else None
@@ -145,8 +177,8 @@ class Store:
         with self._connect() as c:
             c.execute("BEGIN IMMEDIATE")
             try:
-                t = c.execute("SELECT title FROM threads WHERE id = ?", (thread_id,)).fetchone()
-                if t is None:
+                t = c.execute("SELECT title, owner FROM threads WHERE id = ?", (thread_id,)).fetchone()
+                if t is None or (owner is not None and t["owner"] != owner):
                     raise ThreadNotFound(thread_id)
                 c.execute("INSERT INTO messages (thread_id, role, text, created_at) VALUES (?, 'user', ?, ?)",
                           (thread_id, safe, now))

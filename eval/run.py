@@ -687,9 +687,11 @@ def phase5_checks() -> list[dict]:
                               + ("; CI runner: reported only, enforced on local runs" if on_ci else "")))
         survivor = api.new_thread()
         api.ask(survivor, "HDFC Small Cap Fund expense ratio")
+        cookie = api.cookie                     # the same browser comes back (owner cookie)
 
     # Persistence: a new server on the same database file.
     with LiveServer(db, r) as api:
+        api.cookie = cookie
         hist = api.messages(survivor)
         status, body = api.ask(survivor, "what about its exit load?")
         ok = len(hist) == 2 and status == 200 and body.get("scheme_id") == "hdfc-small-cap"

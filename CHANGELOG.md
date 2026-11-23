@@ -4,6 +4,12 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (deployment stage D0: ready for Railway, 23 Nov 2026)
+- Chats belong to one browser: an `HttpOnly; SameSite=Strict` owner cookie (`Secure` over HTTPS); threads store its SHA-256; another browser's chat is a 404 (ISS-046). Old local chats are kept for the local browser.
+- Runs behind Railway's edge: `PORT`, `BOLOSIP_PUBLIC_HOSTS` (default `RAILWAY_PUBLIC_DOMAIN`), `https://` origins, Railway's healthcheck Host for `/api/health` only, `BOLOSIP_TRUST_PROXY` (visitor IP from `X-Real-IP`), HSTS (ISS-047).
+- Clean stop on SIGTERM (requests in flight finish, up to 8 s); `BOLOSIP_RETENTION_DAYS` deletes old chats at start-up and daily.
+- `Dockerfile`, `.dockerignore`, `scripts/docker-entrypoint.sh` (non-root), `scripts/smoke_remote.py` (18–20 checks), `docker` CI job, `tests/test_deploy.py` (15 tests), `Doc/deployment-plan.md`.
+
 ### Added (Phase 7: scheduled daily data refresh, 22 Nov 2026)
 - `.github/workflows/refresh-data.yml`: every day at 10:00 IST (and on demand, with a dry-run option) scrape, parse, clean, chunk, embed and build ChromaDB; the independent truth parser, all tests and every gate run before anything is committed; commit as `github-actions[bot]` only when data changed; one `data-refresh` issue opened on failure and closed after the next fully live run.
 - `scripts/data_diff.py`: change report (daily / minor expense ratio / stable / official) in the run summary; blocks the commit on a missing scheme or more than 5 stable-fact changes.

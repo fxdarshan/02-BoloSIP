@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| **Version** | 1.0 (23 Nov 2026) |
+| **Version** | 1.1 (23 Nov 2026) |
 | **Goal** | Run BoloSIP as a public website on [Railway](https://railway.com), served from this GitHub repository, with the same answers, privacy and freshness as on the laptop |
-| **Status** | Planned. Nothing is deployed yet. Stage D0 (code changes) must be done before the site is made public |
+| **Status** | **D0 done** (23 Nov 2026): code changes B1–B9, `Dockerfile`, `.dockerignore`, the entrypoint and `scripts/smoke_remote.py` are built and tested; the `docker` CI job builds the image and checks it. Nothing is deployed yet; D1 (Railway account) is next and is the owner's step |
 | **Related** | [Implementation plan](Implementation-plan.md) (Phase 7 daily refresh, Phase 10 release), [architecture](architecture.md) §13 API, §17 security, [issues log](issues.md) |
 
 Railway facts in this plan were checked against docs.railway.com on **23 Nov 2026** (sources in §12). Railway changes often: recheck the items marked ⚠️ before each stage.
@@ -55,7 +55,7 @@ The server was built for one person on `127.0.0.1`. These changes are needed bef
 | B1 | **Chats belong to one browser.** Give each visitor a random owner id in an `HttpOnly; Secure; SameSite=Strict` cookie; store it (hashed) with each thread; `GET /api/threads`, reading, posting and deleting only work on that owner's threads (404 otherwise) | Today `GET /api/threads` lists **every** conversation on the server. On a public site any visitor would see everyone's chats | `server.py`, `bolosip/store.py` (new `owner` column with a migration), `web/index.html`, `tests/test_api.py`, `tests/test_threads.py` |
 | B2 | **Listen where Railway expects.** If `PORT` is set, use it (it wins over `BOLOSIP_PORT`); set `BOLOSIP_HOST=0.0.0.0` | Railway sends traffic and the healthcheck to `$PORT`; the server now binds `127.0.0.1:8000` | `bolosip/config.py`, `server.py` |
 | B3 | **Allow the public host name.** New setting `BOLOSIP_PUBLIC_HOSTS` (comma-separated, default from `RAILWAY_PUBLIC_DOMAIN`). Accept those names without a port, and accept `https://<name>` as an `Origin`. Allow `healthcheck.railway.app` as the `Host` for `GET /api/health` only | The Host check (GAP-08) only knows `127.0.0.1`, `localhost` and `[::1]` with the port, and only `http://` origins, so every public request and the healthcheck would get 403 | `server.py`, `tests/test_api.py` (`TestOriginChecks`) |
-| B4 | **Rate-limit the real visitor.** With `BOLOSIP_TRUST_PROXY=1`, take the client IP from `X-Real-IP` (set by Railway's edge); never trust it otherwise | Behind the proxy every request comes from Railway's address, so the 30-a-minute limit would be shared by all visitors | `server.py`, `tests/test_api.py` (`TestRateLimit`) |
+| B4 | **Rate-limit the real visitor.** With `BOLOSIP_TRUST_PROXY=1`, take the client IP from `X-Real-IP` (set by Railway's edge); never trust it otherwise. ⚠️ In D4, confirm the edge replaces a client-sent `X-Real-IP` (send a fake one 31 times; the 31st message must still get 429) | Behind the proxy every request comes from Railway's address, so the 30-a-minute limit would be shared by all visitors | `server.py`, `tests/test_api.py` (`TestRateLimit`) |
 | B5 | **Stop cleanly.** Handle `SIGTERM`: stop accepting requests, finish the ones in flight, close SQLite | Railway sends `SIGTERM` on every redeploy (daily), then kills the container after `drainingSeconds` | `server.py` |
 | B6 | **HTTPS headers.** When `X-Forwarded-Proto` is `https`, add `Strict-Transport-Security: max-age=31536000`; keep the current CSP, `nosniff` and no-CORS rules | The site is only served over HTTPS; browsers should never try plain HTTP | `server.py` |
 | B7 | **Keep chats for a limited time.** New setting `BOLOSIP_RETENTION_DAYS` (30 on Railway); delete older threads at start-up and once a day | Stored questions are redacted, but a public site should not keep them forever. State the period in the privacy hint | `bolosip/store.py`, `bolosip/config.py`, `server.py` |
@@ -69,8 +69,10 @@ Nothing else in the pipeline changes: guards, retrieval, answers and the daily r
 | File | Contents |
 |---|---|
 | `Dockerfile` | `FROM python:3.12-slim`; copy `pyproject.toml` and `bolosip/` first and `pip install --no-cache-dir ".[embed]"` (so code-only changes reuse the cached dependency layer); copy the rest; **download the embedding model at build time** into `/app/.cache/models` (`python -c` that loads `nomic-ai/nomic-embed-text-v1.5` through `bolosip.embedder`); run as a non-root user; `CMD ["python", "server.py"]` |
-| `.dockerignore` | `.git`, `.venv`, `.cache`, `.env`, `data/chroma`, `data/*.sqlite3*`, `data/preview.sqlite3`, `__pycache__`, `bolosip.egg-info`, `graft`, `stitch_bolosip_mutual_fund_assistant`, `tests/`, `eval/` reports, `Doc/` |
-| `scripts/smoke_remote.py` | Stdlib-only check of a deployed URL: `/api/health` (27 schemes, dense retriever, `data_age_days` ≤ 1), one answer with its source and footer, one advice refusal, one personal-data reply, a 403 for a foreign `Origin`, and a 404 when reading another browser's thread (B1). Prints pass/fail per check |
+| `scripts/docker-entrypoint.sh` | Creates `/data` and `/data/chroma`, gives them to the `app` user (Railway mounts volumes owned by root), then runs the server as `app` with `setpriv`. No `RAILWAY_RUN_UID` needed |
+| `.dockerignore` | `.git`, `.github`, `.venv`, `.cache`, `.claude`, `.env`, `__pycache__`, `*.egg-info`, `graft`, `stitch_bolosip_mutual_fund_assistant`, `Doc`, `tests`, `eval`, `data/raw` (only `ingest.py` reads the saved pages), `data/chroma`, `data/*.sqlite3*` |
+| `scripts/smoke_remote.py` | Stdlib-only check of a deployed URL, acting as two browsers: `/api/health` (27 schemes, dense retriever, `data_age_days` ≤ `--max-age`, default 3), the page with its CSP and cookie flags (plus `Secure` and HSTS over HTTPS), one answer with its source and footer, an advice refusal, a personal-data reply, a 403 for a foreign `Origin`, and 404s when the second browser reads or deletes the first one's chat (B1). It deletes its test chat. 18 checks on `http://`, 20 on `https://` |
+| `.github/workflows/tests.yml` job `docker` | Builds the image, runs it like Railway (`PORT=7123`, a `/data` volume, `BOLOSIP_TRUST_PROXY=1`, a public host), runs the smoke test, checks the healthcheck Host rule and the non-root user, stops it with SIGTERM (exit code 0, "BoloSIP stopped."), and checks the database and ChromaDB are on the volume after a restart |
 | `Doc/deployment-plan.md` | This file |
 
 `.env` is never copied into the image (`.dockerignore`) and never committed. Secrets live only in Railway variables.
@@ -130,7 +132,7 @@ Each stage ends with its check; do not start the next one until it passes.
 
 | Stage | What happens | Done when |
 |---|---|---|
-| **D0. Code changes** | B1–B9 from §3, `Dockerfile`, `.dockerignore`, `scripts/smoke_remote.py`; tests for each; README "Deploy on Railway" section | All tests and gates pass locally and in CI; `docker build` works and `docker run -p 8000:8000 -e PORT=8000 …` answers on `localhost` (if Docker is installed; otherwise the first Railway build is this check) |
+| **D0. Code changes** ✅ | B1–B9 from §3, `Dockerfile`, `.dockerignore`, `scripts/smoke_remote.py`; tests for each (`tests/test_deploy.py`, 15 tests); README "Deploy on Railway" section | Done 23 Nov 2026: 266 tests and every gate pass (keyword and embedding search); the smoke test passes 18/18 on the local server; the `docker` CI job builds and checks the image (Docker is not installed on the laptop, so CI is the image check) |
 | **D1. Account and project** | The owner creates the Railway account (the owner signs in and enters payment details; Claude never does), picks Hobby, creates a project from the GitHub repo and gives Railway access to this repository only | The project shows the repo and branch `main` |
 | **D2. Settings** | §6 settings and variables, the `/data` volume; generate the `*.up.railway.app` domain | Every row of §6 matches the dashboard |
 | **D3. First deploy** | Railway builds and starts; read the build and deploy logs | Healthcheck passes; logs show "retriever: dense (nomic + ChromaDB)" and no warning other than expected ones; start-up time recorded here |

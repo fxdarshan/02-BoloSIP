@@ -96,6 +96,20 @@ Add `--show-unanswered` to list the (redacted) questions that got "not found".
 
 `GET /api/health` reports the 27 schemes and which search is in use. Conversations are kept in `data/bolosip.sqlite3` (git-ignored); personal details are replaced with `[redacted]` before anything is saved. Start the server with the Python 3.12 environment (`.venv/Scripts/python.exe server.py`) to use the embedding search.
 
+## Deploy on Railway
+
+BoloSIP can run as a public website on [Railway](https://railway.com) from this repository. The full plan, with every setting, stage, rollback step and cost, is in [Doc/deployment-plan.md](Doc/deployment-plan.md). In short:
+
+- The `Dockerfile` builds a Python 3.12 image with the embedding search and the model inside it; `scripts/docker-entrypoint.sh` runs the server as a non-root user.
+- One Railway service, one replica, a volume at `/data` for the chats database and ChromaDB, healthcheck `/api/health`, automatic deploys from `main` (so each morning's data refresh deploys by itself).
+- On a public site each browser sees only its own chats (an `HttpOnly` cookie), rate limits are per visitor, and old chats are deleted after `BOLOSIP_RETENTION_DAYS`.
+
+After a deploy, check the site from your laptop:
+
+```bash
+python scripts/smoke_remote.py https://<your-app>.up.railway.app
+```
+
 ## Daily data refresh (GitHub Actions)
 
 Every day at **10:00 IST**, the `refresh-data` workflow on GitHub rebuilds BoloSIP's data from the 27 Groww pages: it scrapes them, parses and cleans the facts, chunks them, embeds the chunks and rebuilds ChromaDB, then runs every test and evaluation gate. Only if all of that passes does it commit the new data to `main` (as `github-actions[bot]`), and the run's summary page shows a change report. A failed or suspicious run (a missing scheme, or more than 5 stable facts changing at once) commits nothing and opens a GitHub issue labelled `data-refresh`.

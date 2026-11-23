@@ -91,3 +91,63 @@ jobs:
 
       - name: Browser tests
         run: python -m unittest tests.test_ui_browser -v
+
+  docker:
+    # The container Railway runs (Doc/deployment-plan.md §4): build the image, start it the
+    # way Railway does (PORT, a /data volume, proxy settings), smoke-test it over HTTP,
+    # check Railway's healthcheck Host, then stop it with SIGTERM and expect a clean exit.
+    name: Docker image (deployment)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build the image
+        run: docker build -t bolosip:ci .
+
+      - name: Start it like Railway
+        run: |
+          docker volume create bolosip-data
+          docker run -d --name bolosip -p 7123:7123 -v bolosip-data:/data \
+            -e PORT=7123 -e BOLOSIP_TRUST_PROXY=1 -e BOLOSIP_PUBLIC_HOSTS=bolosip.example \
+            -e BOLOSIP_RETENTION_DAYS=30 bolosip:ci
+          for i in $(seq 1 120); do
+            if curl -fsS -H "Host: healthcheck.railway.app" http://127.0.0.1:7123/api/health > /dev/null 2>&1; then
+              echo "healthy after ${i} s"; exit 0
+            fi
+            sleep 1
+          done
+          docker logs bolosip; exit 1
+
+      - name: Smoke test
+        run: python scripts/smoke_remote.py http://localhost:7123 --max-age 30
+
+      - name: Railway's healthcheck Host works only for /api/health
+        run: |
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: healthcheck.railway.app' http://127.0.0.1:7123/api/health)" = 200
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: healthcheck.railway.app' http://127.0.0.1:7123/api/threads)" = 403
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: bolosip.example' -H 'X-Forwarded-Proto: https' http://127.0.0.1:7123/api/health)" = 200
+
+      - name: Runs as a non-root user
+        run: test "$(docker exec bolosip stat -c %U /proc/1)" = app
+
+      - name: Stops cleanly on SIGTERM
+        run: |
+          docker stop --time 15 bolosip
+          test "$(docker inspect -f '{{.State.ExitCode}}' bolosip)" = 0
+          docker logs bolosip 2>&1 | tail -5
+          docker logs bolosip 2>&1 | grep -q "BoloSIP stopped."
+
+      - name: The database and ChromaDB live on the volume and survive a restart
+        run: |
+          docker start bolosip
+          for i in $(seq 1 120); do curl -fsS http://localhost:7123/api/health > /dev/null 2>&1 && break; sleep 1; done
+          docker exec bolosip test -f /data/bolosip.sqlite3
+          docker exec bolosip test -d /data/chroma
+
+      - name: Logs on failure
+        if: failure()
+        run: docker logs bolosip || true

@@ -104,6 +104,34 @@ class Settings:
     embed_model: str = DEFAULT_EMBED_MODEL
     model_cache: Path = ROOT / ".cache" / "models"
     chroma_dir: Path = DATA_DIR / "chroma"
+    # Hosting (Doc/deployment-plan.md §3). Defaults keep the laptop behaviour.
+    public_hosts: tuple[str, ...] = ()                # extra host names served over HTTPS (B3)
+    trust_proxy: bool = False                         # behind Railway's edge: client IP from X-Real-IP (B4)
+    retention_days: int = 0                           # delete chats untouched this long; 0 = keep (B7)
+
+
+def _hosts(raw: str | None) -> tuple[str, ...]:
+    """'a.example, B.example:443' -> ('a.example', 'b.example'); ports and schemes dropped."""
+    out = []
+    for part in (raw or "").split(","):
+        h = part.strip().lower()
+        if "://" in h:
+            h = h.split("://", 1)[1]
+        h = h.split("/", 1)[0]
+        if h.count(":") == 1:                         # host:port (not an IPv6 literal)
+            h = h.split(":", 1)[0]
+        if h and h not in out:
+            out.append(h)
+    return tuple(out)
+
+
+def _bool(env: Mapping[str, str], name: str) -> bool:
+    raw = (env.get(name) or "").strip().lower()
+    if raw in ("", "0", "false", "no", "off"):
+        return False
+    if raw in ("1", "true", "yes", "on"):
+        return True
+    raise ValueError(f"{name} must be 1 or 0, got {raw!r}")
 
 
 def _int(env: Mapping[str, str], name: str, default: int, lo: int, hi: int) -> int:
@@ -144,7 +172,9 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
 
     return Settings(
         host=(env.get("BOLOSIP_HOST") or "127.0.0.1").strip(),
-        port=_int(env, "BOLOSIP_PORT", 8000, 1, 65535),
+        # A host platform's PORT (Railway sets it) wins over BOLOSIP_PORT (B2).
+        port=_int(env, "PORT", 0, 1, 65535) if (env.get("PORT") or "").strip() else
+        _int(env, "BOLOSIP_PORT", 8000, 1, 65535),
         db_path=_path(env, "BOLOSIP_DB", DATA_DIR / "bolosip.sqlite3"),
         corpus_path=_path(env, "BOLOSIP_CORPUS", DATA_DIR / "corpus.json"),
         llm_mode=llm_mode,
@@ -156,6 +186,9 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         embed_model=(env.get("BOLOSIP_EMBED_MODEL") or DEFAULT_EMBED_MODEL).strip(),
         model_cache=_path(env, "BOLOSIP_MODEL_CACHE", ROOT / ".cache" / "models"),
         chroma_dir=_path(env, "BOLOSIP_CHROMA_DIR", DATA_DIR / "chroma"),
+        public_hosts=_hosts(env.get("BOLOSIP_PUBLIC_HOSTS") or env.get("RAILWAY_PUBLIC_DOMAIN")),
+        trust_proxy=_bool(env, "BOLOSIP_TRUST_PROXY"),
+        retention_days=_int(env, "BOLOSIP_RETENTION_DAYS", 0, 0, 3650),
     )
 
 

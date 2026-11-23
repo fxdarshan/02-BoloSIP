@@ -1,0 +1,24 @@
+# Keep the image small and free of secrets (Doc/deployment-plan.md §4).
+.git
+.github
+.venv
+.venv-research
+.cache
+.claude
+.env
+**/__pycache__
+*.egg-info
+graft
+stitch_bolosip_mutual_fund_assistant
+Doc
+tests
+eval
+# Saved source pages: only ingest.py reads them, and it never runs in the container
+data/raw
+
+# Local runtime data: chats and the local ChromaDB collection
+data/chroma
+data/*.sqlite3*
+data/embeddings_view.csv
+data/corpus.json.tmp
+data/.ingest.lock

@@ -6,17 +6,27 @@ Standard library only (`http.server.ThreadingHTTPServer`). Every request passes,
 the Host check (DNS rebinding, GAP-08), the per-IP rate limit (GAP-09), then the route.
 POST and DELETE also need a same-origin `Origin` (when sent) and POST needs a JSON body
 (CSRF, GAP-08). Logs show method, path, status and time only, never a message (arch §17).
+
+Hosting (Doc/deployment-plan.md §3): each browser gets a random owner token in an HttpOnly
+cookie and sees only its own chats (B1); `PORT`, `BOLOSIP_PUBLIC_HOSTS` and
+`BOLOSIP_TRUST_PROXY` let it run behind Railway's HTTPS edge (B2-B4, B6); SIGTERM stops it
+cleanly (B5); `BOLOSIP_RETENTION_DAYS` deletes old chats (B7).
 """
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import logging
+import re
+import secrets
+import signal
 import sys
 import threading
 import time
 import uuid
 from http import HTTPStatus
+from http.cookies import CookieError, SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -30,6 +40,12 @@ ROOT = Path(__file__).resolve().parent
 INDEX_HTML = ROOT / "web" / "index.html"
 SOCKET_TIMEOUT_S = 10                       # SEC-07: slow clients are dropped
 LOCAL_HOSTS = ("127.0.0.1", "localhost", "[::1]")
+OWNER_COOKIE = "bolosip_owner"
+OWNER_COOKIE_MAX_AGE = 400 * 24 * 3600      # the longest browsers keep a cookie
+_TOKEN = re.compile(r"^[A-Za-z0-9_-]{43}$")  # secrets.token_urlsafe(32)
+HEALTHCHECK_HOST = "healthcheck.railway.app"  # Railway's deploy-time healthcheck sends this Host
+SHUTDOWN_GRACE_S = 8                        # Railway's draining time is set to 10 s
+RETENTION_SWEEP_S = 24 * 3600
 
 log = logging.getLogger("bolosip.server")
 
@@ -70,16 +86,39 @@ class BoloSIPServer(ThreadingHTTPServer):
     request_queue_size = 128
 
     def __init__(self, address, *, store: Store, retriever: Retriever, rate_msg: int, rate_all: int,
-                 extra_hosts: tuple[str, ...] = ()):
+                 extra_hosts: tuple[str, ...] = (), public_hosts: tuple[str, ...] = (),
+                 trust_proxy: bool = False):
         super().__init__(address, Handler)
         self.store, self.retriever = store, retriever
         self.msg_limiter, self.all_limiter = RateLimiter(rate_msg), RateLimiter(rate_all)
+        self.trust_proxy = trust_proxy
+        self.public = bool(public_hosts)
         port = self.server_address[1]
         names = set(LOCAL_HOSTS) | {h for h in extra_hosts if h}
         self.allowed_hosts = {f"{h}:{port}" for h in names}
         if port == 80:
             self.allowed_hosts |= names
         self.allowed_origins = {f"http://{h}" for h in self.allowed_hosts}
+        # Public names arrive through the HTTPS edge: no port in Host, https:// in Origin (B3).
+        pub = {h.lower() for h in public_hosts if h}
+        self.allowed_hosts |= pub | {f"{h}:{port}" for h in pub}
+        self.allowed_origins |= {f"https://{h}" for h in pub}
+        self._active = 0                            # requests in flight, for a clean stop (B5)
+        self._active_lock = threading.Lock()
+
+    def track(self, delta: int) -> None:
+        with self._active_lock:
+            self._active += delta
+
+    def wait_idle(self, timeout: float) -> bool:
+        end = time.monotonic() + timeout
+        while True:
+            with self._active_lock:
+                if self._active <= 0:
+                    return True
+            if time.monotonic() >= end:
+                return False
+            time.sleep(0.05)
 
 
 _THREAD_PATH = "/api/threads/"
@@ -118,9 +157,14 @@ class Handler(BaseHTTPRequestHandler):
     def _handle(self, method: str):
         started = time.perf_counter()
         status = 500
+        self.server.track(+1)
+        self._new_token = None
+        self._https = self.server.trust_proxy and \
+            (self.headers.get("X-Forwarded-Proto") or "").strip().lower() == "https"
         try:
             self._check_host()
-            ok, wait = self.server.all_limiter.take(self.client_address[0])
+            self.owner = self._owner()
+            ok, wait = self.server.all_limiter.take(self._client_ip())
             if not ok:
                 raise ApiError(429, "Too many requests. Please wait a moment.", {"Retry-After": str(wait)})
             status = self._route(method)
@@ -138,6 +182,7 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
         finally:
+            self.server.track(-1)
             self._log(status, started)
 
     def _route(self, method: str) -> int:
@@ -157,10 +202,12 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/threads":
             self._allow(method, "GET", "POST")
             if method == "GET":
-                return self._json(200, self.server.store.list_threads())
+                if not self.server.public:              # chats saved before B1 stay visible locally
+                    self.server.store.claim_unowned(self.owner)
+                return self._json(200, self.server.store.list_threads(owner=self.owner))
             self._check_write()
             self._read_json(required=False)
-            t = self.server.store.create_thread()
+            t = self.server.store.create_thread(owner=self.owner)
             return self._json(201, {"id": t["id"], "title": t["title"]})
         if path.startswith(_THREAD_PATH):
             rest = path[len(_THREAD_PATH):]
@@ -168,12 +215,12 @@ class Handler(BaseHTTPRequestHandler):
                 tid = self._thread_id(rest[: -len("/messages")])
                 self._allow(method, "GET", "POST")
                 if method == "GET":
-                    return self._json(200, self.server.store.get_messages(tid))
+                    return self._json(200, self.server.store.get_messages(tid, owner=self.owner))
                 return self._post_message(tid)
             tid = self._thread_id(rest)
             self._allow(method, "DELETE")
             self._check_write()
-            if not self.server.store.delete_thread(tid):
+            if not self.server.store.delete_thread(tid, owner=self.owner):
                 raise ThreadNotFound(tid)
             return self._empty(204)
         raise ApiError(404, "Not found")
@@ -190,13 +237,14 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(400, "Message is empty")
         if len(text) > config.MAX_TEXT_CHARS:
             raise ApiError(400, f"Message too long (max {config.MAX_TEXT_CHARS})")
-        ok, wait = self.server.msg_limiter.take(self.client_address[0])
+        ok, wait = self.server.msg_limiter.take(self._client_ip())
         if not ok:
             raise ApiError(429, "Too many messages. Please wait a moment.", {"Retry-After": str(wait)})
-        ctx = self.server.store.get_ctx(tid)               # 404 if the thread is gone
+        ctx = self.server.store.get_ctx(tid, owner=self.owner)   # 404 if gone or another browser's
         reply, new_ctx = pipeline.handle(text, ctx, retriever=self.server.retriever)
         try:
-            self.server.store.add_exchange(tid, guards.redact(text), reply, new_ctx.get("last_scheme"))
+            self.server.store.add_exchange(tid, guards.redact(text), reply, new_ctx.get("last_scheme"),
+                                           owner=self.owner)
         except ThreadNotFound:
             raise
         except Exception as e:                             # THR-06: never show an unsaved reply as saved
@@ -227,8 +275,43 @@ class Handler(BaseHTTPRequestHandler):
     # --- checks ---------------------------------------------------------------
     def _check_host(self):
         host = (self.headers.get("Host") or "").strip().lower()
-        if host not in self.server.allowed_hosts:
-            raise ApiError(403, "Forbidden host")
+        if host in self.server.allowed_hosts:
+            return
+        if self.server.public and host == HEALTHCHECK_HOST and self.command == "GET" \
+                and urlsplit(self.path).path == "/api/health":
+            return                                      # Railway's deploy-time healthcheck only
+        raise ApiError(403, "Forbidden host")
+
+    def _client_ip(self) -> str:
+        """The visitor's IP: X-Real-IP from Railway's edge when trusted (B4), else the socket's."""
+        if self.server.trust_proxy:
+            real = (self.headers.get("X-Real-IP") or "").strip()
+            if real and len(real) <= 64:
+                return real
+        return self.client_address[0]
+
+    def _owner(self) -> str:
+        """SHA-256 of this browser's owner token; issues a new token if there is none (B1)."""
+        token = None
+        raw = self.headers.get("Cookie")
+        if raw:
+            try:
+                morsel = SimpleCookie(raw).get(OWNER_COOKIE)
+            except CookieError:
+                morsel = None
+            if morsel is not None and _TOKEN.match(morsel.value):
+                token = morsel.value
+        if token is None:
+            token = self._new_token = secrets.token_urlsafe(32)
+        return hashlib.sha256(token.encode("ascii")).hexdigest()
+
+    def _session_headers(self):
+        if getattr(self, "_new_token", None):
+            flags = "; Secure" if self._https else ""
+            self.send_header("Set-Cookie", f"{OWNER_COOKIE}={self._new_token}; Path=/; "
+                                           f"Max-Age={OWNER_COOKIE_MAX_AGE}; HttpOnly; SameSite=Strict{flags}")
+        if getattr(self, "_https", False):
+            self.send_header("Strict-Transport-Security", "max-age=31536000")     # B6
 
     def _check_write(self):
         origin = self.headers.get("Origin")
@@ -284,6 +367,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
+        self._session_headers()
 
     def _json(self, status: int, payload, headers: dict | None = None) -> int:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -298,6 +382,7 @@ class Handler(BaseHTTPRequestHandler):
     def _empty(self, status: int) -> int:
         self.send_response(status)
         self.send_header("Content-Length", "0")
+        self._session_headers()
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         return status
@@ -317,7 +402,8 @@ def data_age_days(built_on: str | None, today: dt.date | None = None) -> int | N
 
 def make_server(host: str | None = None, port: int | None = None, *, store: Store | None = None,
                 retriever: Retriever | None = None, rate_msg: int | None = None,
-                rate_all: int | None = None) -> BoloSIPServer:
+                rate_all: int | None = None, public_hosts: tuple[str, ...] | None = None,
+                trust_proxy: bool | None = None) -> BoloSIPServer:
     """Build (not start) a server. Port 0 picks a free port (tests)."""
     s = config.SETTINGS
     host = s.host if host is None else host
@@ -325,7 +411,41 @@ def make_server(host: str | None = None, port: int | None = None, *, store: Stor
         (host, s.port if port is None else port),
         store=store or Store(s.db_path), retriever=retriever or get_retriever(),
         rate_msg=rate_msg or s.rate_msg_per_min, rate_all=rate_all or s.rate_all_per_min,
-        extra_hosts=(host.lower(),))
+        extra_hosts=(host.lower(),),
+        public_hosts=s.public_hosts if public_hosts is None else public_hosts,
+        trust_proxy=s.trust_proxy if trust_proxy is None else trust_proxy)
+
+
+def purge_old_chats(store: Store, days: int) -> None:
+    if days > 0:
+        n = store.purge_older_than(days)
+        if n:
+            log.info("Deleted %d chat(s) not used for %d days (BOLOSIP_RETENTION_DAYS).", n, days)
+
+
+def _start_retention_sweeps(store: Store, days: int, stop: threading.Event) -> None:
+    def loop():
+        while not stop.wait(RETENTION_SWEEP_S):
+            try:
+                purge_old_chats(store, days)
+            except Exception as e:                     # never take the server down
+                log.error("chat retention sweep failed: %s", type(e).__name__)
+    if days > 0:
+        threading.Thread(target=loop, name="retention", daemon=True).start()
+
+
+def _install_sigterm(httpd: BoloSIPServer, stopped: threading.Event) -> None:
+    """On SIGTERM (every Railway redeploy): stop accepting, let requests in flight finish (B5)."""
+    def on_term(signum, frame):
+        if stopped.is_set():
+            return
+        stopped.set()
+        log.info("SIGTERM: finishing requests in flight, then stopping.")
+        threading.Thread(target=httpd.shutdown, name="shutdown", daemon=True).start()
+    try:
+        signal.signal(signal.SIGTERM, on_term)
+    except (ValueError, OSError):                       # not the main thread, or unsupported
+        pass
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -334,10 +454,18 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     s = config.SETTINGS
     if s.host not in ("127.0.0.1", "localhost", "::1"):
-        log.warning("Listening on %s: BoloSIP has no authentication, so anyone who can reach this address "
-                    "can use it (SEC-03).", s.host)
+        if s.trust_proxy and s.public_hosts:            # B8: public on purpose, behind an HTTPS edge
+            log.info("Public site for %s behind a proxy: no sign-in by design; each browser sees only "
+                     "its own chats, rate limits are per visitor (SEC-03).", ", ".join(s.public_hosts))
+        else:
+            log.warning("Listening on %s: BoloSIP has no authentication, so anyone who can reach this "
+                        "address can use it (SEC-03).", s.host)
     retriever = get_retriever()                       # load the corpus and the model once, before serving
     httpd = make_server(retriever=retriever)
+    stopped = threading.Event()
+    purge_old_chats(httpd.store, s.retention_days)
+    _start_retention_sweeps(httpd.store, s.retention_days, stopped)
+    _install_sigterm(httpd, stopped)
     log.info("BoloSIP %s on http://%s:%d (retriever: %s). %s", VERSION, s.host, httpd.server_address[1],
              retriever.backend_name(), config.DISCLAIMER)
     age = data_age_days(retriever.meta.get("built_on"))
@@ -350,7 +478,11 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         pass
     finally:
+        stopped.set()
+        if not httpd.wait_idle(SHUTDOWN_GRACE_S):
+            log.warning("Stopped with requests still in flight after %d s.", SHUTDOWN_GRACE_S)
         httpd.server_close()
+        log.info("BoloSIP stopped.")
     return 0
 
 

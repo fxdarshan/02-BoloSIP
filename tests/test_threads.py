@@ -169,7 +169,9 @@ class TestPersistence(unittest.TestCase):
             with LiveServer(db, retriever()) as api:
                 t = api.new_thread()
                 api.ask(t, "HDFC Small Cap Fund expense ratio")
+                cookie = api.cookie                         # the browser keeps its cookie
             with LiveServer(db, retriever()) as api:
+                api.cookie = cookie
                 self.assertEqual(len(api.messages(t)), 2)
                 reply = api.ask(t, "what about its exit load?")[1]
                 self.assertEqual(reply["scheme_id"], "hdfc-small-cap")
@@ -182,6 +184,37 @@ class TestPersistence(unittest.TestCase):
                 p.unlink()
             self.assertEqual(store.list_threads(), [])
             self.assertTrue(db.exists())
+
+    def test_old_database_gets_the_owner_column(self):                     # deployment plan B1
+        import sqlite3
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+            db = Path(tmp) / "old.sqlite3"
+            c = sqlite3.connect(db)
+            c.executescript("CREATE TABLE threads (id TEXT PRIMARY KEY, title TEXT NOT NULL, created_at TEXT "
+                            "NOT NULL, updated_at TEXT NOT NULL, last_scheme TEXT);"
+                            "INSERT INTO threads VALUES ('t1', 'Old chat', '2026-01-01', '2026-01-01', NULL);")
+            c.close()
+            store = Store(db)
+            self.assertEqual([t["title"] for t in store.list_threads()], ["Old chat"])
+            self.assertEqual(store.list_threads(owner="me"), [])
+            self.assertEqual(store.claim_unowned("me"), 1)
+            self.assertEqual([t["id"] for t in store.list_threads(owner="me")], ["t1"])
+
+    def test_old_chats_are_deleted_after_the_retention_period(self):        # deployment plan B7
+        from datetime import datetime, timedelta, timezone
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+            store = Store(Path(tmp) / "t.sqlite3")
+            old, new = store.create_thread()["id"], store.create_thread()["id"]
+            later = datetime.now(timezone.utc) + timedelta(days=31)
+            import sqlite3
+            c = sqlite3.connect(store.path)
+            with c:
+                c.execute("UPDATE threads SET updated_at = ? WHERE id = ?", ((later - timedelta(days=1)).isoformat(), new))
+            c.close()
+            self.assertEqual(store.purge_older_than(0, now=later), 0)            # 0 = keep everything
+            self.assertEqual(store.purge_older_than(30, now=later), 1)
+            self.assertEqual([t["id"] for t in store.list_threads()], [new])
+            self.assertIsNone(store.get_thread(old))
 
     def test_unknown_thread(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
