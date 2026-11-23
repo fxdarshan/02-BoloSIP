@@ -173,4 +173,5 @@ The Groq key is optional. Without it, BoloSIP answers with the source text direc
 | [Implementation plan](Doc/Implementation-plan.md) | Phases 0–10 with tasks and exit criteria (Phase 7: daily data refresh at 10:00 IST) |
 | [Edge cases](Doc/edge-case.md) | 234 corner cases and expected behaviour |
 | [Evaluation](Doc/eval.md) | Datasets, metrics and pass thresholds per phase |
+| [Deployment plan](Doc/deployment-plan.md) | Running BoloSIP publicly on Railway: code changes needed first, settings, stages, rollback, cost |
 | [Retrieval research](Doc/retrieval-research.md) | Chunking, embedding model and vector store chosen by measurement for Phase 3 |
