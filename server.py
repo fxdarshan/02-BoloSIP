@@ -21,6 +21,7 @@ import logging
 import re
 import secrets
 import signal
+import socket
 import sys
 import threading
 import time
@@ -88,6 +89,8 @@ class BoloSIPServer(ThreadingHTTPServer):
     def __init__(self, address, *, store: Store, retriever: Retriever, rate_msg: int, rate_all: int,
                  extra_hosts: tuple[str, ...] = (), public_hosts: tuple[str, ...] = (),
                  trust_proxy: bool = False):
+        if ":" in address[0]:                       # an IPv6 address such as "::" (B2)
+            self.address_family = socket.AF_INET6
         super().__init__(address, Handler)
         self.store, self.retriever = store, retriever
         self.msg_limiter, self.all_limiter = RateLimiter(rate_msg), RateLimiter(rate_all)
@@ -105,6 +108,16 @@ class BoloSIPServer(ThreadingHTTPServer):
         self.allowed_origins |= {f"https://{h}" for h in pub}
         self._active = 0                            # requests in flight, for a clean stop (B5)
         self._active_lock = threading.Lock()
+
+    def server_bind(self):
+        # "::" listens on IPv6 *and* IPv4 (dual stack), so a platform proxy reaches the
+        # server whichever protocol it uses (Railway's edge; deployment plan B2).
+        if self.address_family == socket.AF_INET6 and hasattr(socket, "IPV6_V6ONLY"):
+            try:
+                self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+            except OSError:
+                pass
+        super().server_bind()
 
     def track(self, delta: int) -> None:
         with self._active_lock:
@@ -466,7 +479,8 @@ def main(argv: list[str] | None = None) -> int:
     purge_old_chats(httpd.store, s.retention_days)
     _start_retention_sweeps(httpd.store, s.retention_days, stopped)
     _install_sigterm(httpd, stopped)
-    log.info("BoloSIP %s on http://%s:%d (retriever: %s). %s", VERSION, s.host, httpd.server_address[1],
+    shown = f"[{s.host}]" if ":" in s.host else s.host
+    log.info("BoloSIP %s on http://%s:%d (retriever: %s). %s", VERSION, shown, httpd.server_address[1],
              retriever.backend_name(), config.DISCLAIMER)
     age = data_age_days(retriever.meta.get("built_on"))
     if age is not None and age > STALE_AFTER_DAYS:

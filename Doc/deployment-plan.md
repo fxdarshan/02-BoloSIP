@@ -132,7 +132,7 @@ Each stage ends with its check; do not start the next one until it passes.
 
 | Stage | What happens | Done when |
 |---|---|---|
-| **D0. Code changes** ✅ | B1–B9 from §3, `Dockerfile`, `.dockerignore`, `scripts/smoke_remote.py`; tests for each (`tests/test_deploy.py`, 15 tests); README "Deploy on Railway" section | Done 23 Nov 2026: 266 tests and every gate pass (keyword and embedding search); the smoke test passes 18/18 on the local server; the `docker` CI job builds and checks the image (Docker is not installed on the laptop, so CI is the image check) |
+| **D0. Code changes** ✅ | B1–B9 from §3, `Dockerfile`, `.dockerignore`, `scripts/smoke_remote.py`; tests for each (`tests/test_deploy.py`, 16 tests); README "Deploy on Railway" section | Done 23 Nov 2026: 266 tests and every gate pass (keyword and embedding search); the smoke test passes 18/18 on the local server; the `docker` CI job builds and checks the image (Docker is not installed on the laptop, so CI is the image check) |
 | **D1. Account and project** | The owner creates the Railway account (the owner signs in and enters payment details; Claude never does), picks Hobby, creates a project from the GitHub repo and gives Railway access to this repository only | The project shows the repo and branch `main` |
 | **D2. Settings** | §6 settings and variables, the `/data` volume; generate the `*.up.railway.app` domain | Every row of §6 matches the dashboard |
 | **D3. First deploy** | Railway builds and starts; read the build and deploy logs | Healthcheck passes; logs show "retriever: dense (nomic + ChromaDB)" and no warning other than expected ones; start-up time recorded here |

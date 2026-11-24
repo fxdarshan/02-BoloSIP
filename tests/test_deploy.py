@@ -150,6 +150,34 @@ class TestProxyHeadersIgnoredLocally(Case):                                  # B
         self.assertNotIn("Secure", h["Set-Cookie"])
 
 
+class TestDualStack(unittest.TestCase):                                     # B2
+    def test_ipv6_any_also_answers_on_ipv4(self):
+        import http.client
+        import socket
+        if not socket.has_ipv6:
+            self.skipTest("no IPv6 on this machine")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+            from bolosip.store import Store
+            try:
+                httpd = server.make_server("::", 0, store=Store(Path(tmp) / "t.sqlite3"), retriever=retriever(),
+                                           public_hosts=(), trust_proxy=False)
+            except OSError:
+                self.skipTest("cannot bind IPv6 here")
+            t = threading.Thread(target=httpd.serve_forever, daemon=True)
+            t.start()
+            try:
+                port = httpd.server_address[1]
+                for host in ("127.0.0.1", "::1"):
+                    with self.subTest(host=host):
+                        c = http.client.HTTPConnection(host, port, timeout=10)
+                        c.request("GET", "/api/health", headers={"Host": f"{'localhost'}:{port}"})
+                        self.assertEqual(c.getresponse().status, 200)
+                        c.close()
+            finally:
+                httpd.shutdown()
+                httpd.server_close()
+
+
 class TestShutdown(unittest.TestCase):                                       # B5
     def test_sigterm_stops_the_server(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
