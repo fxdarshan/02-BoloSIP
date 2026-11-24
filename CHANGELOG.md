@@ -4,6 +4,9 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Changed (UI refresh, 24 Nov 2026)
+- Chat page redesigned beyond the Google Stitch draft: deeper surfaces with a soft accent glow; a welcome screen that shows the live data date (from `/api/health`), clickable topic shortcuts that start a question and open the typing suggestions, compact example cards and a three-point trust line; lighter answer cards (small kind label, larger text, highlighted figures, source link with its domain and the date on one line); a quieter "New chat" button; a focus ring on the input; gentle entry animations (off with reduced motion). Contrast (WCAG AA, both themes), the overflow scan at four widths and all browser tests pass.
+
 ### Added (Phase 8: optional LLM rephrasing, 24 Nov 2026)
 - `bolosip/llm.py`: Groq `openai/gpt-oss-120b` (temperature 0, reasoning effort low, 200 completion tokens, 15 s timeout, 1 retry), a system prompt that allows only rewording of the one source fact, and a thread-safe budget for the account limits (30 requests and 8,000 tokens a minute, 1,000 requests and 200,000 tokens a day); a 429 pauses calls for Retry-After. Over a limit, on any error, or with no SDK or key, the answer stays extractive.
 - Output checks (`composer.rejection_reason`): numbers and dates must match the fact after normalising (GAP-06) and none may be dropped; the plan name, quoted riskometer levels and words like "blocked" must stay; no URLs; no advice, including advice phrased as a statement ("you should invest"), which the question guard did not catch (ISS-050).
