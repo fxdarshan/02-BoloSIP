@@ -14,7 +14,7 @@ import argparse
 import json
 import sys
 
-from bolosip import config, pipeline
+from bolosip import config, llm, pipeline
 from bolosip.textutil import utf8_output
 
 
@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
 
     def ask(q: str) -> None:
         nonlocal ctx
-        reply, ctx = pipeline.handle(q, ctx)
+        reply, ctx = pipeline.handle(q, ctx, rephrase=llm.get_rephraser())
         if args.json:
             print(json.dumps(reply.to_dict(), ensure_ascii=False, indent=2))
         else:
@@ -46,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
             q = input("> ").strip()
             if not q:
                 return 0
-            reply, ctx = pipeline.handle(q, ctx)
+            reply, ctx = pipeline.handle(q, ctx, rephrase=llm.get_rephraser())
             print(reply.render() + "\n")
     except (EOFError, KeyboardInterrupt):
         print()

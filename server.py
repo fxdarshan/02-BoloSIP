@@ -33,7 +33,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from bolosip import __version__ as VERSION
-from bolosip import config, guards, pipeline, suggest
+from bolosip import config, guards, llm, pipeline, suggest
 from bolosip.retriever import Retriever, get_retriever
 from bolosip.store import Store, ThreadNotFound
 
@@ -88,11 +88,12 @@ class BoloSIPServer(ThreadingHTTPServer):
 
     def __init__(self, address, *, store: Store, retriever: Retriever, rate_msg: int, rate_all: int,
                  extra_hosts: tuple[str, ...] = (), public_hosts: tuple[str, ...] = (),
-                 trust_proxy: bool = False):
+                 trust_proxy: bool = False, rephrase=None):
         if ":" in address[0]:                       # an IPv6 address such as "::" (B2)
             self.address_family = socket.AF_INET6
         super().__init__(address, Handler)
         self.store, self.retriever = store, retriever
+        self.rephrase = rephrase                    # Phase 8: Groq rewording, or None (extractive)
         self.msg_limiter, self.all_limiter = RateLimiter(rate_msg), RateLimiter(rate_all)
         self.trust_proxy = trust_proxy
         self.public = bool(public_hosts)
@@ -254,7 +255,7 @@ class Handler(BaseHTTPRequestHandler):
         if not ok:
             raise ApiError(429, "Too many messages. Please wait a moment.", {"Retry-After": str(wait)})
         ctx = self.server.store.get_ctx(tid, owner=self.owner)   # 404 if gone or another browser's
-        reply, new_ctx = pipeline.handle(text, ctx, retriever=self.server.retriever)
+        reply, new_ctx = pipeline.handle(text, ctx, retriever=self.server.retriever, rephrase=self.server.rephrase)
         try:
             self.server.store.add_exchange(tid, guards.redact(text), reply, new_ctx.get("last_scheme"),
                                            owner=self.owner)
@@ -267,7 +268,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _health(self) -> dict:
         r = self.server.retriever
-        return {"status": "ok", "version": VERSION, "llm_enabled": False, "retriever": r.backend_name(),
+        return {"status": "ok", "version": VERSION, "llm_enabled": self.server.rephrase is not None, "retriever": r.backend_name(),
                 "corpus_built_on": r.meta.get("built_on"), "data_age_days": data_age_days(r.meta.get("built_on")),
                 "schemes": len(r.meta.get("schemes", {}))}
 
@@ -416,7 +417,7 @@ def data_age_days(built_on: str | None, today: dt.date | None = None) -> int | N
 def make_server(host: str | None = None, port: int | None = None, *, store: Store | None = None,
                 retriever: Retriever | None = None, rate_msg: int | None = None,
                 rate_all: int | None = None, public_hosts: tuple[str, ...] | None = None,
-                trust_proxy: bool | None = None) -> BoloSIPServer:
+                trust_proxy: bool | None = None, rephrase=None) -> BoloSIPServer:
     """Build (not start) a server. Port 0 picks a free port (tests)."""
     s = config.SETTINGS
     host = s.host if host is None else host
@@ -426,7 +427,7 @@ def make_server(host: str | None = None, port: int | None = None, *, store: Stor
         rate_msg=rate_msg or s.rate_msg_per_min, rate_all=rate_all or s.rate_all_per_min,
         extra_hosts=(host.lower(),),
         public_hosts=s.public_hosts if public_hosts is None else public_hosts,
-        trust_proxy=s.trust_proxy if trust_proxy is None else trust_proxy)
+        trust_proxy=s.trust_proxy if trust_proxy is None else trust_proxy, rephrase=rephrase)
 
 
 def purge_old_chats(store: Store, days: int) -> None:
@@ -447,14 +448,15 @@ def _start_retention_sweeps(store: Store, days: int, stop: threading.Event) -> N
         threading.Thread(target=loop, name="retention", daemon=True).start()
 
 
-def _install_sigterm(httpd: BoloSIPServer, stopped: threading.Event) -> None:
+def _install_sigterm(httpd: BoloSIPServer, stopped: threading.Event, *others: BoloSIPServer) -> None:
     """On SIGTERM (every Railway redeploy): stop accepting, let requests in flight finish (B5)."""
     def on_term(signum, frame):
         if stopped.is_set():
             return
         stopped.set()
         log.info("SIGTERM: finishing requests in flight, then stopping.")
-        threading.Thread(target=httpd.shutdown, name="shutdown", daemon=True).start()
+        for srv in (httpd, *others):
+            threading.Thread(target=srv.shutdown, name="shutdown", daemon=True).start()
     try:
         signal.signal(signal.SIGTERM, on_term)
     except (ValueError, OSError):                       # not the main thread, or unsupported
@@ -474,13 +476,24 @@ def main(argv: list[str] | None = None) -> int:
             log.warning("Listening on %s: BoloSIP has no authentication, so anyone who can reach this "
                         "address can use it (SEC-03).", s.host)
     retriever = get_retriever()                       # load the corpus and the model once, before serving
-    httpd = make_server(retriever=retriever)
+    rephrase = llm.get_rephraser()                    # Phase 8; None = extractive answers
+    if rephrase is None and s.llm_mode == "on":
+        log.error("BOLOSIP_LLM=on but the LLM is unavailable: %s.", llm.unavailable_reason())
+        return 2
+    httpd = make_server(retriever=retriever, rephrase=rephrase)
+    # ISS-048: also listen on BOLOSIP_ALSO_PORT (8000 in the container), so the site works
+    # whether the platform's domain points at its own PORT or at 8000.
+    extra = None
+    if s.also_port and s.also_port != httpd.server_address[1]:
+        extra = make_server(port=s.also_port, store=httpd.store, retriever=retriever, rephrase=rephrase)
+        threading.Thread(target=extra.serve_forever, name=f"port-{s.also_port}", daemon=True).start()
     stopped = threading.Event()
     purge_old_chats(httpd.store, s.retention_days)
     _start_retention_sweeps(httpd.store, s.retention_days, stopped)
-    _install_sigterm(httpd, stopped)
+    _install_sigterm(httpd, stopped, *([extra] if extra else []))
     shown = f"[{s.host}]" if ":" in s.host else s.host
-    log.info("BoloSIP %s on http://%s:%d (retriever: %s). %s", VERSION, shown, httpd.server_address[1],
+    ports = f"{httpd.server_address[1]}" + (f" and {extra.server_address[1]}" if extra else "")
+    log.info("BoloSIP %s on http://%s port %s (retriever: %s). %s", VERSION, shown, ports,
              retriever.backend_name(), config.DISCLAIMER)
     age = data_age_days(retriever.meta.get("built_on"))
     if age is not None and age > STALE_AFTER_DAYS:
@@ -496,6 +509,9 @@ def main(argv: list[str] | None = None) -> int:
         if not httpd.wait_idle(SHUTDOWN_GRACE_S):
             log.warning("Stopped with requests still in flight after %d s.", SHUTDOWN_GRACE_S)
         httpd.server_close()
+        if extra:
+            extra.shutdown()
+            extra.server_close()
         log.info("BoloSIP stopped.")
     return 0
 

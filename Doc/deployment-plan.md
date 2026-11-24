@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| **Version** | 1.1 (23 Nov 2026) |
+| **Version** | 1.2 (24 Nov 2026) |
 | **Goal** | Run BoloSIP as a public website on [Railway](https://railway.com), served from this GitHub repository, with the same answers, privacy and freshness as on the laptop |
-| **Status** | **D0 done** (23 Nov 2026): code changes B1–B9, `Dockerfile`, `.dockerignore`, the entrypoint and `scripts/smoke_remote.py` are built and tested; the `docker` CI job builds the image and checks it. Nothing is deployed yet; D1 (Railway account) is next and is the owner's step |
+| **Status** | **D0 done** (23 Nov 2026): code changes B1–B9, `Dockerfile`, `.dockerignore`, the entrypoint and `scripts/smoke_remote.py` are built and tested; the `docker` CI job builds the image and checks it. **D1–D2 done by the owner** (24 Nov 2026): project `passionate-abundance`, service `02-BoloSIP`, deploys from `main` (it already deployed the 23 Nov data refresh by itself), domain `02-bolosip-production.up.railway.app`. **D3 open:** the deploy is Active but the domain answers 502 "Application failed to respond" (ISS-048): the domain's target port must equal the port the app listens on; see §6 `PORT`. Account on the Trial plan (1 GB), region US East |
 | **Related** | [Implementation plan](Implementation-plan.md) (Phase 7 daily refresh, Phase 10 release), [architecture](architecture.md) §13 API, §17 security, [issues log](issues.md) |
 
 Railway facts in this plan were checked against docs.railway.com on **23 Nov 2026** (sources in §12). Railway changes often: recheck the items marked ⚠️ before each stage.
@@ -112,8 +112,8 @@ If the database file is ever damaged, deleting it is safe: the server creates an
 
 | Variable | Value | Notes |
 |---|---|---|
-| `BOLOSIP_HOST` | `0.0.0.0` | B2 |
-| `PORT` | set by Railway | B2: do not set by hand |
+| `BOLOSIP_HOST` | `::` (set in the Dockerfile) | B2: listens on IPv6 and IPv4 together, whichever the edge uses |
+| `PORT` | **`8000`**, and the domain's target port **8000** | B2. Railway injects its own `PORT` (often 8080) and the app listens there; a domain generated with another target port answers 502 (ISS-048). Set both to the same number. ⚠️ Lesson from D3 |
 | `BOLOSIP_PUBLIC_HOSTS` | `${{RAILWAY_PUBLIC_DOMAIN}}` (plus the custom domain later) | B3 |
 | `BOLOSIP_TRUST_PROXY` | `1` | B4 |
 | `BOLOSIP_RETRIEVER` | `embed` | Never fall back to keyword search silently |
@@ -135,7 +135,7 @@ Each stage ends with its check; do not start the next one until it passes.
 | **D0. Code changes** ✅ | B1–B9 from §3, `Dockerfile`, `.dockerignore`, `scripts/smoke_remote.py`; tests for each (`tests/test_deploy.py`, 16 tests); README "Deploy on Railway" section | Done 23 Nov 2026: 266 tests and every gate pass (keyword and embedding search); the smoke test passes 18/18 on the local server; the `docker` CI job builds and checks the image (Docker is not installed on the laptop, so CI is the image check) |
 | **D1. Account and project** | The owner creates the Railway account (the owner signs in and enters payment details; Claude never does), picks Hobby, creates a project from the GitHub repo and gives Railway access to this repository only | The project shows the repo and branch `main` |
 | **D2. Settings** | §6 settings and variables, the `/data` volume; generate the `*.up.railway.app` domain | Every row of §6 matches the dashboard |
-| **D3. First deploy** | Railway builds and starts; read the build and deploy logs | Healthcheck passes; logs show "retriever: dense (nomic + ChromaDB)" and no warning other than expected ones; start-up time recorded here |
+| **D3. First deploy** | Railway builds and starts; read the build and deploy logs; check the domain's target port equals the port in the log line `BoloSIP … on http://[::]:NNNN` | Healthcheck passes; logs show "retriever: dense (nomic + ChromaDB)" and no warning other than expected ones; start-up time recorded here |
 | **D4. Smoke test** | `python scripts/smoke_remote.py https://<domain>` from the laptop; then the manual pass on a phone and a desktop browser (examples, typing suggestions, chips, drawer, dark/light) | Every smoke check passes; the footer date equals the latest data commit; a second browser cannot see the first one's chats |
 | **D5. Daily refresh on Railway** | Wait for the next 10:00 IST refresh commit | Railway deploys it by itself; `/api/health` shows `data_age_days` 0 the same morning; the gap during the redeploy is seconds |
 | **D6. Monitoring** | Railway's healthcheck only runs at deploy time, so add an outside check: a small step in `refresh-data.yml` that runs `smoke_remote.py` after the data commit has deployed, plus a free uptime monitor on `/api/health` (owner's choice of service) | A stopped service is noticed within an hour; a failed smoke check opens the `data-refresh` issue |

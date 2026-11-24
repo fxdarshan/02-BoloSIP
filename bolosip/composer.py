@@ -11,9 +11,11 @@ that link was last reviewed.
 """
 from __future__ import annotations
 
+import re
+from decimal import Decimal, InvalidOperation
 from typing import Callable
 
-from bolosip import config, registry
+from bolosip import config, guards, registry
 from bolosip.formatter import Reply, make, validate
 from bolosip.topics import TOPIC_LABELS
 
@@ -29,16 +31,121 @@ def compose(question: str, chunk: dict, rephrase: Rephrase | None = None) -> str
         candidate = rephrase(question, text)
     except Exception:
         return text
+    if candidate:
+        candidate = candidate.translate(_STRAIGHT_QUOTES)
     return candidate if accept_rephrase(candidate, chunk) else text
 
 
 def accept_rephrase(candidate: str | None, chunk: dict) -> bool:
-    """Phase 8 output checks plug in here (numbers, URLs, advice). Until then: format only."""
-    if not candidate or candidate.strip() == "NOT_IN_SOURCE":
-        return False
+    """Phase 8 output checks (architecture §9.2). Any failure keeps the extractive text."""
+    return rejection_reason(candidate, chunk) is None
+
+
+def rejection_reason(candidate: str | None, chunk: dict) -> str | None:
+    """Why an LLM rewording can't be used, or None if it passes every check."""
+    if not candidate or not candidate.strip():
+        return "empty"
+    if "NOT_IN_SOURCE" in candidate:
+        return "not in source"
+    if _URLISH.search(candidate):
+        return "url"
+    if guards.is_advisory(candidate) or _ADVICE_OUT.search(candidate):
+        return "advice words"
+    src = chunk["text"]
+    nums, dates = numbers_and_dates(candidate)
+    src_nums, src_dates = numbers_and_dates(src)
+    if not nums <= src_nums:
+        return "number not in source: " + ", ".join(sorted(nums - src_nums))
+    if not dates <= src_dates:
+        return "date not in source"
+    # Nothing that matters may be dropped either: every number and date, quoted levels such
+    # as "Very High", the plan name and words like "blocked" (live run, 24 Nov 2026).
+    if not src_nums <= nums:
+        return "dropped a number: " + ", ".join(sorted(src_nums - nums))
+    if not src_dates <= dates:
+        return "dropped the date"
+    flat = candidate.translate(_STRAIGHT_QUOTES).lower()
+    src_flat = src.translate(_STRAIGHT_QUOTES).lower()
+    for phrase in _MUST_KEEP + tuple(_QUOTED.findall(src_flat)):
+        if phrase in src_flat and phrase not in flat:
+            return f"dropped {phrase!r}"
+    low, src_low = candidate.lower(), src.lower()
+    for s in registry.SCHEMES:
+        if s.name.lower() in low and s.name.lower() not in src_low:
+            return f"names another scheme: {s.name}"
     probe = make("answer", candidate, url=chunk["source_url"], source_name=chunk["source_name"],
                  as_of=chunk["as_of"])
-    return probe.text == " ".join(candidate.split()) and not validate(probe)
+    if probe.text != " ".join(candidate.split()) or validate(probe):
+        return "format"
+    return None
+
+
+# --- number and date normalising for the output check (GAP-06) -------------------
+
+_URLISH = re.compile(r"https?://|www\.|\b[a-z0-9-]+\.(?:com|in|org|net|gov|co)\b", re.I)
+_STRAIGHT_QUOTES = str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'"})
+_QUOTED = re.compile(r'"[^"]{1,40}"')
+_MUST_KEEP = ("direct growth", "blocked", "suspended", "not accepting", "no exit load", "nil", "not applicable")
+# Advice phrased as a statement to the user (the question guard looks for "should I ...").
+_ADVICE_OUT = re.compile(
+    r"\b(?:you|investors?)\s+(?:should|must|ought to|could consider|may want to|might want to|need to)\b"
+    r"|\b(?:i|we)\s+(?:recommend|suggest|advise)\b|\brecommended\b|\bconsider (?:investing|buying|adding)\b"
+    r"|\bworth (?:investing|buying|it)\b|\b(?:good|great|safe|smart|ideal|right) (?:choice|option|pick|bet|investment)\b"
+    r"|\bsuitable for you\b|\bgo for it\b", re.I)
+_MONTHS = {m: i for i, m in enumerate(
+    ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"), 1)}
+_MON = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?"
+_DATE_DMY = re.compile(r"\b(\d{1,2})(?:st|nd|rd|th)?[\s\-/]+" + _MON + r"[\s\-/,]+(\d{4})\b", re.I)
+_DATE_MDY = re.compile(r"\b" + _MON + r"\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b", re.I)
+_DATE_ISO = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+_CURRENCY = re.compile(r"₹|\bRs\.?(?=\s?\d)|\bINR\b", re.I)
+_WORDS = {w: str(i) for i, w in enumerate(
+    ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"), 1)}
+_NUMBER_WORD = re.compile(r"\b(" + "|".join(_WORDS) + r")\b", re.I)
+_NUMBER = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+
+def _month(name: str) -> int:
+    return _MONTHS[name.lower()[:3]]
+
+
+def numbers_and_dates(text: str) -> tuple[set[str], set[tuple[int, int, int]]]:
+    """Normalised numbers and (year, month, day) dates in a text.
+
+    "₹1,00,687.07", "Rs 100687.07" and "100,687.070" all give "100687.07"; "one year"
+    gives "1"; "0.730%" gives "0.73"; "12 Nov 2026", "12-Nov-2026", "Nov 12, 2026" and
+    "2026-11-12" give the same date. Dates are taken out before numbers are read."""
+    dates: set[tuple[int, int, int]] = set()
+
+    def take_dmy(m):
+        dates.add((int(m.group(3)), _month(m.group(2)), int(m.group(1))))
+        return " "
+
+    def take_mdy(m):
+        dates.add((int(m.group(3)), _month(m.group(1)), int(m.group(2))))
+        return " "
+
+    def take_iso(m):
+        dates.add((int(m.group(1)), int(m.group(2)), int(m.group(3))))
+        return " "
+
+    t = _DATE_DMY.sub(take_dmy, text)
+    t = _DATE_MDY.sub(take_mdy, t)
+    t = _DATE_ISO.sub(take_iso, t)
+    t = _CURRENCY.sub(" ", t)
+    t = _NUMBER_WORD.sub(lambda m: _WORDS[m.group(1).lower()], t)
+    nums = set()
+    for raw in _NUMBER.findall(t):
+        value = raw.replace(",", "").rstrip(".")
+        try:
+            d = Decimal(value)
+        except InvalidOperation:
+            continue
+        s = format(d, "f")
+        if "." in s:
+            s = s.rstrip("0").rstrip(".")
+        nums.add(s.lstrip("0") or "0" if "." not in s else s)
+    return nums, dates
 
 
 def answer(question: str, chunk: dict, *, prefix: str = "", suffix: str = "",

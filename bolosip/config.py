@@ -108,6 +108,7 @@ class Settings:
     public_hosts: tuple[str, ...] = ()                # extra host names served over HTTPS (B3)
     trust_proxy: bool = False                         # behind Railway's edge: client IP from X-Real-IP (B4)
     retention_days: int = 0                           # delete chats untouched this long; 0 = keep (B7)
+    also_port: int = 0                                # a second port to listen on; 0 = none (ISS-048)
 
 
 def _hosts(raw: str | None) -> tuple[str, ...]:
@@ -189,6 +190,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         public_hosts=_hosts(env.get("BOLOSIP_PUBLIC_HOSTS") or env.get("RAILWAY_PUBLIC_DOMAIN")),
         trust_proxy=_bool(env, "BOLOSIP_TRUST_PROXY"),
         retention_days=_int(env, "BOLOSIP_RETENTION_DAYS", 0, 0, 3650),
+        also_port=_int(env, "BOLOSIP_ALSO_PORT", 0, 0, 65535),
     )
 
 
@@ -245,6 +247,10 @@ LLM_TIMEOUT_S = 15.0
 LLM_MAX_RETRIES = 1
 LLM_TEMPERATURE = 0
 LLM_MAX_COMPLETION_TOKENS = 200
+# gpt-oss-120b is a reasoning model, and its reasoning tokens count against
+# max_completion_tokens. "low" used 36 reasoning tokens for a one-fact rephrase in the
+# key check (24 Nov 2026), leaving room for 3 sentences; Phase 8 measures it on 165 answers.
+LLM_REASONING_EFFORT = "low"
 
 # Groq rate limits of the project's account for the default model (owner, 19 Nov 2026).
 # Phase 8 enforces them in the client: over a limit, a reply simply stays extractive.

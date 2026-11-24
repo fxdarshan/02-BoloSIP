@@ -22,7 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "eval" / "reports"
-CURRENT_PHASE = 6
+CURRENT_PHASE = 8                   # Phase 7 is checked by its own workflow (refresh-data.yml)
 
 
 def _git_commit() -> str:
@@ -757,8 +757,93 @@ def phase6_checks() -> list[dict]:
     return results
 
 
+def phase8_checks() -> list[dict]:
+    """Phase 8 gate (Doc/eval.md §5): LLM rephrasing never makes answers less correct or
+    less safe. Offline: a stub client plays the model, so no key or network is needed.
+    The live run with Groq is separate: python -m eval.llm_live."""
+    from types import SimpleNamespace
+    from unittest import mock
+
+    sys.path.insert(0, str(ROOT))
+    from bolosip import composer, config, llm, pipeline
+    from bolosip.retriever import Retriever
+
+    results = []
+    stress = _load_set("llm_stress")
+    probe = {"source_url": "https://groww.in/mutual-funds/x", "source_name": "x", "as_of": "20 Nov 2026"}
+    bad = [c for c in stress if c["kind"] == "bad"]
+    good = [c for c in stress if c["kind"] == "good"]
+    caught = [c for c in bad if composer.rejection_reason(c["output"], {**probe, "text": c["source"]})]
+    wrongly = [c for c in good if composer.rejection_reason(c["output"], {**probe, "text": c["source"]})]
+    for c in bad:
+        if c not in caught:
+            FAILURES.append({"id": c["id"], "expected": ["rejected"], "got": "accepted: " + c["output"]})
+    for c in wrongly:
+        FAILURES.append({"id": c["id"], "expected": ["accepted"], "got": composer.rejection_reason(
+            c["output"], {**probe, "text": c["source"]})})
+    results.append(_check("LLM fallback correctness (bad outputs rejected)", len(caught) == len(bad),
+                          f"{len(caught)} / {len(bad)} (need 100%)"))
+    rate = len(wrongly) / len(good) if good else 0
+    results.append(_check("LLM false-rejection rate (GAP-06 reformatted outputs)", rate <= 0.05,
+                          f"{len(wrongly)} / {len(good)} rejected ({rate:.0%}; max 5%)"))
+
+    def resp(text):
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=text), finish_reason="stop")],
+                               usage=SimpleNamespace(prompt_tokens=200, completion_tokens=50, total_tokens=250))
+
+    class Stub:
+        def __init__(self, fn):
+            self.fn, self.calls = fn, 0
+            self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
+
+        def create(self, **kw):
+            self.calls += 1
+            return self.fn(kw)
+
+    big = dict(requests_per_minute=10**9, requests_per_day=10**9, tokens_per_minute=10**12, tokens_per_day=10**12)
+    r = Retriever()
+    leaks = 0
+    stub = Stub(lambda kw: resp("Yes."))
+    rephrase = llm.Rephraser(stub, budget=llm.Budget(**big))
+    non_answer_sets = ("advice", "performance", "pii", "help", "ambiguous", "out_of_corpus")
+    n = 0
+    for name in non_answer_sets:
+        for case in _load_set(name):
+            if case.get("expect", {}).get("kind") in (None, "answer") or "question" not in case:
+                continue
+            before = stub.calls
+            reply, _ = pipeline.handle(case["question"], {}, retriever=r, rephrase=rephrase)
+            n += 1
+            if reply.kind != "answer" and stub.calls != before:
+                leaks += 1
+    results.append(_check("No LLM call on non-answer replies (advice, returns, personal data, help, clarify, not found)",
+                          leaks == 0, f"{leaks} calls over {n} questions"))
+
+    facts = [c for c in _load_set("facts") if c.get("ref") == "AC1"]
+    extractive = {c["id"]: pipeline.handle(c["question"], {}, retriever=r)[0].text for c in facts}
+    failing = {
+        "exception": lambda kw: (_ for _ in ()).throw(TimeoutError("timeout")),
+        "invented number": lambda kw: resp("The figure is 99.99% and 12345."),
+        "url": lambda kw: resp("See https://example.com for this."),
+        "NOT_IN_SOURCE": lambda kw: resp("NOT_IN_SOURCE"),
+    }
+    changed = 0
+    for why, fn in failing.items():
+        reph = llm.Rephraser(Stub(fn), budget=llm.Budget(**big))
+        for c in facts:
+            if pipeline.handle(c["question"], {}, retriever=r, rephrase=reph)[0].text != extractive[c["id"]]:
+                changed += 1
+    with mock.patch.dict("sys.modules", {"groq": None}):
+        no_sdk = llm.unavailable_reason(config.load_settings({"GROQ_API_KEY": "gsk_test"}))
+    results.append(_check("Graceful degradation: failing LLM or no SDK keeps every core answer extractive",
+                          changed == 0 and no_sdk is not None,
+                          f"{len(facts)} core facts x {len(failing)} failure modes: {changed} changed; "
+                          f"without the SDK: {no_sdk}"))
+    return results
+
+
 PHASE_CHECKS = {0: phase0_checks, 1: phase1_checks, 2: phase2_checks, 3: phase3_checks, 4: phase4_checks,
-                5: phase5_checks, 6: phase6_checks}
+                5: phase5_checks, 6: phase6_checks, 8: phase8_checks}
 
 
 def run(phases: list[int]) -> dict:

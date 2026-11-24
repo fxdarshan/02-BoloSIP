@@ -15,6 +15,7 @@ ENV PYTHONUNBUFFERED=1 \
     BOLOSIP_SKIP_DOTENV=1 \
     BOLOSIP_HOST=:: \
     PORT=8000 \
+    BOLOSIP_ALSO_PORT=8000 \
     BOLOSIP_RETRIEVER=embed \
     BOLOSIP_LLM=off \
     BOLOSIP_MODEL_CACHE=/app/.cache/models \
@@ -26,7 +27,7 @@ WORKDIR /app
 # 1. Dependencies: only re-run when pyproject.toml (or the version) changes.
 COPY pyproject.toml README.md ./
 COPY bolosip/__init__.py bolosip/__init__.py
-RUN pip install --no-cache-dir ".[embed]"
+RUN pip install --no-cache-dir ".[embed,llm]"
 
 # 2. The embedding model (about 550 MB), downloaded once per dependency change.
 COPY bolosip/ bolosip/
