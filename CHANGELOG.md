@@ -4,6 +4,11 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Changed (Apple-style look, 24 Nov 2026)
+- System San Francisco font (Segoe UI Variable on Windows) with tighter tracking; Apple system grays (true black in dark mode) and system colours; Apple blue as the accent, with accessible shades so every text colour still meets WCAG AA in both themes.
+- Frosted, translucent header, input and suggestion list; soft shadows instead of borders; pill buttons with a light spring on press.
+- Two-line headline with a blue-to-purple gradient; app-icon style example tiles; iMessage-style blue question bubbles; quieter labels and source links in blue.
+
 ### Changed (UI refresh, 24 Nov 2026)
 - Chat page redesigned beyond the Google Stitch draft: deeper surfaces with a soft accent glow; a welcome screen that shows the live data date (from `/api/health`), clickable topic shortcuts that start a question and open the typing suggestions, compact example cards and a three-point trust line; lighter answer cards (small kind label, larger text, highlighted figures, source link with its domain and the date on one line); a quieter "New chat" button; a focus ring on the input; gentle entry animations (off with reduced motion). Contrast (WCAG AA, both themes), the overflow scan at four widths and all browser tests pass.
 
