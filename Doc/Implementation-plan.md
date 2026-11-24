@@ -35,6 +35,7 @@ Section references such as "arch §8" point to [architecture.md](architecture.md
 | **Phase 5: Thread store and HTTP API** | **Done** (19 Nov 2026): `bolosip/store.py` (SQLite, WAL), `server.py` (stdlib JSON API, Host/Origin/JSON checks, per-IP rate limit); dense gate: API parity 838/838, context over HTTP 63/63, 0 leaks, 0 personal data stored, p50 25 ms / p95 ≤ 46 ms; 213 tests |
 | **Phase 6: Web UI, M2** | **Done** (20 Nov 2026): `web/index.html`, one self-contained file built from the reviewed Google Stitch design ([ui-review.md](design/ui-review.md)); dark (default) and light themes; 15 browser checks recorded (incl. an overflow scan at 6 widths); 225 tests. By hand still: Edge, Lighthouse, screen reader, 3-person usability check |
 | **Improvements after Phase 6** | **Done** (22 Nov 2026): chatbot design audit ([design/chatbot-audit.md](design/chatbot-audit.md)); typing suggestions, "Ask next" / "Try instead" chips, capability note after two misses; follow-ups only with a signal (ISS-039); stamp-duty synonyms; `scripts/usage_report.py`; Playwright browser tests in a CI `ui` job. Issues log: [issues.md](issues.md) |
+| **Phase 8: Optional LLM rephrasing** | **Done** (24 Nov 2026): `bolosip/llm.py` (Groq `openai/gpt-oss-120b`, reasoning effort low, client-side budget for the account limits), output checks in `composer.py` (numbers and dates must match and none may be dropped; plan name, quoted levels, "blocked" kept; no URL; no advice); offline gate 24/24 bad outputs rejected, 0/14 good rejected, 0 LLM calls on 242 non-answers; live: 0 invented numbers, accuracy 60/60 = extractive, p95 0.8 s, about 320 tokens an answer. 283 tests |
 | **Phase 7: Scheduled daily data refresh** | **Built** (22 Nov 2026): `.github/workflows/refresh-data.yml` (10:00 IST), `scripts/data_diff.py`, stable embeddings (only changed rows re-embedded; NAV/fund-size changes leave the vectors alone), `data_age_days` in `/api/health`. Exit criteria below show what is verified |
 | Everything else in arch §3 | Not started |
 
@@ -537,9 +538,9 @@ Checked on 20 Nov 2026 in the Chromium-based browser of the Claude desktop app (
 **Files:** `bolosip/llm.py`, `bolosip/composer.py`, `tests/test_llm.py`, `requirements.txt`
 
 **Exit criteria**
-- [ ] With the `groq` SDK uninstalled, everything still works and all other tests pass.
-- [ ] Every stub case falls back correctly.
-- [ ] The live test (if run) shows 0 invented numbers and 0 URLs in accepted outputs.
+- [x] With the `groq` SDK uninstalled, everything still works and all other tests pass. *(283 tests on Python 3.15 without `groq` and on 3.12 with `groq` 1.7, 24 Nov 2026; the gate's graceful-degradation check: 135 core facts × 4 failure modes, 0 changed.)*
+- [x] Every stub case falls back correctly. *(`llm_stress.jsonl`: 24/24 bad outputs rejected, 0/14 reformatted good outputs rejected; `tests/test_llm.py`.)*
+- [x] The live test (if run) shows 0 invented numbers and 0 URLs in accepted outputs. *(`python -m eval.llm_live`, 24 Nov 2026. Run 1, 165 questions: 0 invented numbers, 0 URLs, 0 advice, but accuracy 142/165 against 165/165 extractive: the model dropped "(Direct Growth)", "as on" dates and curly-quoted the riskometer level. Fixed (the check now rejects dropped numbers, dates, the plan name, quoted levels and "blocked"; quotes are straightened). Run 2, 60 questions: 0 / 0 / 0 and accuracy 60/60 = extractive; the model rewords 17, repeats the fact as written for 26, and 17 rewordings are rejected for a dropped date or plan name (stored text used). Reports in `eval/reports/`.)*
 
 **Covers:** arch §9.2, §17 (prompt injection); PS §11 (LLM optional)
 

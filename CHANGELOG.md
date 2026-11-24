@@ -4,6 +4,13 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (Phase 8: optional LLM rephrasing, 24 Nov 2026)
+- `bolosip/llm.py`: Groq `openai/gpt-oss-120b` (temperature 0, reasoning effort low, 200 completion tokens, 15 s timeout, 1 retry), a system prompt that allows only rewording of the one source fact, and a thread-safe budget for the account limits (30 requests and 8,000 tokens a minute, 1,000 requests and 200,000 tokens a day); a 429 pauses calls for Retry-After. Over a limit, on any error, or with no SDK or key, the answer stays extractive.
+- Output checks (`composer.rejection_reason`): numbers and dates must match the fact after normalising (GAP-06) and none may be dropped; the plan name, quoted riskometer levels and words like "blocked" must stay; no URLs; no advice, including advice phrased as a statement ("you should invest"), which the question guard did not catch (ISS-050).
+- Only `answer` replies are sent; `/api/health` reports `llm_enabled`; `BOLOSIP_LLM=on` refuses to start without the LLM.
+- `eval/datasets/llm_stress.jsonl` (38 cases), the Phase 8 gate in `eval/run.py`, `eval/llm_live.py` (live report), `tests/test_llm.py` (16).
+- The container also listens on port 8000 (`BOLOSIP_ALSO_PORT`), so the Railway domain works whichever port it targets (ISS-048); the image includes the `llm` extra.
+
 ### Added (deployment stage D0: ready for Railway, 23 Nov 2026)
 - Chats belong to one browser: an `HttpOnly; SameSite=Strict` owner cookie (`Secure` over HTTPS); threads store its SHA-256; another browser's chat is a 404 (ISS-046). Old local chats are kept for the local browser.
 - Runs behind Railway's edge: `PORT`, `BOLOSIP_PUBLIC_HOSTS` (default `RAILWAY_PUBLIC_DOMAIN`), `https://` origins, Railway's healthcheck Host for `/api/health` only, `BOLOSIP_TRUST_PROXY` (visitor IP from `X-Real-IP`), HSTS (ISS-047).

@@ -173,10 +173,14 @@ All local settings live in a `.env` file in the project folder. It is git-ignore
 3. Install the Groq SDK (only needed for LLM rephrasing):
 
    ```bash
-   pip install groq
+   uv pip install --python .venv/Scripts/python.exe -e ".[llm]"
    ```
 
-The Groq key is optional. Without it, BoloSIP answers with the source text directly. A variable set in your real environment overrides the same name in `.env`. See [.env.example](.env.example) for every setting.
+The Groq key is optional. Without it, BoloSIP answers with the source text directly. With it, answers are reworded to fit the question by `openai/gpt-oss-120b`, but only the wording changes: a rewording that adds, changes or drops a number, a date, the plan name or the riskometer level, or contains a link or advice, is thrown away and the source text is used. BoloSIP stays inside the Groq account limits by itself (30 requests and 8,000 tokens a minute, 1,000 requests and 200,000 tokens a day). `BOLOSIP_LLM=off` switches it off. To measure it with your key (uses about 50,000 tokens):
+
+```bash
+.venv/Scripts/python.exe -m eval.llm_live
+``` A variable set in your real environment overrides the same name in `.env`. See [.env.example](.env.example) for every setting.
 
 ## Documents
 

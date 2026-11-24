@@ -93,7 +93,9 @@ def main(argv: list[str] | None = None) -> int:
         row.update(reply=reply, extractive=extractive, limited=base.stats.rate_limited > before)
         row["used_llm"] = reply.text != extractive.text
         if row["raw"] is not None and not row["used_llm"] and row["chunk"]:
-            row["why"] = composer.rejection_reason(row["raw"], row["chunk"]) or "prefix/suffix changed"
+            same = " ".join(row["raw"].split()) == " ".join(row["chunk"]["text"].split())
+            row["why"] = "model repeated the source" if same else (
+                composer.rejection_reason(row["raw"], row["chunk"]) or "prefix/suffix changed")
         if i % 20 == 0:
             print(f"{i}/{len(cases)} done ({time.time() - start:.0f} s)", flush=True)
 
@@ -131,7 +133,8 @@ def main(argv: list[str] | None = None) -> int:
     p50, p95 = lat[len(lat) // 2], lat[min(len(lat) - 1, int(len(lat) * 0.95))]
     calls = max(st.calls, 1)
     cost100 = (st.prompt_tokens * args.price_in + st.completion_tokens * args.price_out) / 1e6 / calls * 100
-    fallback = 1 - len(accepted) / max(len(answers), 1)
+    repeated = sum(1 for x in answers if x.get("why") == "model repeated the source")
+    fallback = 1 - (len(accepted) + repeated) / max(len(answers), 1)
     gate = halluc == 0 and urls == 0 and advice == 0 and acc_llm >= acc_ext
 
     lines = [
@@ -149,7 +152,8 @@ def main(argv: list[str] | None = None) -> int:
         f"| Fact accuracy, LLM on | {acc_llm} / {len(rows)} |",
         f"| Fact accuracy, extractive | {acc_ext} / {len(rows)} |",
         f"| LLM wording used | {len(accepted)} / {len(answers)} answers |",
-        f"| Fallback rate | {fallback:.0%} (investigate if > 20%) |",
+        f"| Model kept the source wording | {repeated} / {len(answers)} |",
+        f"| Fallback rate (rewording rejected or unavailable) | {fallback:.0%} (investigate if > 20%) |",
         f"| Fallback reasons | {', '.join(f'{k}: {v}' for k, v in reasons.most_common()) or 'none'} |",
         f"| Model returned NOT_IN_SOURCE | {st.not_in_source} |",
         f"| Errors / rate-limited (incl. 429) | {st.errors} / {st.rate_limited} |",
