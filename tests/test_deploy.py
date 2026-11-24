@@ -178,6 +178,28 @@ class TestDualStack(unittest.TestCase):                                     # B2
                 httpd.server_close()
 
 
+class TestRailwaySettings(unittest.TestCase):                               # ISS-052
+    def test_loopback_host_from_a_laptop_env_is_replaced_on_railway(self):
+        bad = config.load_settings({"BOLOSIP_HOST": "127.0.0.1", "BOLOSIP_DB": "data/bolosip.sqlite3"})
+        env = {"RAILWAY_ENVIRONMENT": "production", "RAILWAY_VOLUME_MOUNT_PATH": "/data"}
+        with self.assertLogs("bolosip.server", "WARNING") as cm:
+            self.assertEqual(server.hosting_checks(bad, env), "::")
+        text = " | ".join(cm.output)
+        for hint in ("Remove BOLOSIP_HOST", "BOLOSIP_PUBLIC_HOSTS", "BOLOSIP_TRUST_PROXY", "not on the volume"):
+            self.assertIn(hint, text)
+
+    def test_good_settings_are_quiet(self):
+        good = config.load_settings({"BOLOSIP_HOST": "::", "BOLOSIP_TRUST_PROXY": "1",
+                                     "RAILWAY_PUBLIC_DOMAIN": PUBLIC, "BOLOSIP_DB": "/data/bolosip.sqlite3"})
+        mount = str(good.db_path.parent).replace("\\", "/")             # "/data" on Linux
+        env = {"RAILWAY_ENVIRONMENT": "production", "RAILWAY_VOLUME_MOUNT_PATH": mount}
+        with self.assertNoLogs("bolosip.server", "WARNING"):
+            self.assertEqual(server.hosting_checks(good, env), "::")
+
+    def test_laptop_is_untouched(self):
+        self.assertEqual(server.hosting_checks(config.load_settings({}), {}), "127.0.0.1")
+
+
 class TestShutdown(unittest.TestCase):                                       # B5
     def test_sigterm_stops_the_server(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:

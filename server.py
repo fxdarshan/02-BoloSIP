@@ -18,6 +18,7 @@ import datetime as dt
 import hashlib
 import json
 import logging
+import os
 import re
 import secrets
 import signal
@@ -463,35 +464,67 @@ def _install_sigterm(httpd: BoloSIPServer, stopped: threading.Event, *others: Bo
         pass
 
 
+_LOOPBACK = ("127.0.0.1", "localhost", "::1")
+
+
+def hosting_checks(s, environ) -> str:
+    """The host to bind, plus warnings for settings that break a Railway deploy (ISS-052).
+
+    Railway sets RAILWAY_* variables in every container. There, a loopback host (often
+    copied from a laptop .env) would make the site unreachable ("Application failed to
+    respond"), so it is replaced by "::"; the other risky settings are only logged."""
+    on_railway = any(k.startswith("RAILWAY_") for k in environ)
+    if not on_railway:
+        return s.host
+    host = s.host
+    if host in _LOOPBACK:
+        log.warning("BOLOSIP_HOST=%s cannot be reached from outside the container on Railway; listening "
+                    "on :: instead. Remove BOLOSIP_HOST from the Railway variables.", host)
+        host = "::"
+    if not s.public_hosts:
+        log.warning("No public host name: set BOLOSIP_PUBLIC_HOSTS (or generate a Railway domain), "
+                    "otherwise every public request gets 403 Forbidden host.")
+    if not s.trust_proxy:
+        log.warning("BOLOSIP_TRUST_PROXY is off on Railway: all visitors share one rate limit. Set it to 1.")
+    mount = environ.get("RAILWAY_VOLUME_MOUNT_PATH")
+    if not mount:
+        log.warning("No Railway volume: chats are lost on every redeploy. Attach a volume at /data.")
+    elif not str(s.db_path).replace("\\", "/").startswith(mount.rstrip("/") + "/"):
+        log.warning("BOLOSIP_DB (%s) is not on the volume (%s): chats are lost on every redeploy.",
+                    s.db_path, mount)
+    return host
+
+
 def main(argv: list[str] | None = None) -> int:
     from bolosip.textutil import utf8_output
     utf8_output()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     s = config.SETTINGS
-    if s.host not in ("127.0.0.1", "localhost", "::1"):
+    host = hosting_checks(s, os.environ)              # ISS-052: never bind loopback on Railway
+    if host not in ("127.0.0.1", "localhost", "::1"):
         if s.trust_proxy and s.public_hosts:            # B8: public on purpose, behind an HTTPS edge
             log.info("Public site for %s behind a proxy: no sign-in by design; each browser sees only "
                      "its own chats, rate limits are per visitor (SEC-03).", ", ".join(s.public_hosts))
         else:
             log.warning("Listening on %s: BoloSIP has no authentication, so anyone who can reach this "
-                        "address can use it (SEC-03).", s.host)
+                        "address can use it (SEC-03).", host)
     retriever = get_retriever()                       # load the corpus and the model once, before serving
     rephrase = llm.get_rephraser()                    # Phase 8; None = extractive answers
     if rephrase is None and s.llm_mode == "on":
         log.error("BOLOSIP_LLM=on but the LLM is unavailable: %s.", llm.unavailable_reason())
         return 2
-    httpd = make_server(retriever=retriever, rephrase=rephrase)
+    httpd = make_server(host, retriever=retriever, rephrase=rephrase)
     # ISS-048: also listen on BOLOSIP_ALSO_PORT (8000 in the container), so the site works
     # whether the platform's domain points at its own PORT or at 8000.
     extra = None
     if s.also_port and s.also_port != httpd.server_address[1]:
-        extra = make_server(port=s.also_port, store=httpd.store, retriever=retriever, rephrase=rephrase)
+        extra = make_server(host, port=s.also_port, store=httpd.store, retriever=retriever, rephrase=rephrase)
         threading.Thread(target=extra.serve_forever, name=f"port-{s.also_port}", daemon=True).start()
     stopped = threading.Event()
     purge_old_chats(httpd.store, s.retention_days)
     _start_retention_sweeps(httpd.store, s.retention_days, stopped)
     _install_sigterm(httpd, stopped, *([extra] if extra else []))
-    shown = f"[{s.host}]" if ":" in s.host else s.host
+    shown = f"[{host}]" if ":" in host else host
     ports = f"{httpd.server_address[1]}" + (f" and {extra.server_address[1]}" if extra else "")
     log.info("BoloSIP %s on http://%s port %s (retriever: %s). %s", VERSION, shown, ports,
              retriever.backend_name(), config.DISCLAIMER)
