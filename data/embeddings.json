@@ -342,7 +342,7 @@
     "official:factsheet"
   ],
   "text_sha256": [
-    "5ef01bcc93ad6a99",
+    "1d74008947a75321",
     "a7dacb9cd1806ec6",
     "302fda36fdfffe3c",
     "e23cef0a48ae6a52",
@@ -677,6 +677,6 @@
     "30de9606b62de015",
     "a2e3c7aba0c36c69"
   ],
-  "texts_sha256": "bfce02b285e888a00418fb496f980bba617ad1b78de20f48746094c5f089ed3a",
-  "built_on": "25 Nov 2026"
+  "texts_sha256": "d6551802521249ebf9b935720f8798c1c1d4386fe876cc16f0a2901e3c74b6b4",
+  "built_on": "26 Nov 2026"
 }
