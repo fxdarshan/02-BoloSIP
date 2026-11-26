@@ -88,7 +88,7 @@ class TestInputValidation(ApiCase):
         self.assertEqual(self.api.request("GET", "/api/nothing")[0], 404)
         s, b, h = self.api.request("PUT", "/api/threads")
         self.assertEqual(s, 405)
-        self.assertEqual(h.get("Allow"), "GET, POST")
+        self.assertEqual(h.get("Allow"), "GET, POST, DELETE")
         self.assertEqual(self.api.request("GET", f"/api/threads/{self.tid}")[0], 405)
 
 

@@ -84,7 +84,7 @@ Run `python -m bolosip` with no question for an interactive prompt, or add `--js
 python server.py
 ```
 
-Open http://127.0.0.1:8000 for the chat page: dark theme by default (sun/moon button for light), a list of chats on the left (a drawer on phones), and three example questions to start. Start typing a scheme or a topic ("mid cap exit", "ter", "statement") for suggested questions; after each answer, chips offer the next questions. The JSON API is under `/api/`.
+Open http://127.0.0.1:8000 for the chat page. Besides asking, you can browse the 27 schemes (sidebar "Schemes") and open a fact card with every fact and its source, tap terms like "exit load" for the official definition, copy or rate an answer, and search, pin, rename or clear chats. The settings button switches the theme (Auto / Light / Dark) and text size; press `?` for keyboard shortcuts, and click the logo to start over. Also: dark theme by default (sun/moon button for light), a list of chats on the left (a drawer on phones), and three example questions to start. Start typing a scheme or a topic ("mid cap exit", "ter", "statement") for suggested questions; after each answer, chips offer the next questions. The JSON API is under `/api/`.
 
 To see how people use it (reply mix, "not found" rate, answers per topic), run:
 

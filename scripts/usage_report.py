@@ -44,6 +44,11 @@ def report(db: Path, show_unanswered: bool = False, out=print) -> dict:
     try:
         threads = con.execute("SELECT COUNT(*) FROM threads").fetchone()[0]
         rows = con.execute("SELECT thread_id, role, text, kind, scheme_id FROM messages ORDER BY thread_id, id").fetchall()
+        has_fb = "feedback" in {r[1] for r in con.execute("PRAGMA table_info(messages)")}
+        rated = con.execute(
+            "SELECT a.feedback, (SELECT u.text FROM messages u WHERE u.thread_id = a.thread_id AND u.role = 'user' "
+            "AND u.id < a.id ORDER BY u.id DESC LIMIT 1), a.text FROM messages a "
+            "WHERE a.role = 'assistant' AND a.feedback IS NOT NULL").fetchall() if has_fb else []
     finally:
         con.close()
 
@@ -84,12 +89,20 @@ def report(db: Path, show_unanswered: bool = False, out=print) -> dict:
     names = {s.id: s.name for s in registry.SCHEMES}
     for s, n in schemes.most_common(10):
         out(f"  {names.get(s, s):<40} {n:>6}")
+    up = sum(1 for r in rated if r[0] > 0)
+    down = [r for r in rated if r[0] < 0]
+    out(f"\nFeedback: {up} helpful, {len(down)} not helpful")
+    if show_unanswered and down:
+        out("\nAnswers marked 'not helpful' (question stored redacted)")
+        for _, q, a in down[:30]:
+            out(f"  Q: {q}\n     A: {a[:140]}")
     if show_unanswered and unanswered:
         out("\nQuestions answered 'not found' (stored redacted), most frequent first")
         for q, n in Counter(unanswered).most_common(30):
             out(f"  {n:>3} × {q}")
     return {"threads": threads, "replies": total, "kinds": dict(kinds), "fallback_rate": fallback / total,
-            "repeat_not_found_threads": len(repeat_threads), "topics": dict(topics)}
+            "repeat_not_found_threads": len(repeat_threads), "topics": dict(topics),
+            "feedback": {"helpful": up, "not_helpful": len(down)}}
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -34,7 +34,8 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from bolosip import __version__ as VERSION
-from bolosip import config, guards, llm, pipeline, suggest
+from bolosip import config, guards, llm, pipeline, registry, suggest
+from bolosip.topics import TOPIC_LABELS
 from bolosip.retriever import Retriever, get_retriever
 from bolosip.store import Store, ThreadNotFound
 
@@ -213,9 +214,23 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"welcome": config.WELCOME_TEXT, "examples": list(config.EXAMPLE_QUESTIONS),
                                     "disclaimer": config.DISCLAIMER, "privacy_hint": config.PRIVACY_HINT,
                                     "max_chars": config.MAX_TEXT_CHARS,
-                                    "suggest": suggest.suggestion_index(self.server.retriever)})
+                                    "suggest": suggest.suggestion_index(self.server.retriever),
+                                    "terms": glossary(self.server.retriever)})
+        if path == "/api/schemes":
+            self._allow(method, "GET")
+            return self._json(200, scheme_list(self.server.retriever))
+        if path.startswith("/api/schemes/"):
+            self._allow(method, "GET")
+            card = scheme_card(self.server.retriever, path[len("/api/schemes/"):])
+            if card is None:
+                raise ApiError(404, "Unknown scheme")
+            return self._json(200, card)
         if path == "/api/threads":
-            self._allow(method, "GET", "POST")
+            self._allow(method, "GET", "POST", "DELETE")
+            if method == "DELETE":                          # "Clear all chats": this browser's only
+                self._check_write()
+                self.server.store.delete_all(owner=self.owner)
+                return self._empty(204)
             if method == "GET":
                 if not self.server.public:              # chats saved before B1 stay visible locally
                     self.server.store.claim_unowned(self.owner)
@@ -226,6 +241,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(201, {"id": t["id"], "title": t["title"]})
         if path.startswith(_THREAD_PATH):
             rest = path[len(_THREAD_PATH):]
+            if rest.endswith("/feedback") and "/messages/" in rest:
+                tid_raw, mid_raw = rest[: -len("/feedback")].split("/messages/", 1)
+                tid = self._thread_id(tid_raw)
+                self._allow(method, "POST")
+                return self._feedback(tid, mid_raw)
             if rest.endswith("/messages"):
                 tid = self._thread_id(rest[: -len("/messages")])
                 self._allow(method, "GET", "POST")
@@ -233,14 +253,39 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(200, self.server.store.get_messages(tid, owner=self.owner))
                 return self._post_message(tid)
             tid = self._thread_id(rest)
-            self._allow(method, "DELETE")
+            self._allow(method, "DELETE", "PATCH")
             self._check_write()
+            if method == "PATCH":
+                return self._patch_thread(tid)
             if not self.server.store.delete_thread(tid, owner=self.owner):
                 raise ThreadNotFound(tid)
             return self._empty(204)
         raise ApiError(404, "Not found")
 
     # --- endpoints ------------------------------------------------------------
+    def _patch_thread(self, tid: str) -> int:
+        body = self._read_json(required=True)
+        if not isinstance(body, dict):
+            raise ApiError(400, "Body must be a JSON object")
+        title, pinned = body.get("title"), body.get("pinned")
+        if title is not None and (not isinstance(title, str) or not title.strip() or len(title) > 200):
+            raise ApiError(400, "Title must be 1-60 characters")
+        if pinned is not None and not isinstance(pinned, bool):
+            raise ApiError(400, "pinned must be true or false")
+        return self._json(200, self.server.store.update_thread(tid, title=title, pinned=pinned, owner=self.owner))
+
+    def _feedback(self, tid: str, mid_raw: str) -> int:
+        self._check_write()
+        if not mid_raw.isdigit() or len(mid_raw) > 12:
+            raise ApiError(400, "Invalid message id")
+        body = self._read_json(required=True)
+        value = body.get("value") if isinstance(body, dict) else None
+        if isinstance(value, bool) or value not in (1, -1, 0):
+            raise ApiError(400, "value must be 1, -1 or 0")
+        if not self.server.store.set_feedback(tid, int(mid_raw), value, owner=self.owner):
+            raise ApiError(404, "Message not found")
+        return self._empty(204)
+
     def _post_message(self, tid: str) -> int:
         self._check_write()
         body = self._read_json(required=True)
@@ -258,14 +303,14 @@ class Handler(BaseHTTPRequestHandler):
         ctx = self.server.store.get_ctx(tid, owner=self.owner)   # 404 if gone or another browser's
         reply, new_ctx = pipeline.handle(text, ctx, retriever=self.server.retriever, rephrase=self.server.rephrase)
         try:
-            self.server.store.add_exchange(tid, guards.redact(text), reply, new_ctx.get("last_scheme"),
+            message_id = self.server.store.add_exchange(tid, guards.redact(text), reply, new_ctx.get("last_scheme"),
                                            owner=self.owner)
         except ThreadNotFound:
             raise
         except Exception as e:                             # THR-06: never show an unsaved reply as saved
             log.error("could not save message: %s", type(e).__name__)
             raise ApiError(500, "Could not save message") from None
-        return self._json(200, reply.to_dict())
+        return self._json(200, {**reply.to_dict(), "id": message_id})
 
     def _health(self) -> dict:
         r = self.server.retriever
@@ -332,7 +377,7 @@ class Handler(BaseHTTPRequestHandler):
         origin = self.headers.get("Origin")
         if origin is not None and origin.strip().lower() not in self.server.allowed_origins:
             raise ApiError(403, "Forbidden origin")
-        if self.command == "POST":
+        if self.command in ("POST", "PATCH"):
             ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
             if ctype != "application/json":
                 raise ApiError(415, "Content-Type must be application/json")
@@ -404,6 +449,56 @@ class Handler(BaseHTTPRequestHandler):
 
 
 STALE_AFTER_DAYS = 3
+
+# --- Read-only scheme data for the scheme browser and fact cards ----------------
+GROUP_ORDER = ("Equity", "Hybrid", "Debt", "FoF")
+_TOPIC_ORDER = list(TOPIC_LABELS)
+# Official definitions shown when a term in an answer is tapped: official note topic -> words.
+GLOSSARY = {
+    "expense_ratio_general": ("expense ratio", "TER"),
+    "exit_load_general": ("exit load",),
+    "riskometer_general": ("riskometer",),
+    "plans_general": ("Direct Plan", "Regular Plan"),
+    "sip_general": ("SIP",),
+    "lock_in_general": ("ELSS", "lock-in"),
+}
+
+
+def scheme_list(r) -> list[dict]:
+    """The 27 schemes, grouped (Equity, Hybrid, Debt, FoF) in registry order."""
+    meta = r.meta.get("schemes", {})
+    out = []
+    for s in registry.SCHEMES:
+        m = meta.get(s.id)
+        if m:
+            out.append({"id": s.id, "name": m["name"], "group": m.get("group"), "category": m.get("category")})
+    out.sort(key=lambda x: GROUP_ORDER.index(x["group"]) if x["group"] in GROUP_ORDER else len(GROUP_ORDER))
+    return out
+
+
+def scheme_card(r, scheme_id: str) -> dict | None:
+    """Every stored fact of one scheme, each with its own source and date (facts only)."""
+    m = r.meta.get("schemes", {}).get(scheme_id)
+    if m is None:
+        return None
+    facts = [c for c in r.chunks if c.get("scheme_id") == scheme_id]
+    facts.sort(key=lambda c: _TOPIC_ORDER.index(c["topic"]) if c["topic"] in _TOPIC_ORDER else 99)
+    return {"id": scheme_id, "name": m["name"], "label": m.get("label"), "group": m.get("group"),
+            "category": m.get("category"), "url": m.get("url"),
+            "facts": [{"topic": c["topic"], "label": TOPIC_LABELS.get(c["topic"], c["topic"]), "text": c["text"],
+                       "source": {"url": c["source_url"], "name": c["source_name"]}, "as_of": c["as_of"]}
+                      for c in facts]}
+
+
+def glossary(r) -> list[dict]:
+    """Official definitions for terms that appear in answers (shown when a term is tapped)."""
+    out = []
+    for topic, words in GLOSSARY.items():
+        c = next((c for c in r.chunks if not c.get("scheme_id") and c["topic"] == topic), None)
+        if c:
+            out.append({"words": list(words), "text": c["text"],
+                        "source": {"url": c["source_url"], "name": c["source_name"]}, "as_of": c["as_of"]})
+    return out
 
 
 def data_age_days(built_on: str | None, today: dt.date | None = None) -> int | None:

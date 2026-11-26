@@ -4,6 +4,17 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (chat page features, 26 Nov 2026)
+- **Scheme browser** (sidebar tab "Schemes"): the 27 schemes grouped Equity / Hybrid / Debt / Fund of funds, with search. **Fact card**: every stored fact of a scheme with its own source link and date, opened from the browser or "All facts" under an answer; "Ask about this scheme" starts a question. API: `GET /api/schemes`, `GET /api/schemes/<id>`.
+- **Answer actions**: copy (with source and date), thumbs up / down stored with the message (`POST /api/threads/<id>/messages/<mid>/feedback`; counted in `scripts/usage_report.py`, "not helpful" answers listed with `--show-unanswered`).
+- **Official definitions**: "expense ratio", "TER", "exit load", "riskometer", "SIP", "ELSS", "Direct/Regular Plan" in answers are tappable and show the official note with its link (`terms` in `/api/config`).
+- **Chat controls**: search chats, pin (pinned first), rename (redacted, 60 characters), "Clear all chats" (this browser's only). API: `PATCH /api/threads/<id>`, `DELETE /api/threads`.
+- **Settings menu**: theme Auto (follows the device, now the default) / Light / Dark, and text size Small / Default / Large, both remembered.
+- **Keyboard shortcuts**: `/` type, Ctrl/Cmd K new chat, `?` list; the logo also starts over.
+- **Fixes**: a failed send keeps the question with a Retry button; no auto-focus (keyboard pop-up) on touch screens; slimmer phone header; a notice when the data is more than 3 days old; the footer date explains itself on hover.
+- Voice input was considered and left out on purpose: browser speech recognition sends audio to a third party.
+- Tests: `tests/test_features.py` (9), five new browser tests.
+
 ### Changed (Apple-style look, 24 Nov 2026)
 - System San Francisco font (Segoe UI Variable on Windows) with tighter tracking; Apple system grays (true black in dark mode) and system colours; Apple blue as the accent, with accessible shades so every text colour still meets WCAG AA in both themes.
 - Frosted, translucent header, input and suggestion list; soft shadows instead of borders; pill buttons with a light spring on press.

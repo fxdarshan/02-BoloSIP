@@ -612,7 +612,7 @@ def phase5_checks() -> list[dict]:
             tid = api.new_thread()
             status, body = api.ask(tid, c["question"])
             want = pipeline.handle(c["question"], {}, retriever=r)[0].to_dict()
-            if status != 200 or body != want:
+            if status != 200 or {k: v for k, v in body.items() if k != "id"} != want:      # id: message id for feedback
                 diffs.append(c["id"])
         results.append(_check("API parity: every Phase 4 case over HTTP gives the same reply", not diffs,
                               f"{len(cases) - len(diffs)} / {len(cases)}" + (f"; differ: {diffs[:10]}" if diffs else "")))

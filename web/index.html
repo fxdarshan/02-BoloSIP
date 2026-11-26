@@ -8,8 +8,13 @@
 <meta name="description" content="Facts-only answers about 27 HDFC Mutual Fund schemes, each with its source. No investment advice.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230071e3'/%3E%3Cpath d='M9 21V18M14 21V15M19 21V12M24 21V9' stroke='%23ffffff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>
-  // Apply the saved theme before first paint (no flash). Storage may be blocked: ignore.
-  try { var t = localStorage.getItem("bolosip.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  // Apply the saved theme ("auto" follows the device) and text size before first paint.
+  var t = null, z = null;
+  try { t = localStorage.getItem("bolosip.theme"); z = localStorage.getItem("bolosip.text"); } catch (e) {}
+  var d = document.documentElement;
+  if (t === "light" || t === "dark") d.dataset.theme = t;
+  else d.dataset.theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  if (z === "s" || z === "l") d.dataset.text = z;
 </script>
 <style>
 /* ---------------------------------------------------------------------------
@@ -177,13 +182,6 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
 .thread-text { min-width: 0; }
 .thread-title { display: block; font-size: 14px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .thread-time { display: block; font-size: 12px; color: var(--faint); }
-.thread-del {
-  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-  display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 999px;
-  background: transparent; color: var(--faint); font-size: 16px; opacity: 0; transition: opacity .15s, background .15s, color .15s;
-}
-.thread-row:hover .thread-del, .thread-row:focus-within .thread-del, .thread[aria-current="true"] .thread-del { opacity: 1; }
-.thread-del:hover { background: var(--k-privacy-bg); color: var(--danger); }
 .confirm {
   margin: 4px 4px 6px; padding: 14px; border-radius: var(--r-md);
   background: var(--card); box-shadow: var(--shadow);
@@ -393,7 +391,7 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
 
 /* ---- Narrow screens: same components, sidebar becomes a drawer ---------------- */
 @media (max-width: 700px) {
-  :root { --header-h: 100px; }
+  :root { --header-h: 84px; }
   .header { flex-wrap: wrap; gap: 8px 10px; padding: 10px 14px; }
   .menu-btn { display: inline-grid; }
   .brand { margin-right: auto; }
@@ -401,7 +399,14 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   /* May wrap: with a wide system font (DejaVu Sans on Linux, some Android fonts) one
      line is wider than a 320 px screen and pushed the whole page sideways (ISS-041). */
   .disclaimer { order: 3; width: 100%; min-width: 0; justify-content: center; text-align: center;
-                white-space: normal; font-size: 13px; padding: 6px 12px; }
+                white-space: normal; font-size: 12px; padding: 2px 8px; background: none; }
+  .disclaimer svg { font-size: 13px; }
+  .header { padding-bottom: 6px; }
+  .thread-acts { opacity: 1; }
+  .reply-actions { margin-left: auto; }
+  .sheet { width: 100vw; max-width: 100vw; max-height: 88vh; margin: auto 0 0; border-radius: var(--r-xl) var(--r-xl) 0 0; }
+  .sheet-foot { flex-direction: column; align-items: stretch; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .new-chat kbd { display: none; }
   .header > * { min-width: 0; }
   .body { grid-template-columns: 1fr; }
   .sidebar {
@@ -436,6 +441,125 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   .count { display: none; }
   .count.near { display: block; }
 }
+/* ---- Settings menu ---------------------------------------------------------- */
+.settings-wrap { position: relative; }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 70; width: 260px; padding: 12px;
+  border-radius: var(--r-lg); background: var(--material); border: 1px solid var(--line);
+  -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
+  box-shadow: var(--shadow), 0 20px 50px rgba(0,0,0,.25); display: grid; gap: 12px;
+}
+.menu[hidden] { display: none; }
+.menu-title { font-size: 12px; font-weight: 600; color: var(--faint); margin: 0 2px 6px; }
+.seg { display: flex; padding: 3px; gap: 2px; border-radius: 11px; background: var(--card-hi); }
+.seg > button {
+  flex: 1; height: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--muted);
+  font-size: 13px; font-weight: 590; transition: background .2s, color .2s;
+}
+.seg > button[aria-pressed="true"], .seg > button[aria-selected="true"] { background: var(--card); color: var(--text); box-shadow: var(--shadow-sm); }
+.menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: 10px;
+  background: transparent; font-size: 14px; text-align: left;
+}
+.menu-item:hover { background: var(--card-hi); }
+.menu-item svg { color: var(--faint); font-size: 17px; }
+kbd {
+  display: inline-block; min-width: 20px; padding: 1px 6px; border-radius: 6px; background: var(--card-hi);
+  border: 1px solid var(--line); font: 600 11.5px var(--font); color: var(--muted); text-align: center;
+}
+.menu-item kbd { margin-left: auto; }
+.new-chat kbd { margin-left: auto; background: transparent; }
+[data-text="s"] .messages, [data-text="s"] .sheet-body { zoom: .92; }
+[data-text="l"] .messages, [data-text="l"] .sheet-body { zoom: 1.14; }
+
+/* ---- Sidebar: tabs, search, thread actions, scheme browser --------------------- */
+.side-tabs { margin: 0 2px; }
+.side-pane { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: 1; }
+.side-pane[hidden] { display: none; }
+.search { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border-radius: 10px; background: var(--card-hi); color: var(--faint); }
+.search svg { font-size: 15px; flex: none; }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 14px; color: var(--text); }
+.search input::placeholder { color: var(--faint); }
+.search:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+.thread-btn { padding-right: 10px; }
+.thread-acts { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: flex; gap: 2px;
+  padding-left: 18px; background: linear-gradient(90deg, transparent, var(--panel) 16px); opacity: 0; transition: opacity .15s; }
+.thread[aria-current="true"] .thread-acts { background: linear-gradient(90deg, transparent, var(--card-hi) 16px); }
+.thread-row:hover .thread-acts, .thread-row:focus-within .thread-acts { opacity: 1; }
+.thread-act { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--faint); font-size: 15px; }
+.thread-act:hover { background: var(--card); color: var(--text); }
+.thread-act.thread-del:hover { background: var(--k-privacy-bg); color: var(--danger); }
+.thread.pinned .thread-ico { color: var(--accent); }
+.rename { width: 100%; height: 44px; padding: 0 12px; border-radius: var(--r-sm); border: 1px solid var(--accent);
+  background: var(--card); font-size: 14px; outline: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+.link-btn { align-self: flex-start; margin: 2px 8px; padding: 2px 0; border: 0; background: none; font-size: 12.5px; font-weight: 550; color: var(--faint); }
+.link-btn:hover { color: var(--danger); text-decoration: underline; text-underline-offset: 3px; }
+.link-btn[hidden] { display: none; }
+.schemes { overflow-y: auto; min-height: 0; padding-bottom: 6px; }
+.scheme-group { position: sticky; top: 0; z-index: 1; padding: 10px 10px 4px; font-size: 12px; font-weight: 600; color: var(--faint); background: var(--panel); }
+.scheme-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.scheme-row { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 7px 10px;
+  border: 0; border-radius: var(--r-sm); background: transparent; text-align: left; transition: background .15s; }
+.scheme-row:hover { background: var(--card-hi); }
+.scheme-name { font-size: 14px; font-weight: 550; }
+.scheme-cat { font-size: 12px; color: var(--faint); }
+
+/* ---- Reply actions, glossary terms, failed send, stale notice ------------------ */
+.reply-actions { display: flex; align-items: center; gap: 2px; margin-left: 4px; }
+.act { display: inline-flex; align-items: center; gap: 6px; height: 28px; min-width: 28px; justify-content: center; padding: 0 6px;
+  border: 0; border-radius: 999px; background: transparent; color: var(--faint); font-size: 15px; transition: background .15s, color .15s; }
+.act:hover { background: var(--card-hi); color: var(--text); }
+.act[aria-pressed="true"] { color: var(--accent); background: var(--value-bg); }
+.act-text { padding: 0 10px; font-size: 13px; font-weight: 590; color: var(--accent); }
+.act-text svg { font-size: 14px; }
+.term { padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: help;
+  text-decoration: underline dotted; text-decoration-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
+.term:hover { color: var(--accent); }
+.term-pop { position: fixed; z-index: 80; width: min(360px, calc(100vw - 24px)); padding: 14px 16px;
+  border-radius: var(--r-lg); background: var(--material); border: 1px solid var(--line);
+  -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
+  box-shadow: var(--shadow), 0 20px 50px rgba(0,0,0,.3); font-size: 14px; line-height: 1.5; animation: pop .25s var(--spring) both; }
+.term-pop[hidden] { display: none; }
+.term-head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; color: var(--accent); }
+.term-pop p { margin: 0 0 8px; color: var(--text); }
+.term-pop .source { font-size: 13px; }
+.msg-user.failed { opacity: .6; }
+.failed-row { align-self: flex-end; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px;
+  margin-top: -8px; font-size: 13px; color: var(--danger); }
+.failed-row > svg { font-size: 15px; }
+.stale { position: sticky; top: 0; z-index: 5; margin: 0 auto; max-width: var(--col); padding: 9px 16px;
+  font-size: 13px; text-align: center; color: var(--text); background: var(--k-clarify-bg);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-bottom: 1px solid var(--line); }
+.stale[hidden] { display: none; }
+
+/* ---- Fact card and shortcuts (native modal dialogs) ---------------------------- */
+.sheet { width: min(620px, calc(100vw - 24px)); max-height: min(86vh, 820px); padding: 0; border: 0;
+  border-radius: var(--r-xl); background: var(--card); color: var(--text); box-shadow: 0 30px 80px rgba(0,0,0,.45);
+  flex-direction: column; overflow: hidden; }
+.sheet[open] { display: flex; animation: pop .35s var(--spring) both; }
+.sheet::backdrop { background: var(--scrim); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.sheet-sm { width: min(420px, calc(100vw - 24px)); }
+.sheet-head { display: flex; align-items: flex-start; gap: 12px; padding: 20px 20px 14px; border-bottom: 1px solid var(--line); }
+.sheet-titles { flex: 1; min-width: 0; }
+.sheet h2 { margin: 0; font: 700 22px/1.2 var(--display); letter-spacing: -.025em; }
+.sheet-titles p { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); }
+.sheet-body { overflow-y: auto; padding: 6px 20px 10px; }
+.fact { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.fact:last-child { border-bottom: 0; }
+.fact-label { margin: 0 0 4px; font-size: 12.5px; font-weight: 650; color: var(--faint); letter-spacing: .01em; }
+.fact-text { margin: 0; font-size: 15.5px; line-height: 1.5; }
+.fact-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 6px; font-size: 12.5px; }
+.fact-meta .source { font-size: 13px; }
+.fact-date { color: var(--faint); }
+.sheet-foot { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--line); background: var(--panel); }
+.sheet-note { flex: 1; margin: 0; font-size: 12.5px; color: var(--faint); }
+.btn-primary { height: 36px; padding: 0 16px; background: var(--btn); color: var(--on-btn); }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin: 0; padding: 16px 20px 20px; align-items: center; }
+.keys dt { margin: 0; text-align: right; }
+.keys dd { margin: 0; font-size: 14px; color: var(--muted); }
+
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
@@ -455,20 +579,37 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
       <span class="brand-name">Bolo<b>SIP</b></span>
     </a>
     <div class="disclaimer" role="note"><span data-icon="shield"></span>Facts-only. No investment advice.</div>
-    <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to light theme"></button>
+    <div class="settings-wrap">
+      <button class="icon-btn" id="settingsBtn" type="button" aria-label="Settings" aria-haspopup="true" aria-expanded="false" aria-controls="settings"></button>
+      <div class="menu" id="settings" role="group" aria-label="Settings" hidden></div>
+    </div>
   </header>
 
   <div class="body">
     <div class="scrim" id="scrim"></div>
     <nav class="sidebar" id="sidebar" aria-label="Chats">
-      <button class="new-chat" id="newChat" type="button"><span data-icon="plus"></span>New chat</button>
-      <div class="side-label"><span>Recent chats</span></div>
-      <ul class="threads" id="threads"></ul>
+      <button class="new-chat" id="newChat" type="button"><span data-icon="plus"></span>New chat<kbd id="newChatKey">Ctrl K</kbd></button>
+      <div class="seg side-tabs" role="tablist" aria-label="Sidebar">
+        <button type="button" role="tab" id="tabChats" aria-selected="true" aria-controls="paneChats">Chats</button>
+        <button type="button" role="tab" id="tabSchemes" aria-selected="false" aria-controls="paneSchemes">Schemes</button>
+      </div>
+      <div class="side-pane" id="paneChats" role="tabpanel" aria-labelledby="tabChats">
+        <label class="search"><span data-icon="search"></span><span class="sr-only">Search chats</span>
+          <input id="chatSearch" type="search" placeholder="Search chats" autocomplete="off"></label>
+        <ul class="threads" id="threads"></ul>
+        <button class="link-btn" id="clearAll" type="button" hidden>Clear all chats</button>
+      </div>
+      <div class="side-pane" id="paneSchemes" role="tabpanel" aria-labelledby="tabSchemes" hidden>
+        <label class="search"><span data-icon="search"></span><span class="sr-only">Search schemes</span>
+          <input id="schemeSearch" type="search" placeholder="Search 27 schemes" autocomplete="off"></label>
+        <div class="schemes" id="schemes"></div>
+      </div>
       <div class="side-foot"><strong>Sources:</strong> the Groww pages of 27 HDFC Mutual Fund schemes and official HDFC MF, AMFI and SEBI pages. Each answer shows its own date.</div>
     </nav>
 
     <main class="chat">
       <div class="scroll" id="scroll">
+        <div class="stale" id="stale" role="status" hidden></div>
         <section class="messages" id="messages" aria-live="polite" aria-label="Conversation"></section>
       </div>
       <form class="composer" id="composer" autocomplete="off">
@@ -493,6 +634,28 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   <span id="toastText"></span>
   <button class="icon-btn" id="toastClose" type="button" aria-label="Dismiss"></button>
 </div>
+
+<dialog class="sheet" id="factCard" aria-labelledby="factTitle">
+  <div class="sheet-head">
+    <div class="sheet-titles"><h2 id="factTitle"></h2><p id="factSub"></p></div>
+    <button class="icon-btn" id="factClose" type="button" aria-label="Close"></button>
+  </div>
+  <div class="sheet-body" id="factBody"></div>
+  <div class="sheet-foot">
+    <p class="sheet-note">Facts only, each from its own source. No investment advice.</p>
+    <button class="btn btn-primary" id="factAsk" type="button">Ask about this scheme</button>
+  </div>
+</dialog>
+
+<dialog class="sheet sheet-sm" id="shortcuts" aria-labelledby="scTitle">
+  <div class="sheet-head">
+    <div class="sheet-titles"><h2 id="scTitle">Keyboard shortcuts</h2></div>
+    <button class="icon-btn" id="scClose" type="button" aria-label="Close"></button>
+  </div>
+  <dl class="keys" id="keys"></dl>
+</dialog>
+
+<div class="term-pop" id="termPop" role="dialog" aria-modal="false" hidden></div>
 
 <script>
 "use strict";
@@ -526,6 +689,17 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     arrowUR: ["M7 17L17 7", "M9 7h8v8"],
     alert: ["M12 4l9 16H3z", "M12 10v4", "M12 17v.2"],
     empty: ["M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v8a2.5 2.5 0 0 1-2.5 2.5H9l-5 3z", "M8.5 9.5h7", "M8.5 12.5h4"],
+    sliders: ["M4 7h9", "M17 7h3", {c: [15, 7, 2]}, "M4 17h3", "M11 17h9", {c: [9, 17, 2]}],
+    copy: [{r: [8, 8, 12, 12, 2.5]}, "M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"],
+    thumbUp: ["M7.5 10.5v9", "M7.5 10.5l3.4-6a1.6 1.6 0 0 1 3 .9l-.6 4.1h5a2 2 0 0 1 2 2.3l-1 6a2 2 0 0 1-2 1.7H7.5", "M3.5 10.5h4v9h-4z"],
+    thumbDown: ["M7.5 13.5v-9", "M7.5 13.5l3.4 6a1.6 1.6 0 0 0 3-.9l-.6-4.1h5a2 2 0 0 0 2-2.3l-1-6a2 2 0 0 0-2-1.7H7.5", "M3.5 13.5h4v-9h-4z"],
+    pin: ["M9 4h6", "M10 4v5l-3 4h10l-3-4V4", "M12 13v7"],
+    pencil: ["M4 20h4L19 9l-4-4L4 16z", "M13.5 6.5l4 4"],
+    list: ["M9 7h11", "M9 12h11", "M9 17h11", {c: [5, 7, 1]}, {c: [5, 12, 1]}, {c: [5, 17, 1]}],
+    keyboard: [{r: [3, 6, 18, 12, 2.5]}, "M7 10h.01", "M11 10h.01", "M15 10h.01", "M8 14h8"],
+    search: [{c: [11, 11, 6.5]}, "M20 20l-4.2-4.2"],
+    retry: ["M4.5 12a7.5 7.5 0 1 0 2.2-5.3", "M4.5 4.5v4h4"],
+    info: [{c: [12, 12, 9]}, "M12 11v5", "M12 8v.2"],
   };
   const NS = "http://www.w3.org/2000/svg";
   function icon(name) {
@@ -557,8 +731,15 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   const ui = {
     messages: $("messages"), scroll: $("scroll"), threads: $("threads"), input: $("input"), send: $("send"),
     count: $("count"), composer: $("composer"), sidebar: $("sidebar"), scrim: $("scrim"), menuBtn: $("menuBtn"),
-    themeBtn: $("themeBtn"), toast: $("toast"), toastText: $("toastText"),
+    settingsBtn: $("settingsBtn"), settings: $("settings"), toast: $("toast"), toastText: $("toastText"),
+    factCard: $("factCard"), termPop: $("termPop"), stale: $("stale"), schemes: $("schemes"),
   };
+  ui.settingsBtn.appendChild(icon("sliders"));
+  $("factClose").appendChild(icon("close"));
+  $("scClose").appendChild(icon("close"));
+  const coarse = window.matchMedia("(pointer: coarse)");          // touch screens: no auto-focus (keyboard)
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+  $("newChatKey").textContent = isMac ? "\u2318K" : "Ctrl K";
   ui.menuBtn.appendChild(icon("menu"));
   ui.send.appendChild(icon("send"));
   $("toastClose").appendChild(icon("close"));
@@ -567,7 +748,8 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   // lastScheme: scheme of the thread's latest answer (for next-step chips);
   // misses: "not found" replies in a row in this thread (fallback layer 2 after two).
   const state = { config: null, threads: [], active: null, pending: new Set(), confirming: null,
-                  lastScheme: null, misses: 0 };
+                  lastScheme: null, misses: 0, renaming: null, threadQuery: "", schemes: null, schemeQuery: "",
+                  confirmingAll: false, health: null };
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } },
@@ -595,18 +777,59 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   // -------------------------------------------------------------------------
   // Theme
   // -------------------------------------------------------------------------
-  function paintThemeButton() {
-    const dark = document.documentElement.dataset.theme !== "light";
-    ui.themeBtn.replaceChildren(icon(dark ? "sun" : "moon"));
-    ui.themeBtn.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+  const mqLight = window.matchMedia("(prefers-color-scheme: light)");
+  const THEMES = [["auto", "Auto"], ["light", "Light"], ["dark", "Dark"]];
+  const SIZES = [["s", "Small"], ["m", "Default"], ["l", "Large"]];
+  function themeChoice() { const t = store.get("bolosip.theme"); return t === "light" || t === "dark" ? t : "auto"; }
+  function textChoice() { const z = store.get("bolosip.text"); return z === "s" || z === "l" ? z : "m"; }
+  function applyAppearance() {
+    const t = themeChoice(), z = textChoice(), root = document.documentElement;
+    root.dataset.theme = t === "auto" ? (mqLight.matches ? "light" : "dark") : t;
+    if (z === "m") delete root.dataset.text; else root.dataset.text = z;
+    ui.settings.querySelectorAll("[data-choice]").forEach(b => {
+      const [kind, value] = b.dataset.choice.split(":");
+      b.setAttribute("aria-pressed", String((kind === "theme" ? t : z) === value));
+    });
   }
-  ui.themeBtn.addEventListener("click", () => {
-    const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
-    document.documentElement.dataset.theme = next;
-    store.set("bolosip.theme", next);
-    paintThemeButton();
+  if (mqLight.addEventListener) mqLight.addEventListener("change", () => { if (themeChoice() === "auto") applyAppearance(); });
+
+  function buildSettings() {
+    const group = (title, kind, options) => {
+      const box = el("div", "menu-group");
+      box.appendChild(el("div", "menu-title", title));
+      const seg = el("div", "seg");
+      seg.setAttribute("role", "group"); seg.setAttribute("aria-label", title);
+      for (const [value, label] of options) {
+        const b = el("button", null, label);
+        b.type = "button"; b.dataset.choice = `${kind}:${value}`;
+        b.addEventListener("click", () => {
+          store.set(kind === "theme" ? "bolosip.theme" : "bolosip.text",
+                    (kind === "theme" && value === "auto") || (kind === "text" && value === "m") ? null : value);
+          applyAppearance();
+        });
+        seg.appendChild(b);
+      }
+      box.appendChild(seg);
+      return box;
+    };
+    const keys = el("button", "menu-item");
+    keys.type = "button";
+    keys.append(icon("keyboard"), el("span", null, "Keyboard shortcuts"), el("kbd", null, "?"));
+    keys.addEventListener("click", () => { setSettings(false); openShortcuts(); });
+    ui.settings.append(group("Appearance", "theme", THEMES), group("Text size", "text", SIZES), keys);
+  }
+  function setSettings(open) {
+    ui.settings.hidden = !open;
+    ui.settingsBtn.setAttribute("aria-expanded", String(open));
+    if (open) { const first = ui.settings.querySelector("[aria-pressed='true']"); first && first.focus(); }
+  }
+  ui.settingsBtn.addEventListener("click", e => { e.stopPropagation(); setSettings(ui.settings.hidden); });
+  document.addEventListener("click", e => {
+    if (!ui.settings.hidden && !ui.settings.contains(e.target)) setSettings(false);
+    if (!ui.termPop.hidden && !ui.termPop.contains(e.target) && !e.target.closest(".term")) ui.termPop.hidden = true;
   });
-  paintThemeButton();
+  buildSettings();
+  applyAppearance();
 
   // -------------------------------------------------------------------------
   // Drawer (narrow screens)
@@ -621,7 +844,10 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   ui.scrim.addEventListener("click", () => setDrawer(false));
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
-    if (state.confirming) { state.confirming = null; renderThreads(); return; }
+    if (!ui.settings.hidden) { setSettings(false); ui.settingsBtn.focus(); return; }
+    if (!ui.termPop.hidden) { ui.termPop.hidden = true; return; }
+    if (state.renaming) { state.renaming = null; renderThreads(); return; }
+    if (state.confirming || state.confirmingAll) { state.confirming = null; state.confirmingAll = false; renderThreads(); return; }
     if (ui.sidebar.classList.contains("open")) { setDrawer(false); ui.menuBtn.focus(); }
   });
   const narrow = window.matchMedia("(max-width: 700px)");
@@ -664,31 +890,99 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   function renderThreads() {
     const ul = ui.threads;
     ul.replaceChildren();
+    $("clearAll").hidden = !state.threads.length;
+    if (state.confirmingAll) ul.appendChild(clearAllBox());
     if (!state.threads.length) {
       const li = el("li", "empty-threads");
       li.append(icon("empty"), el("div", null, "No chats yet. Ask your first question."));
       ul.appendChild(li);
       return;
     }
-    for (const t of state.threads) {
+    const q = state.threadQuery.trim().toLowerCase();
+    const shown = q ? state.threads.filter(t => t.title.toLowerCase().includes(q)) : state.threads;
+    if (!shown.length) { ul.appendChild(el("li", "empty-threads", "No chats match.")); return; }
+    for (const t of shown) {
       const li = el("li", "thread");
       if (t.id === state.active) li.setAttribute("aria-current", "true");
-      const b = el("button", "thread-btn");
-      b.type = "button";
-      const ico = el("span", "thread-ico"); ico.appendChild(icon("chat"));
-      const txt = el("span", "thread-text");
-      txt.append(el("span", "thread-title", t.title), el("span", "thread-time", ago(t.updated_at)));
-      b.append(ico, txt);
-      b.addEventListener("click", () => { openThread(t.id); if (narrow.matches) setDrawer(false); });
-      const del = el("button", "thread-del");
-      del.type = "button"; del.setAttribute("aria-label", `Delete chat: ${t.title}`); del.appendChild(icon("trash"));
-      del.addEventListener("click", () => { state.confirming = t.id; renderThreads(); });
+      if (t.pinned) li.classList.add("pinned");
       const row = el("div", "thread-row");
-      row.append(b, del);
+      if (state.renaming === t.id) {
+        row.appendChild(renameField(t));
+      } else {
+        const b = el("button", "thread-btn");
+        b.type = "button";
+        const ico = el("span", "thread-ico"); ico.appendChild(icon(t.pinned ? "pin" : "chat"));
+        const txt = el("span", "thread-text");
+        txt.append(el("span", "thread-title", t.title), el("span", "thread-time", t.pinned ? "Pinned" : ago(t.updated_at)));
+        b.append(ico, txt);
+        b.title = t.title;
+        b.addEventListener("click", () => { openThread(t.id); if (narrow.matches) setDrawer(false); });
+        const acts = el("div", "thread-acts");
+        const act = (name, label, fn, cls) => {
+          const a = el("button", cls || "thread-act");
+          a.type = "button"; a.setAttribute("aria-label", `${label}: ${t.title}`); a.title = label;
+          a.appendChild(icon(name)); a.addEventListener("click", fn);
+          return a;
+        };
+        acts.append(
+          act("pin", t.pinned ? "Unpin" : "Pin", () => updateThread(t.id, { pinned: !t.pinned })),
+          act("pencil", "Rename", () => { state.renaming = t.id; renderThreads(); }),
+          act("trash", "Delete chat", () => { state.confirming = t.id; renderThreads(); }, "thread-act thread-del"));
+        row.append(b, acts);
+      }
       li.appendChild(row);
       if (state.confirming === t.id) li.appendChild(confirmBox(t));
       ul.appendChild(li);
     }
+  }
+
+  function renameField(t) {
+    const input = el("input", "rename");
+    input.value = t.title; input.maxLength = 60;
+    input.setAttribute("aria-label", "New name for this chat");
+    let done = false;
+    const finish = save => {
+      if (done) return; done = true;
+      const title = input.value.trim();
+      state.renaming = null;
+      if (save && title && title !== t.title) updateThread(t.id, { title }); else renderThreads();
+    };
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); finish(true); }
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finish(false); }
+    });
+    input.addEventListener("blur", () => finish(true));
+    setTimeout(() => { input.focus(); input.select(); }, 0);
+    return input;
+  }
+
+  async function updateThread(id, changes) {
+    try { await api("PATCH", `/api/threads/${id}`, changes); }
+    catch (e) { showError(e); }
+    await loadThreads();
+  }
+
+  function clearAllBox() {
+    const box = el("li", "confirm");
+    box.setAttribute("role", "alertdialog"); box.setAttribute("aria-label", "Clear all chats?");
+    const p = el("p"); p.append(el("strong", null, "Clear all chats?"), el("br"),
+                                el("small", null, "Every chat in this browser is removed for good."));
+    const actions = el("div", "confirm-actions");
+    const cancel = el("button", "btn", "Cancel"); cancel.type = "button";
+    const ok = el("button", "btn btn-danger", "Clear all"); ok.type = "button";
+    cancel.addEventListener("click", () => { state.confirmingAll = false; renderThreads(); });
+    ok.addEventListener("click", async () => {
+      ok.disabled = true;
+      try { await api("DELETE", "/api/threads"); } catch (e) { showError(e); ok.disabled = false; return; }
+      state.confirmingAll = false;
+      startNew();
+      await loadThreads();
+      toast("All chats cleared.", 3000);
+    });
+    actions.append(cancel, ok);
+    box.append(p, actions);
+    setTimeout(() => cancel.focus({ preventScroll: true }), 0);
+    return box;
   }
 
   function confirmBox(t) {
@@ -724,7 +1018,7 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     setActive(null);
     state.lastScheme = null; state.misses = 0;
     renderWelcome();
-    ui.input.focus();
+    if (!coarse.matches) ui.input.focus();                  // phones: don't pop the keyboard up
   }
 
   async function openThread(id) {
@@ -861,6 +1155,7 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     body.appendChild(el("span", "kind-label", k.label));
     const p = el("p", "reply-text");
     textWithValues(p, r.text);
+    if (r.kind !== "privacy") markTerms(p);
     body.appendChild(p);
 
     if (r.candidates && r.candidates.length) {
@@ -888,14 +1183,210 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     }
     if (r.footer) {
       const f = el("div", "footer");
+      f.title = "The date BoloSIP last read this source";
       f.append(icon("clock"), el("span", null, r.footer));
       meta.appendChild(f);
     }
+    if (r.kind !== "help") meta.appendChild(replyActions(r));
     if (meta.childNodes.length) body.appendChild(meta);
     card.append(head, body);
     ui.messages.appendChild(card);
     return card;
   }
+
+  // Actions under a reply: all facts of the scheme, copy, and a thumbs up / down.
+  function replyActions(r) {
+    const box = el("div", "reply-actions");
+    const tid = state.active;
+    const act = (name, label, fn) => {
+      const b = el("button", "act");
+      b.type = "button"; b.title = label; b.setAttribute("aria-label", label);
+      b.appendChild(icon(name)); b.addEventListener("click", () => fn(b));
+      return b;
+    };
+    if (r.scheme_id) {
+      const all = el("button", "act act-text");
+      all.type = "button"; all.append(icon("list"), el("span", null, "All facts"));
+      all.setAttribute("aria-label", `All facts about ${schemeName(r.scheme_id)}`);
+      all.addEventListener("click", () => openFactCard(r.scheme_id));
+      box.appendChild(all);
+    }
+    box.appendChild(act("copy", "Copy answer", async () => {
+      const lines = [r.text, r.source && r.source.url ? `Source: ${r.source.name || ""} ${r.source.url}`.trim() : "", r.footer || ""];
+      try { await navigator.clipboard.writeText(lines.filter(Boolean).join("\n")); toast("Copied with its source.", 2500); }
+      catch (e) { toast("Couldn't copy. Select the text instead.", 3500); }
+    }));
+    if (r.id != null && tid) {
+      let value = r.feedback || 0;
+      const up = act("thumbUp", "Helpful", () => rate(1));
+      const down = act("thumbDown", "Not helpful", () => rate(-1));
+      const paint = () => { up.setAttribute("aria-pressed", String(value === 1)); down.setAttribute("aria-pressed", String(value === -1)); };
+      async function rate(v) {
+        const next = value === v ? 0 : v;
+        try { await api("POST", `/api/threads/${tid}/messages/${r.id}/feedback`, { value: next }); }
+        catch (e) { showError(e); return; }
+        value = next; paint();
+        if (next) toast(next === 1 ? "Thanks! Glad it helped." : "Thanks. This helps improve BoloSIP.", 2500);
+      }
+      paint();
+      box.append(up, down);
+    }
+    return box;
+  }
+
+  // Official definitions for terms in an answer ("TER", "exit load"...): tap to read.
+  function markTerms(p) {
+    const terms = (state.config && state.config.terms) || [];
+    if (!terms.length) return;
+    const entries = [];
+    for (const t of terms) for (const w of t.words) entries.push([w, t]);
+    const esc = w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`\\b(${entries.map(([w]) => esc(w)).join("|")})\\b`, "i");
+    const used = new Set();
+    const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) if (!walker.currentNode.parentElement.closest(".value, .term")) nodes.push(walker.currentNode);
+    for (let node of nodes) {
+      let m;
+      while (node && (m = node.nodeValue.match(re))) {
+        const word = m[1];
+        const entry = entries.find(([w]) => w.length <= 4 ? w === word : w.toLowerCase() === word.toLowerCase());
+        if (!entry || used.has(entry[1])) {                     // acronyms match case-sensitively
+          node = node.splitText(m.index + word.length);
+          continue;
+        }
+        used.add(entry[1]);
+        const rest = node.splitText(m.index);
+        const after = rest.splitText(word.length);
+        const b = el("button", "term", word);
+        b.type = "button"; b.setAttribute("aria-label", `What is ${word}? Show the official definition`);
+        b.addEventListener("click", e => { e.stopPropagation(); showTerm(b, word, entry[1]); });
+        rest.replaceWith(b);
+        node = after;
+      }
+    }
+  }
+
+  function showTerm(anchor, word, t) {
+    const pop = ui.termPop;
+    pop.replaceChildren();
+    pop.setAttribute("aria-label", `Definition of ${word}`);
+    const head = el("div", "term-head"); head.append(icon("info"), el("strong", null, word));
+    pop.append(head, el("p", null, t.text));
+    if (t.source && /^https:\/\//.test(t.source.url)) {
+      const a = el("a", "source");
+      a.href = t.source.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.append(icon("external"), el("span", null, t.source.name || t.source.url));
+      pop.appendChild(a);
+    }
+    pop.hidden = false;
+    const r = anchor.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    const left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12));
+    const top = r.bottom + 8 + h > window.innerHeight ? Math.max(12, r.top - h - 8) : r.bottom + 8;
+    pop.style.left = `${left}px`; pop.style.top = `${top}px`;
+  }
+  ui.scroll.addEventListener("scroll", () => { ui.termPop.hidden = true; }, { passive: true });
+
+  // -------------------------------------------------------------------------
+  // Scheme browser and fact card
+  // -------------------------------------------------------------------------
+  function setTab(which) {
+    const chats = which === "chats";
+    $("tabChats").setAttribute("aria-selected", String(chats));
+    $("tabSchemes").setAttribute("aria-selected", String(!chats));
+    $("paneChats").hidden = !chats; $("paneSchemes").hidden = chats;
+    if (!chats) loadSchemes();
+  }
+  $("tabChats").addEventListener("click", () => setTab("chats"));
+  $("tabSchemes").addEventListener("click", () => setTab("schemes"));
+
+  async function loadSchemes() {
+    if (state.schemes) return renderSchemes();
+    try { state.schemes = await api("GET", "/api/schemes"); }
+    catch (e) { showError(e); return; }
+    renderSchemes();
+  }
+  function renderSchemes() {
+    const q = state.schemeQuery.trim().toLowerCase();
+    const list = (state.schemes || []).filter(s => !q || `${s.name} ${s.category} ${s.group}`.toLowerCase().includes(q));
+    ui.schemes.replaceChildren();
+    if (!list.length) { ui.schemes.appendChild(el("p", "empty-threads", "No scheme matches.")); return; }
+    let group = null, ul = null;
+    for (const s of list) {
+      if (s.group !== group) {
+        group = s.group;
+        ui.schemes.appendChild(el("div", "scheme-group", group === "FoF" ? "Fund of funds" : group));
+        ul = el("ul", "scheme-list"); ui.schemes.appendChild(ul);
+      }
+      const li = el("li");
+      const b = el("button", "scheme-row");
+      b.type = "button";
+      b.append(el("span", "scheme-name", s.name.replace(/^HDFC /, "")), el("span", "scheme-cat", s.category || ""));
+      b.setAttribute("aria-label", `${s.name}: show all facts`);
+      b.addEventListener("click", () => { openFactCard(s.id); if (narrow.matches) setDrawer(false); });
+      li.appendChild(b); ul.appendChild(li);
+    }
+  }
+  $("schemeSearch").addEventListener("input", e => { state.schemeQuery = e.target.value; renderSchemes(); });
+  $("chatSearch").addEventListener("input", e => { state.threadQuery = e.target.value; renderThreads(); });
+  $("clearAll").addEventListener("click", () => { state.confirmingAll = true; renderThreads(); });
+
+  async function openFactCard(id) {
+    let card;
+    try { card = await api("GET", `/api/schemes/${encodeURIComponent(id)}`); }
+    catch (e) { showError(e); return; }
+    $("factTitle").textContent = card.name;
+    $("factSub").textContent = [card.category, card.group === "FoF" ? "Fund of funds" : card.group, "Direct Growth"].filter(Boolean).join(" · ");
+    const body = $("factBody");
+    body.replaceChildren();
+    for (const f of card.facts) {
+      const row = el("section", "fact");
+      row.appendChild(el("h3", "fact-label", f.label.charAt(0).toUpperCase() + f.label.slice(1)));
+      const p = el("p", "fact-text"); textWithValues(p, f.text); row.appendChild(p);
+      const meta = el("div", "fact-meta");
+      if (f.source && /^https:\/\//.test(f.source.url)) {
+        const a = el("a", "source");
+        a.href = f.source.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.append(icon("external"), el("span", null, f.source.name || "Source"));
+        meta.appendChild(a);
+      }
+      meta.appendChild(el("span", "fact-date", `Updated ${f.as_of}`));
+      row.appendChild(meta);
+      body.appendChild(row);
+    }
+    $("factAsk").onclick = () => {
+      ui.factCard.close();
+      ui.input.value = `${card.name} `;
+      ui.input.focus();
+      ui.input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    if (!ui.factCard.open) ui.factCard.showModal();
+    body.scrollTop = 0;
+  }
+  $("factClose").addEventListener("click", () => ui.factCard.close());
+  for (const dlg of [ui.factCard, $("shortcuts")])                 // click on the backdrop closes
+    dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+
+  // -------------------------------------------------------------------------
+  // Keyboard shortcuts
+  // -------------------------------------------------------------------------
+  const KEYS = [["/", "Type a question"], [isMac ? "\u2318 K" : "Ctrl K", "New chat"], ["\u2191 \u2193", "Move through suggestions"],
+                ["Enter", "Send"], ["Shift Enter", "New line"], ["Esc", "Close a list, menu or card"], ["?", "Show this list"]];
+  function openShortcuts() {
+    const dl = $("keys");
+    if (!dl.childNodes.length) for (const [k, what] of KEYS) { const dt = el("dt"); dt.appendChild(el("kbd", null, k)); dl.append(dt, el("dd", null, what)); }
+    $("shortcuts").showModal();
+  }
+  $("scClose").addEventListener("click", () => $("shortcuts").close());
+  document.addEventListener("keydown", e => {
+    const typing = e.target.closest && e.target.closest("input, textarea, [contenteditable]");
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
+      e.preventDefault(); startNew(); ui.input.focus(); return;
+    }
+    if (typing || e.ctrlKey || e.metaKey || e.altKey || document.querySelector("dialog[open]")) return;
+    if (e.key === "/") { e.preventDefault(); ui.input.focus(); }
+    else if (e.key === "?") { e.preventDefault(); openShortcuts(); }
+  });
 
   function scrollDown(smooth = true) {
     ui.scroll.scrollTo({ top: ui.scroll.scrollHeight, behavior: smooth ? "smooth" : "auto" });
@@ -1114,7 +1605,17 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     catch (e) {
       typing.remove();
       if (e.status === 404) { bubble.remove(); toast("That chat was deleted. Starting a new one."); startNew(); loadThreads(); }
-      else { bubble.remove(); ui.input.value = text; autosize(); showError(e); }
+      else {
+        bubble.classList.add("failed");
+        const row = el("div", "failed-row");
+        const msg = e.status === 429 ? `Too many messages. Please wait ${e.retry || "a few"} seconds.` : (e.message || "Couldn't send.");
+        const retry = el("button", "chip");
+        retry.type = "button"; retry.append(icon("retry"), el("span", null, "Retry"));
+        retry.addEventListener("click", () => { row.remove(); bubble.remove(); send(text); });
+        row.append(icon("alert"), el("span", null, msg), retry);
+        ui.messages.appendChild(row);
+        scrollDown();
+      }
     }
     finally { state.pending.delete(tid); updateSend(); }
     if (!reply) return;
@@ -1178,6 +1679,11 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
     try {
       const [cfg, health] = await Promise.all([api("GET", "/api/config"), api("GET", "/api/health").catch(() => null)]);
       state.config = cfg; state.health = health;
+      if (health && health.data_age_days > 3) {
+        ui.stale.textContent = `These facts were last refreshed ${health.data_age_days} days ago (${health.corpus_built_on}). ` +
+                               "Daily values such as NAV may have changed; each answer links to its source.";
+        ui.stale.hidden = false;
+      }
       if (state.config.privacy_hint) $("privacyHint").textContent = state.config.privacy_hint;
     } catch (e) { showError(e); }
     await loadThreads();

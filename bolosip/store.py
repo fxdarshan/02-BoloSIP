@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS threads (
   created_at  TEXT NOT NULL,
   updated_at  TEXT NOT NULL,
   last_scheme TEXT,
-  owner       TEXT
+  owner       TEXT,
+  pinned      INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS messages (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +50,8 @@ CREATE TABLE IF NOT EXISTS messages (
   as_of       TEXT,
   candidates  TEXT,
   scheme_id   TEXT,
-  created_at  TEXT NOT NULL
+  created_at  TEXT NOT NULL,
+  feedback    INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id, id);
 CREATE INDEX IF NOT EXISTS idx_threads_updated ON threads(updated_at);
@@ -77,10 +79,14 @@ class Store:
     def __init__(self, path: Path | str | None = None):
         self.path = Path(path or config.SETTINGS.db_path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as c:                     # databases from before B1 lack `owner`
+        with self._connect() as c:                     # older databases lack the newer columns
             cols = {r["name"] for r in c.execute("PRAGMA table_info(threads)")}
             if "owner" not in cols:
                 c.execute("ALTER TABLE threads ADD COLUMN owner TEXT")
+            if "pinned" not in cols:
+                c.execute("ALTER TABLE threads ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0")
+            if "feedback" not in {r["name"] for r in c.execute("PRAGMA table_info(messages)")}:
+                c.execute("ALTER TABLE messages ADD COLUMN feedback INTEGER")
             c.execute(OWNER_INDEX)
 
     @contextmanager
@@ -110,9 +116,42 @@ class Store:
     def list_threads(self, limit: int = MAX_THREADS_LISTED, *, owner: str | None = None) -> list[dict]:
         where, args = ("WHERE owner = ? ", (owner,)) if owner is not None else ("", ())
         with self._connect() as c:
-            rows = c.execute(f"SELECT id, title, updated_at FROM threads {where}"
-                             "ORDER BY updated_at DESC, rowid DESC LIMIT ?", (*args, limit)).fetchall()
-        return [dict(r) for r in rows]
+            rows = c.execute(f"SELECT id, title, updated_at, pinned FROM threads {where}"
+                             "ORDER BY pinned DESC, updated_at DESC, rowid DESC LIMIT ?", (*args, limit)).fetchall()
+        return [{**dict(r), "pinned": bool(r["pinned"])} for r in rows]
+
+    def update_thread(self, thread_id: str, *, title: str | None = None, pinned: bool | None = None,
+                      owner: str | None = None) -> dict:
+        """Rename (redacted, 1-60 characters) and/or pin a thread. ThreadNotFound if not the owner's."""
+        if self.get_thread(thread_id, owner=owner) is None:
+            raise ThreadNotFound(thread_id)
+        sets, args = [], []
+        if title is not None:
+            clean = title_from(title)
+            if not clean:
+                raise ValueError("Title is empty")
+            sets.append("title = ?"); args.append(clean)
+        if pinned is not None:
+            sets.append("pinned = ?"); args.append(1 if pinned else 0)
+        if sets:
+            with self._connect() as c:
+                c.execute(f"UPDATE threads SET {', '.join(sets)} WHERE id = ?", (*args, thread_id))
+        t = self.get_thread(thread_id, owner=owner)
+        return {"id": t["id"], "title": t["title"], "pinned": bool(t["pinned"])}
+
+    def delete_all(self, *, owner: str) -> int:
+        """Delete every thread of one owner (the "Clear all chats" control)."""
+        with self._connect() as c:
+            return c.execute("DELETE FROM threads WHERE owner = ?", (owner,)).rowcount
+
+    def set_feedback(self, thread_id: str, message_id: int, value: int, *, owner: str | None = None) -> bool:
+        """Record +1 / -1 (or 0 to clear) on an assistant message of the owner's thread."""
+        if self.get_thread(thread_id, owner=owner) is None:
+            raise ThreadNotFound(thread_id)
+        with self._connect() as c:
+            cur = c.execute("UPDATE messages SET feedback = ? WHERE id = ? AND thread_id = ? AND role = 'assistant'",
+                            (value or None, message_id, thread_id))
+        return cur.rowcount > 0
 
     def claim_unowned(self, owner: str) -> int:
         """Give threads saved before B1 (owner NULL) to `owner`. Laptop only: the server
@@ -160,7 +199,8 @@ class Store:
         out = []
         for r in rows:
             out.append({
-                "role": r["role"], "text": r["text"], "kind": r["kind"],
+                "id": r["id"], "role": r["role"], "text": r["text"], "kind": r["kind"],
+                "feedback": r["feedback"],
                 "source": {"url": r["source_url"], "name": r["source_name"]} if r["source_url"] else None,
                 "footer": f"Last updated from sources: {r['as_of']}" if r["as_of"] else None,
                 "candidates": json.loads(r["candidates"]) if r["candidates"] else None,
@@ -169,8 +209,9 @@ class Store:
         return out
 
     def add_exchange(self, thread_id: str, user_text: str, reply: Reply, last_scheme: str | None, *,
-                     owner: str | None = None) -> None:
-        """Store the (redacted) question and its reply, and the thread's new context, atomically."""
+                     owner: str | None = None) -> int:
+        """Store the (redacted) question and its reply, and the thread's new context, atomically.
+        Returns the reply's message id (for feedback)."""
         safe = guards.redact(user_text)                       # second line of defence (AC 6)
         as_of = reply.footer.split(": ", 1)[1] if reply.footer else None
         now = _now()
@@ -182,7 +223,8 @@ class Store:
                     raise ThreadNotFound(thread_id)
                 c.execute("INSERT INTO messages (thread_id, role, text, created_at) VALUES (?, 'user', ?, ?)",
                           (thread_id, safe, now))
-                c.execute("INSERT INTO messages (thread_id, role, text, kind, source_url, source_name, as_of, "
+                cur = c.execute(
+                          "INSERT INTO messages (thread_id, role, text, kind, source_url, source_name, as_of, "
                           "candidates, scheme_id, created_at) VALUES (?, 'assistant', ?, ?, ?, ?, ?, ?, ?, ?)",
                           (thread_id, reply.text, reply.kind,
                            reply.source.url if reply.source else None,
@@ -196,3 +238,4 @@ class Store:
             except BaseException:
                 c.execute("ROLLBACK")
                 raise
+        return cur.lastrowid

@@ -208,6 +208,71 @@ class TestChatPageInBrowser(unittest.TestCase):
         self.assertGreaterEqual(self.page.locator(".thread").count(), 1)       # the old chat is kept
         self.assertEqual(self.page.url, self.url)                              # no page reload
 
+    def test_settings_theme_and_text_size(self):
+        self.page.click("#settingsBtn")
+        self.page.click("[data-choice='theme:light']")
+        self.assertEqual(self.page.get_attribute("html", "data-theme"), "light")
+        self.page.click("[data-choice='text:l']")
+        self.assertEqual(self.page.get_attribute("html", "data-text"), "l")
+        self.page.click("[data-choice='theme:auto']")                          # follows the device again
+        self.assertEqual(self.page.get_attribute("[data-choice='theme:auto']", "aria-pressed"), "true")
+        self.page.keyboard.press("Escape")
+        self.assertTrue(self.page.locator("#settings").is_hidden())
+
+    def test_scheme_browser_and_fact_card(self):
+        self.page.click("#tabSchemes")
+        self.page.fill("#schemeSearch", "mid cap")
+        self.page.get_by_role("button", name="HDFC Mid Cap Fund: show all facts").click()
+        self.page.locator("#factCard[open]").wait_for()
+        self.assertEqual(self.page.inner_text("#factTitle"), "HDFC Mid Cap Fund")
+        self.assertEqual(self.page.locator("#factBody .fact").count(), 12)
+        self.page.click("#factAsk")
+        self.assertFalse(self.page.locator("#factCard").evaluate("d => d.open"))
+        self.assertEqual(self.page.input_value("#input"), "HDFC Mid Cap Fund ")
+
+    def test_answer_actions_terms_and_feedback(self):
+        reply = self.ask("What is the expense ratio of HDFC Mid Cap Fund?")
+        reply.locator(".term").first.click()
+        self.assertTrue(self.page.locator("#termPop").is_visible())
+        self.assertIn("expense", self.page.inner_text("#termPop").lower())
+        self.page.keyboard.press("Escape")
+        up = reply.get_by_role("button", name="Helpful", exact=True)
+        up.click()
+        self.wait_until("() => document.querySelector('.reply:last-of-type [aria-label=Helpful]')"
+                        "?.getAttribute('aria-pressed') === 'true'")
+        reply.get_by_role("button", name="All facts about HDFC Mid Cap Fund").click()
+        self.page.locator("#factCard[open]").wait_for()
+
+    def test_pin_rename_and_clear_all(self):
+        self.ask("HDFC Mid Cap exit load")
+        self.page.click("#brand")
+        self.ask("HDFC Liquid Fund benchmark")
+        first = self.page.locator(".thread").nth(1)
+        first.hover()
+        first.locator("[title=Pin]").click()
+        self.page.locator(".thread.pinned").first.wait_for()
+        self.assertEqual(self.page.locator(".thread").first.get_attribute("class"), "thread pinned")
+        pinned = self.page.locator(".thread.pinned")
+        pinned.hover()
+        pinned.locator("[title=Rename]").click()
+        self.page.fill(".rename", "Mid cap notes")
+        self.page.press(".rename", "Enter")
+        self.page.locator(".thread-title", has_text="Mid cap notes").wait_for()
+        self.page.fill("#chatSearch", "notes")
+        self.assertEqual(self.page.locator(".thread").count(), 1)
+        self.page.fill("#chatSearch", "")
+        self.page.click("#clearAll")
+        self.page.get_by_role("button", name="Clear all", exact=True).click()
+        self.page.locator(".empty-threads").wait_for()
+
+    def test_keyboard_shortcuts(self):
+        self.page.locator("body").click(position={"x": 5, "y": 300})
+        self.page.keyboard.press("?")
+        self.page.locator("#shortcuts[open]").wait_for()
+        self.page.keyboard.press("Escape")
+        self.page.keyboard.press("/")
+        self.assertEqual(self.page.evaluate("document.activeElement.id"), "input")
+
 
 if __name__ == "__main__":
     unittest.main()
