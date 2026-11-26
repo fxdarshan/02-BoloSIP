@@ -502,12 +502,17 @@ All responses are JSON, and errors look like `{"error": "<message>"}`.
 | Method | Path | Body | Returns |
 |---|---|---|---|
 | `GET` | `/` | — | `web/index.html` |
-| `GET` | `/api/health` | — | `{status, llm_enabled, corpus_built_on, schemes}` |
-| `GET` | `/api/config` | — | `{welcome, examples[3], disclaimer, privacy_hint, max_chars, suggest}` for the UI; `suggest` is the 5 KB question index (`bolosip/suggest.py`) matched in the browser for typing suggestions |
-| `GET` | `/api/threads` | — | `[{id, title, updated_at}]`, newest first, at most 100 |
+| `GET` | `/api/health` | — | `{status, version, llm_enabled, retriever, corpus_built_on, data_age_days, schemes}` |
+| `GET` | `/api/config` | — | `{welcome, examples[3], disclaimer, privacy_hint, max_chars, suggest, terms, retention_days, help_links}` for the UI; `suggest` is the 5 KB question index (`bolosip/suggest.py`) matched in the browser for typing suggestions; `terms` the official definitions shown when a term is tapped; `help_links` the official "Still need help?" links (`config.HELP_LINKS`) |
+| `GET` | `/api/schemes` | — | `[{id, name, group, category}]`, the 27 schemes grouped Equity / Hybrid / Debt / FoF |
+| `GET` | `/api/schemes/{id}` | — | Fact card: `{id, name, label, group, category, url, facts: [{topic, label, text, source, as_of}]}` |
+| `GET` | `/api/threads` | — | `[{id, title, updated_at, pinned}]` of this browser (owner cookie), pinned first, then newest, at most 100 |
+| `DELETE` | `/api/threads` | — | `204`; clears all of this browser's chats |
 | `POST` | `/api/threads` | `{}` (JSON) | `201 {id, title}` (new empty thread, title "New chat") |
-| `GET` | `/api/threads/{id}/messages` | — | `[{role, text, kind, source, footer, candidates, scheme_id, created_at}]`, latest 200 |
-| `POST` | `/api/threads/{id}/messages` | `{text}` (1–500 chars) | `Reply` (section 6.2) |
+| `GET` | `/api/threads/{id}/messages` | — | `[{id, role, text, kind, source, footer, candidates, scheme_id, created_at, feedback, feedback_reason}]`, latest 200 |
+| `POST` | `/api/threads/{id}/messages` | `{text}` (1–500 chars) | `Reply` (section 6.2) plus the message `id` |
+| `POST` | `/api/threads/{id}/messages/{mid}/feedback` | `{value: 1 \| -1 \| 0, reason?}` | `204`; `reason` one of incorrect / incomplete / irrelevant / other, only with -1 |
+| `PATCH` | `/api/threads/{id}` | `{title?, pinned?}` | `{id, title, pinned}`; the title is redacted and cut to 60 characters |
 | `DELETE` | `/api/threads/{id}` | — | `204` |
 
 **Input limits:** request body ≤ 4 KB (else `413`), `text` 1–500 characters after trimming, and a thread ID must be a valid UUID; everything else gets a `400`. An unknown thread is `404`, a known path with the wrong method `405` with `Allow`. Sockets time out after 10 s (SEC-07). Responses carry `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` and `Referrer-Policy: no-referrer`; the page also gets a strict `Content-Security-Policy`.
