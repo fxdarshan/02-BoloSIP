@@ -184,6 +184,9 @@ class TestRateLimit(ApiCase):                                               # GA
     rate_all = 120
 
     def test_31st_message_in_a_minute_is_refused(self):
+        # Frozen clock: on a slow runner 31 requests took over 2 s and the bucket refilled
+        # one token (30/min), so the 31st was allowed (ISS-033).
+        self.api.httpd.msg_limiter = server.RateLimiter(30, clock=lambda: 1000.0)
         statuses = [self.post_msg({"text": "hi"})[0] for _ in range(31)]
         self.assertEqual(statuses[:30], [200] * 30)
         s, b, h = self.post_msg({"text": "hi"})
