@@ -403,7 +403,6 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   .disclaimer svg { font-size: 13px; }
   .header { padding-bottom: 6px; }
   .thread-acts { opacity: 1; }
-  .reply-actions { margin-left: auto; }
   .sheet { width: 100vw; max-width: 100vw; max-height: 88vh; margin: auto 0 0; border-radius: var(--r-xl) var(--r-xl) 0 0; }
   .sheet-foot { flex-direction: column; align-items: stretch; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
   .new-chat kbd { display: none; }
@@ -441,6 +440,48 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   .count { display: none; }
   .count.near { display: block; }
 }
+/* ---- Reply header (avatar, name, kind, time), user meta, help, feedback reasons -- */
+.reply-head { gap: 8px; }
+.avatar { display: grid; place-items: center; width: 26px; height: 26px; flex: none; }
+.avatar svg { width: 26px; height: 26px; }
+.avatar rect { fill: #0a72e8; }
+.avatar path[fill] { fill: #0a72e8; }
+.who { font-size: 13.5px; font-weight: 650; letter-spacing: -.01em; }
+.kind { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 3px; border-radius: 999px; background: var(--k-bg); }
+.kind .reply-ico { width: 18px; height: 18px; font-size: 12px; background: none; }
+.kind .kind-label { font-size: 12.5px; }
+.when { margin-left: auto; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.msg-meta { align-self: flex-end; display: flex; align-items: center; gap: 8px; margin: -10px 4px 0 0; font-size: 12px; color: var(--faint); }
+.msg-meta .edit { display: none; align-items: center; gap: 4px; padding: 2px 8px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--faint); font-size: 12px; font-weight: 550; }
+.msg-meta.latest .edit { display: inline-flex; }
+.msg-meta .edit:hover { background: var(--card-hi); color: var(--text); }
+.msg-meta .edit svg { font-size: 12px; }
+.help-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 10px; padding: 10px 12px;
+  border-radius: var(--r-md); background: var(--card-hi); font-size: 13.5px; }
+.help-title { font-weight: 650; }
+.help-row .source { font-size: 13.5px; }
+.why { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; color: var(--muted); animation: rise .25s var(--ease) both; }
+.why-title { font-weight: 600; margin-right: 2px; }
+.why-chip { padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line-strong); background: transparent;
+  font-size: 12.5px; font-weight: 550; color: var(--text); }
+.why-chip:hover { border-color: var(--accent); color: var(--accent); }
+.why.done { color: var(--k-answer); }
+.why.done svg { font-size: 15px; }
+.link-inline { padding: 0; border: 0; background: none; font: inherit; color: var(--accent); cursor: pointer; }
+.link-inline:hover { text-decoration: underline; text-underline-offset: 3px; }
+.pane-note { margin: 2px 8px 4px; font-size: 12.5px; color: var(--faint); }
+.faq-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: grid; gap: 2px; }
+.faq { width: 100%; padding: 9px 10px; border: 0; border-radius: var(--r-sm); background: transparent; text-align: left; font-size: 14px; line-height: 1.35; }
+.faq:hover { background: var(--card-hi); }
+.privacy-list { list-style: none; margin: 0; padding: 14px 20px 22px; display: grid; gap: 14px; }
+.privacy-list li { display: flex; gap: 12px; font-size: 14.5px; line-height: 1.5; }
+.privacy-list svg { flex: none; margin-top: 3px; font-size: 17px; color: var(--accent); }
+/* Next-step suggestions as outlined quick-reply pills */
+.chip { background: transparent; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent); }
+.chip svg { color: var(--accent); }
+.chip:hover { background: var(--btn); border-color: var(--btn); color: var(--on-btn); }
+
 /* ---- Settings menu ---------------------------------------------------------- */
 .settings-wrap { position: relative; }
 .menu {
@@ -506,17 +547,18 @@ kbd {
 .scheme-cat { font-size: 12px; color: var(--faint); }
 
 /* ---- Reply actions, glossary terms, failed send, stale notice ------------------ */
-.reply-actions { display: flex; align-items: center; gap: 2px; margin-left: 4px; }
+.reply-actions { display: flex; flex-basis: 100%; align-items: center; gap: 2px; }
 .act { display: inline-flex; align-items: center; gap: 6px; height: 28px; min-width: 28px; justify-content: center; padding: 0 6px;
   border: 0; border-radius: 999px; background: transparent; color: var(--faint); font-size: 15px; transition: background .15s, color .15s; }
 .act:hover { background: var(--card-hi); color: var(--text); }
 .act[aria-pressed="true"] { color: var(--accent); background: var(--value-bg); }
 .act-text { padding: 0 10px; font-size: 13px; font-weight: 590; color: var(--accent); }
 .act-text svg { font-size: 14px; }
-.term { padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: help;
+.term { display: inline; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: help;
   text-decoration: underline dotted; text-decoration-color: color-mix(in srgb, var(--accent) 70%, transparent);
   text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
 .term:hover { color: var(--accent); }
+.nowrap { white-space: nowrap; }
 .term-pop { position: fixed; z-index: 80; width: min(360px, calc(100vw - 24px)); padding: 14px 16px;
   border-radius: var(--r-lg); background: var(--material); border: 1px solid var(--line);
   -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
@@ -592,6 +634,7 @@ kbd {
       <div class="seg side-tabs" role="tablist" aria-label="Sidebar">
         <button type="button" role="tab" id="tabChats" aria-selected="true" aria-controls="paneChats">Chats</button>
         <button type="button" role="tab" id="tabSchemes" aria-selected="false" aria-controls="paneSchemes">Schemes</button>
+        <button type="button" role="tab" id="tabFaqs" aria-selected="false" aria-controls="paneFaqs">FAQs</button>
       </div>
       <div class="side-pane" id="paneChats" role="tabpanel" aria-labelledby="tabChats">
         <label class="search"><span data-icon="search"></span><span class="sr-only">Search chats</span>
@@ -603,6 +646,10 @@ kbd {
         <label class="search"><span data-icon="search"></span><span class="sr-only">Search schemes</span>
           <input id="schemeSearch" type="search" placeholder="Search 27 schemes" autocomplete="off"></label>
         <div class="schemes" id="schemes"></div>
+      </div>
+      <div class="side-pane" id="paneFaqs" role="tabpanel" aria-labelledby="tabFaqs" hidden>
+        <p class="pane-note">Common questions BoloSIP answers from official pages.</p>
+        <ul class="faq-list" id="faqs"></ul>
       </div>
       <div class="side-foot"><strong>Sources:</strong> the Groww pages of 27 HDFC Mutual Fund schemes and official HDFC MF, AMFI and SEBI pages. Each answer shows its own date.</div>
     </nav>
@@ -653,6 +700,14 @@ kbd {
     <button class="icon-btn" id="scClose" type="button" aria-label="Close"></button>
   </div>
   <dl class="keys" id="keys"></dl>
+</dialog>
+
+<dialog class="sheet sheet-sm" id="privacy" aria-labelledby="pvTitle">
+  <div class="sheet-head">
+    <div class="sheet-titles"><h2 id="pvTitle">Privacy and your data</h2><p>What BoloSIP keeps, and for how long</p></div>
+    <button class="icon-btn" id="pvClose" type="button" aria-label="Close"></button>
+  </div>
+  <ul class="privacy-list" id="privacyList"></ul>
 </dialog>
 
 <div class="term-pop" id="termPop" role="dialog" aria-modal="false" hidden></div>
@@ -737,6 +792,7 @@ kbd {
   ui.settingsBtn.appendChild(icon("sliders"));
   $("factClose").appendChild(icon("close"));
   $("scClose").appendChild(icon("close"));
+  $("pvClose").appendChild(icon("close"));
   const coarse = window.matchMedia("(pointer: coarse)");          // touch screens: no auto-focus (keyboard)
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   $("newChatKey").textContent = isMac ? "\u2318K" : "Ctrl K";
@@ -816,7 +872,11 @@ kbd {
     keys.type = "button";
     keys.append(icon("keyboard"), el("span", null, "Keyboard shortcuts"), el("kbd", null, "?"));
     keys.addEventListener("click", () => { setSettings(false); openShortcuts(); });
-    ui.settings.append(group("Appearance", "theme", THEMES), group("Text size", "text", SIZES), keys);
+    const priv = el("button", "menu-item");
+    priv.type = "button";
+    priv.append(icon("lock"), el("span", null, "Privacy and your data"));
+    priv.addEventListener("click", () => { setSettings(false); openPrivacy(); });
+    ui.settings.append(group("Appearance", "theme", THEMES), group("Text size", "text", SIZES), keys, priv);
   }
   function setSettings(open) {
     ui.settings.hidden = !open;
@@ -1038,7 +1098,7 @@ kbd {
     let lastQuestion = "", lastReply = null;
     state.lastScheme = null; state.misses = 0;
     for (const m of msgs) {
-      if (m.role === "user") { lastQuestion = m.text; addUser(m.text); }
+      if (m.role === "user") { lastQuestion = m.text; addUser(m.text, m.created_at); }
       else { addReply(m, lastQuestion); trackReply(m); lastReply = m; }
     }
     if (lastReply) addNextSteps(lastReply, lastQuestion);
@@ -1118,13 +1178,36 @@ kbd {
     w.appendChild(grid);
     const trust = el("ul", "trust");
     for (const [ic, text] of TRUST) { const li = el("li"); li.append(icon(ic), el("span", null, text)); trust.appendChild(li); }
+    const pl = el("li"); const pb = el("button", "link-inline", "How your data is handled");
+    pb.type = "button"; pb.addEventListener("click", openPrivacy); pl.appendChild(pb); trust.appendChild(pl);
     w.appendChild(trust);
     ui.messages.appendChild(w);
   }
 
-  function addUser(text) {
+  function timeLabel(iso) {
+    const d = iso ? new Date(iso) : new Date();
+    if (isNaN(d)) return "";
+    const t = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return d.toDateString() === new Date().toDateString() ? t
+      : `${d.toLocaleDateString([], { day: "numeric", month: "short" })}, ${t}`;
+  }
+
+  // The user's question; the latest one can be edited (put back in the box to refine).
+  function addUser(text, iso) {
     const b = el("div", "msg-user", text);
     ui.messages.appendChild(b);
+    ui.messages.querySelectorAll(".msg-meta.latest").forEach(m => m.classList.remove("latest"));
+    const meta = el("div", "msg-meta latest");
+    const edit = el("button", "edit");
+    edit.type = "button"; edit.setAttribute("aria-label", "Edit this question");
+    edit.append(icon("pencil"), el("span", null, "Edit"));
+    edit.addEventListener("click", () => {
+      ui.input.value = text; autosize(); updateSend(); ui.input.focus();
+      ui.input.setSelectionRange(text.length, text.length);
+    });
+    meta.append(edit, el("time", null, timeLabel(iso)));
+    ui.messages.appendChild(meta);
+    b.meta = meta;
     return b;
   }
 
@@ -1149,8 +1232,14 @@ kbd {
     const card = el("article", "reply");
     card.dataset.kind = r.kind;
     const head = el("div", "reply-head");
-    const ico = el("div", "reply-ico"); ico.appendChild(icon(k.icon));
-    head.append(ico, el("span", "kind-label", k.label));
+    const avatar = el("span", "avatar");
+    const mark = document.querySelector(".brand-mark").cloneNode(true);
+    mark.removeAttribute("class"); mark.querySelector("defs") && mark.querySelector("defs").remove();
+    avatar.appendChild(mark);
+    const kind = el("span", "kind");
+    const ico = el("span", "reply-ico"); ico.appendChild(icon(k.icon));
+    kind.append(ico, el("span", "kind-label", k.label));
+    head.append(avatar, el("span", "who", "BoloSIP"), kind, el("time", "when", timeLabel(r.created_at)));
     const body = el("div", "reply-body");
     body.appendChild(el("span", "kind-label", k.label));
     const p = el("p", "reply-text");
@@ -1189,9 +1278,24 @@ kbd {
     }
     if (r.kind !== "help") meta.appendChild(replyActions(r));
     if (meta.childNodes.length) body.appendChild(meta);
+    if (r.kind === "not_found") body.appendChild(stillNeedHelp());
     card.append(head, body);
     ui.messages.appendChild(card);
     return card;
+  }
+
+  // Official places to get further help; the list comes from the server (config.HELP_LINKS).
+  function stillNeedHelp() {
+    const row = el("div", "help-row");
+    row.appendChild(el("span", "help-title", "Still need help?"));
+    for (const { label, url } of (state.config && state.config.help_links) || []) {
+      if (!/^https:\/\//.test(url)) continue;
+      const a = el("a", "source");
+      a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.append(icon("external"), el("span", null, label));
+      row.appendChild(a);
+    }
+    return row;
   }
 
   // Actions under a reply: all facts of the scheme, copy, and a thumbs up / down.
@@ -1226,12 +1330,33 @@ kbd {
         try { await api("POST", `/api/threads/${tid}/messages/${r.id}/feedback`, { value: next }); }
         catch (e) { showError(e); return; }
         value = next; paint();
-        if (next) toast(next === 1 ? "Thanks! Glad it helped." : "Thanks. This helps improve BoloSIP.", 2500);
+        const card = box.closest(".reply-body");
+        card && card.querySelectorAll(".why").forEach(n => n.remove());
+        if (next === 1) toast("Thanks! Glad it helped.", 2500);
+        if (next === -1 && card) card.appendChild(whyRow(tid, r.id));
       }
       paint();
       box.append(up, down);
     }
     return box;
+  }
+
+  const REASONS = [["incorrect", "Incorrect"], ["incomplete", "Incomplete"], ["irrelevant", "Not what I asked"], ["other", "Other"]];
+  function whyRow(tid, mid) {
+    const row = el("div", "why");
+    row.appendChild(el("span", "why-title", "What was wrong?"));
+    for (const [value, label] of REASONS) {
+      const b = el("button", "why-chip", label);
+      b.type = "button";
+      b.addEventListener("click", async () => {
+        try { await api("POST", `/api/threads/${tid}/messages/${mid}/feedback`, { value: -1, reason: value }); }
+        catch (e) { showError(e); return; }
+        row.replaceChildren(icon("check"), el("span", null, `Thanks. Noted as "${label.toLowerCase()}", so it can be checked.`));
+        row.classList.add("done");
+      });
+      row.appendChild(b);
+    }
+    return row;
   }
 
   // Official definitions for terms in an answer ("TER", "exit load"...): tap to read.
@@ -1261,8 +1386,18 @@ kbd {
         const b = el("button", "term", word);
         b.type = "button"; b.setAttribute("aria-label", `What is ${word}? Show the official definition`);
         b.addEventListener("click", e => { e.stopPropagation(); showTerm(b, word, entry[1]); });
-        rest.replaceWith(b);
-        node = after;
+        // Keep punctuation right after the term on the same line ("riskometer." not "riskometer / .").
+        const punct = after.nodeValue.match(/^[.,;:!?)]+/);
+        if (punct) {
+          const glue = el("span", "nowrap");
+          const tail = after.splitText(punct[0].length);
+          glue.append(b, after);
+          rest.replaceWith(glue);
+          node = tail;
+        } else {
+          rest.replaceWith(b);
+          node = after;
+        }
       }
     }
   }
@@ -1290,15 +1425,29 @@ kbd {
   // -------------------------------------------------------------------------
   // Scheme browser and fact card
   // -------------------------------------------------------------------------
+  const TABS = { chats: ["tabChats", "paneChats"], schemes: ["tabSchemes", "paneSchemes"], faqs: ["tabFaqs", "paneFaqs"] };
   function setTab(which) {
-    const chats = which === "chats";
-    $("tabChats").setAttribute("aria-selected", String(chats));
-    $("tabSchemes").setAttribute("aria-selected", String(!chats));
-    $("paneChats").hidden = !chats; $("paneSchemes").hidden = chats;
-    if (!chats) loadSchemes();
+    for (const [name, [tab, pane]] of Object.entries(TABS)) {
+      $(tab).setAttribute("aria-selected", String(name === which));
+      $(pane).hidden = name !== which;
+    }
+    if (which === "schemes") loadSchemes();
+    if (which === "faqs") renderFaqs();
   }
-  $("tabChats").addEventListener("click", () => setTab("chats"));
-  $("tabSchemes").addEventListener("click", () => setTab("schemes"));
+  for (const name of Object.keys(TABS)) $(TABS[name][0]).addEventListener("click", () => setTab(name));
+
+  // Approved general questions, each checked to get an answer (suggest.working_general).
+  function renderFaqs() {
+    const ul = $("faqs");
+    if (ul.childNodes.length) return;
+    const list = (state.config && state.config.suggest && state.config.suggest.general) || [];
+    for (const q of list) {
+      const li = el("li"); const b = el("button", "faq", q);
+      b.type = "button";
+      b.addEventListener("click", () => { send(q); if (narrow.matches) setDrawer(false); });
+      li.appendChild(b); ul.appendChild(li);
+    }
+  }
 
   async function loadSchemes() {
     if (state.schemes) return renderSchemes();
@@ -1378,6 +1527,25 @@ kbd {
     $("shortcuts").showModal();
   }
   $("scClose").addEventListener("click", () => $("shortcuts").close());
+  function openPrivacy() {
+    const cfg = state.config || {}, h = state.health || {};
+    const days = cfg.retention_days || 0;
+    const points = [
+      ["lock", "No account, no ads, no trackers. A private cookie links your chats to this browser only; nobody else can see them."],
+      ["shield", "Personal details such as PAN, Aadhaar, phone or account numbers are replaced with [redacted] before anything is saved."],
+      ["clock", days ? `Chats you don't use for ${days} days are deleted automatically.` : "Chats are kept until you delete them."],
+      ["trash", "Delete one chat, or use \"Clear all chats\" in the sidebar, at any time."],
+      ["info", h.llm_enabled
+        ? "To word answers naturally, your question and one public fact are sent to Groq, an AI provider. Personal details never are, and the facts are checked before you see them."
+        : "Answers come straight from the official sources; nothing is sent to an AI provider."],
+      ["thumbUp", "Feedback stores only the thumbs up or down and the reason you pick, never free text."],
+    ];
+    const ul = $("privacyList"); ul.replaceChildren();
+    for (const [ic, text] of points) { const li = el("li"); li.append(icon(ic), el("span", null, text)); ul.appendChild(li); }
+    $("privacy").showModal();
+  }
+  $("pvClose").addEventListener("click", () => $("privacy").close());
+  $("privacy").addEventListener("click", e => { if (e.target === $("privacy")) $("privacy").close(); });
   document.addEventListener("keydown", e => {
     const typing = e.target.closest && e.target.closest("input, textarea, [contenteditable]");
     if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {

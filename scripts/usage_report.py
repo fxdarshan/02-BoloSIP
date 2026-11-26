@@ -44,11 +44,12 @@ def report(db: Path, show_unanswered: bool = False, out=print) -> dict:
     try:
         threads = con.execute("SELECT COUNT(*) FROM threads").fetchone()[0]
         rows = con.execute("SELECT thread_id, role, text, kind, scheme_id FROM messages ORDER BY thread_id, id").fetchall()
-        has_fb = "feedback" in {r[1] for r in con.execute("PRAGMA table_info(messages)")}
+        mcols = {r[1] for r in con.execute("PRAGMA table_info(messages)")}
+        reason_col = "a.feedback_reason" if "feedback_reason" in mcols else "NULL"
         rated = con.execute(
             "SELECT a.feedback, (SELECT u.text FROM messages u WHERE u.thread_id = a.thread_id AND u.role = 'user' "
-            "AND u.id < a.id ORDER BY u.id DESC LIMIT 1), a.text FROM messages a "
-            "WHERE a.role = 'assistant' AND a.feedback IS NOT NULL").fetchall() if has_fb else []
+            f"AND u.id < a.id ORDER BY u.id DESC LIMIT 1), a.text, {reason_col} FROM messages a "
+            "WHERE a.role = 'assistant' AND a.feedback IS NOT NULL").fetchall() if "feedback" in mcols else []
     finally:
         con.close()
 
@@ -91,18 +92,20 @@ def report(db: Path, show_unanswered: bool = False, out=print) -> dict:
         out(f"  {names.get(s, s):<40} {n:>6}")
     up = sum(1 for r in rated if r[0] > 0)
     down = [r for r in rated if r[0] < 0]
-    out(f"\nFeedback: {up} helpful, {len(down)} not helpful")
+    reasons = Counter(r[3] or "no reason given" for r in down)
+    out(f"\nFeedback: {up} helpful, {len(down)} not helpful"
+        + (f" ({', '.join(f'{k}: {n}' for k, n in reasons.most_common())})" if down else ""))
     if show_unanswered and down:
-        out("\nAnswers marked 'not helpful' (question stored redacted)")
-        for _, q, a in down[:30]:
-            out(f"  Q: {q}\n     A: {a[:140]}")
+        out("\nAnswers marked 'not helpful' (question stored redacted), with the fact that was answered")
+        for _, q, a, why in down[:30]:
+            out(f"  [{why or 'no reason'}] fact: {topic_of(a, chunks) or '?'}\n    Q: {q}\n    A: {a[:140]}")
     if show_unanswered and unanswered:
         out("\nQuestions answered 'not found' (stored redacted), most frequent first")
         for q, n in Counter(unanswered).most_common(30):
             out(f"  {n:>3} × {q}")
     return {"threads": threads, "replies": total, "kinds": dict(kinds), "fallback_rate": fallback / total,
             "repeat_not_found_threads": len(repeat_threads), "topics": dict(topics),
-            "feedback": {"helpful": up, "not_helpful": len(down)}}
+            "feedback": {"helpful": up, "not_helpful": len(down), "reasons": dict(reasons)}}
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -28,6 +28,7 @@ from bolosip.formatter import Reply
 NEW_TITLE = "New chat"                 # THR-09
 MAX_THREADS_LISTED = 100               # THR-07
 MAX_MESSAGES_RETURNED = 200            # THR-08: the latest 200 messages of a thread
+FEEDBACK_REASONS = ("incorrect", "incomplete", "irrelevant", "other")   # why an answer got a thumbs down
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS threads (
@@ -51,7 +52,8 @@ CREATE TABLE IF NOT EXISTS messages (
   candidates  TEXT,
   scheme_id   TEXT,
   created_at  TEXT NOT NULL,
-  feedback    INTEGER
+  feedback    INTEGER,
+  feedback_reason TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id, id);
 CREATE INDEX IF NOT EXISTS idx_threads_updated ON threads(updated_at);
@@ -85,8 +87,11 @@ class Store:
                 c.execute("ALTER TABLE threads ADD COLUMN owner TEXT")
             if "pinned" not in cols:
                 c.execute("ALTER TABLE threads ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0")
-            if "feedback" not in {r["name"] for r in c.execute("PRAGMA table_info(messages)")}:
+            mcols = {r["name"] for r in c.execute("PRAGMA table_info(messages)")}
+            if "feedback" not in mcols:
                 c.execute("ALTER TABLE messages ADD COLUMN feedback INTEGER")
+            if "feedback_reason" not in mcols:
+                c.execute("ALTER TABLE messages ADD COLUMN feedback_reason TEXT")
             c.execute(OWNER_INDEX)
 
     @contextmanager
@@ -144,13 +149,17 @@ class Store:
         with self._connect() as c:
             return c.execute("DELETE FROM threads WHERE owner = ?", (owner,)).rowcount
 
-    def set_feedback(self, thread_id: str, message_id: int, value: int, *, owner: str | None = None) -> bool:
-        """Record +1 / -1 (or 0 to clear) on an assistant message of the owner's thread."""
+    def set_feedback(self, thread_id: str, message_id: int, value: int, *, reason: str | None = None,
+                     owner: str | None = None) -> bool:
+        """Record +1 / -1 (or 0 to clear) on an assistant message of the owner's thread, with an
+        optional reason for a -1 (one of FEEDBACK_REASONS; never free text, so nothing personal)."""
         if self.get_thread(thread_id, owner=owner) is None:
             raise ThreadNotFound(thread_id)
+        reason = reason if value == -1 and reason in FEEDBACK_REASONS else None
         with self._connect() as c:
-            cur = c.execute("UPDATE messages SET feedback = ? WHERE id = ? AND thread_id = ? AND role = 'assistant'",
-                            (value or None, message_id, thread_id))
+            cur = c.execute("UPDATE messages SET feedback = ?, feedback_reason = ? "
+                            "WHERE id = ? AND thread_id = ? AND role = 'assistant'",
+                            (value or None, reason, message_id, thread_id))
         return cur.rowcount > 0
 
     def claim_unowned(self, owner: str) -> int:
@@ -200,7 +209,7 @@ class Store:
         for r in rows:
             out.append({
                 "id": r["id"], "role": r["role"], "text": r["text"], "kind": r["kind"],
-                "feedback": r["feedback"],
+                "feedback": r["feedback"], "feedback_reason": r["feedback_reason"],
                 "source": {"url": r["source_url"], "name": r["source_name"]} if r["source_url"] else None,
                 "footer": f"Last updated from sources: {r['as_of']}" if r["as_of"] else None,
                 "candidates": json.loads(r["candidates"]) if r["candidates"] else None,

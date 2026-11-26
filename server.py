@@ -37,7 +37,7 @@ from bolosip import __version__ as VERSION
 from bolosip import config, guards, llm, pipeline, registry, suggest
 from bolosip.topics import TOPIC_LABELS
 from bolosip.retriever import Retriever, get_retriever
-from bolosip.store import Store, ThreadNotFound
+from bolosip.store import FEEDBACK_REASONS, Store, ThreadNotFound
 
 ROOT = Path(__file__).resolve().parent
 INDEX_HTML = ROOT / "web" / "index.html"
@@ -215,7 +215,9 @@ class Handler(BaseHTTPRequestHandler):
                                     "disclaimer": config.DISCLAIMER, "privacy_hint": config.PRIVACY_HINT,
                                     "max_chars": config.MAX_TEXT_CHARS,
                                     "suggest": suggest.suggestion_index(self.server.retriever),
-                                    "terms": glossary(self.server.retriever)})
+                                    "terms": glossary(self.server.retriever),
+                                    "retention_days": config.SETTINGS.retention_days,
+                                    "help_links": [{"label": l, "url": u} for l, u in config.HELP_LINKS]})
         if path == "/api/schemes":
             self._allow(method, "GET")
             return self._json(200, scheme_list(self.server.retriever))
@@ -282,7 +284,10 @@ class Handler(BaseHTTPRequestHandler):
         value = body.get("value") if isinstance(body, dict) else None
         if isinstance(value, bool) or value not in (1, -1, 0):
             raise ApiError(400, "value must be 1, -1 or 0")
-        if not self.server.store.set_feedback(tid, int(mid_raw), value, owner=self.owner):
+        reason = body.get("reason")
+        if reason is not None and reason not in FEEDBACK_REASONS:
+            raise ApiError(400, f"reason must be one of {', '.join(FEEDBACK_REASONS)}")
+        if not self.server.store.set_feedback(tid, int(mid_raw), value, reason=reason, owner=self.owner):
             raise ApiError(404, "Message not found")
         return self._empty(204)
 

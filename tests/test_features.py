@@ -106,6 +106,11 @@ class TestFeedback(Case):
             with self.subTest(body=bad):
                 self.assertEqual(self.api.request("POST", url, bad)[0], 400)
         self.assertEqual(self.api.request("POST", url, {"value": 1}, headers=OTHER)[0], 404)
+        self.assertEqual(self.api.request("POST", url, {"value": -1, "reason": "incomplete"})[0], 204)
+        self.assertEqual(self.api.messages(tid)[1]["feedback_reason"], "incomplete")
+        self.assertEqual(self.api.request("POST", url, {"value": 1, "reason": "incomplete"})[0], 204)
+        self.assertIsNone(self.api.messages(tid)[1]["feedback_reason"])           # reasons only for a thumbs down
+        self.assertEqual(self.api.request("POST", url, {"value": -1, "reason": "my PAN is ABCDE1234F"})[0], 400)
         user_msg = msgs[0]["id"]                                                   # only replies can be rated
         self.assertEqual(self.api.request("POST", f"/api/threads/{tid}/messages/{user_msg}/feedback",
                                           {"value": 1})[0], 404)

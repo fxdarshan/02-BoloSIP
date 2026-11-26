@@ -270,6 +270,10 @@ GROQ_LIMITS = {
 AMFI_INVESTOR_URL = "https://www.amfiindia.com/investor"
 SEBI_INVESTOR_URL = "https://investor.sebi.gov.in/"
 HDFC_FACTSHEET_URL = "https://www.hdfcfund.com/mutual-funds/factsheets"
+# "Still need help?" under a not-found reply: real, official places only (no invented
+# phone numbers or e-mail addresses). Both sites are already BoloSIP sources.
+HELP_LINKS = (("HDFC Mutual Fund website", "https://www.hdfcfund.com/"),
+              ("AMFI investor help", AMFI_INVESTOR_URL))
 
 # Domains a reply may cite (besides the 27 Groww scheme pages). Used by tests
 # and the evaluation runner to check citations (AC 3).

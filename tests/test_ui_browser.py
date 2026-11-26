@@ -265,6 +265,29 @@ class TestChatPageInBrowser(unittest.TestCase):
         self.page.get_by_role("button", name="Clear all", exact=True).click()
         self.page.locator(".empty-threads").wait_for()
 
+    def test_faqs_edit_and_privacy(self):
+        self.page.click("#tabFaqs")
+        before = self.replies().count()
+        self.page.locator(".faq").first.click()
+        self.replies().nth(before).wait_for()
+        self.assertTrue(self.replies().last.locator(".when").inner_text().strip())      # reply shows its time
+        self.page.locator(".msg-meta.latest .edit").click()
+        self.assertEqual(self.page.input_value("#input"), self.page.locator(".msg-user").last.inner_text())
+        self.page.click("#settingsBtn")
+        self.page.get_by_role("button", name="Privacy and your data").click()
+        self.page.locator("#privacy[open]").wait_for()
+        self.assertGreaterEqual(self.page.locator("#privacyList li").count(), 5)
+
+    def test_not_found_offers_help_and_thumbs_down_asks_why(self):
+        reply = self.ask("what is the weather in Mumbai")
+        self.assertEqual(reply.get_attribute("data-kind"), "not_found")
+        links = reply.locator(".help-row a")
+        self.assertEqual(links.count(), 2)
+        self.assertTrue(all(h.startswith("https://") for h in links.evaluate_all("as => as.map(a => a.href)")))
+        reply.get_by_role("button", name="Not helpful").click()
+        reply.locator(".why-chip", has_text="Incomplete").click()
+        reply.locator(".why.done").wait_for()
+
     def test_keyboard_shortcuts(self):
         self.page.locator("body").click(position={"x": 5, "y": 300})
         self.page.keyboard.press("?")

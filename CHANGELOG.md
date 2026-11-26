@@ -4,6 +4,11 @@ All notable changes to BoloSIP. Newest first.
 
 ## [Unreleased]
 
+### Added (product review, 26 Nov 2026; see Doc/design/product-review.md)
+- Held-out set `holdout2.jsonl` run once: 40/40 (`eval/holdout_run.py`, report in `eval/reports/`). Prompt-injection probes added as tests.
+- Privacy and your data (settings menu, welcome screen); "Still need help?" with official links under not-found replies (`config.HELP_LINKS`); thumbs-down reasons (stored as fixed values; in the usage report with the answered fact); Edit on the latest question; FAQs sidebar tab.
+- Replies show the BoloSIP avatar, name, kind and time; questions show their time; next-step suggestions are outlined pills; a term followed by punctuation no longer wraps on its own.
+
 ### Added (chat page features, 26 Nov 2026)
 - **Scheme browser** (sidebar tab "Schemes"): the 27 schemes grouped Equity / Hybrid / Debt / Fund of funds, with search. **Fact card**: every stored fact of a scheme with its own source link and date, opened from the browser or "All facts" under an answer; "Ask about this scheme" starts a question. API: `GET /api/schemes`, `GET /api/schemes/<id>`.
 - **Answer actions**: copy (with source and date), thumbs up / down stored with the message (`POST /api/threads/<id>/messages/<mid>/feedback`; counted in `scripts/usage_report.py`, "not helpful" answers listed with `--show-unanswered`).
