@@ -197,6 +197,17 @@ class TestChatPageInBrowser(unittest.TestCase):
         self.page.keyboard.press("Escape")
         self.assertEqual(self.page.get_attribute("#menuBtn", "aria-expanded"), "false")
 
+    def test_logo_starts_over(self):
+        self.ask("HDFC Mid Cap exit load")
+        self.page.fill("#input", "a half-typed question")
+        self.page.click("#brand")
+        self.page.locator(".welcome").wait_for()
+        self.assertEqual(self.replies().count(), 0)
+        self.assertEqual(self.page.input_value("#input"), "")
+        self.assertEqual(self.page.locator(".thread[aria-current='true']").count(), 0)
+        self.assertGreaterEqual(self.page.locator(".thread").count(), 1)       # the old chat is kept
+        self.assertEqual(self.page.url, self.url)                              # no page reload
+
 
 if __name__ == "__main__":
     unittest.main()

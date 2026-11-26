@@ -123,7 +123,12 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; margin-right: auto; }
-.brand-mark { width: 30px; height: 30px; filter: drop-shadow(0 2px 6px rgba(0,113,227,.35)); }
+.brand-mark { width: 30px; height: 30px; filter: drop-shadow(0 2px 6px rgba(0,113,227,.35)); transition: transform .3s var(--spring); }
+.brand { border-radius: 10px; padding: 3px 6px 3px 3px; margin-left: -3px; }
+.brand:hover .brand-mark { transform: scale(1.08) rotate(-4deg); }
+.brand:active .brand-mark { transform: scale(.9); }
+.brand-mark.spin { animation: logo-reset .5s var(--spring); }
+@keyframes logo-reset { 40% { transform: scale(.86) rotate(-12deg); } 100% { transform: none; } }
 .brand-name { font: 650 19px/1 var(--display); letter-spacing: -.02em; }
 .brand-name b { font-weight: 650; color: var(--accent); }
 .disclaimer {
@@ -438,7 +443,7 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
 <div class="app">
   <header class="header">
     <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Open chats" aria-controls="sidebar" aria-expanded="false"></button>
-    <a class="brand" href="/" aria-label="BoloSIP home">
+    <a class="brand" id="brand" href="/" aria-label="BoloSIP: start over with a new chat" title="Start over">
       <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
         <defs><linearGradient id="bmGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" style="stop-color: #3ea0ff"/><stop offset="1" style="stop-color: #0058d6"/>
@@ -1150,6 +1155,21 @@ svg.i { width: 1em; height: 1em; flex: none; display: block; }
   });
   ui.composer.addEventListener("submit", e => { e.preventDefault(); if (!ui.send.disabled) send(ui.input.value); });
   $("newChat").addEventListener("click", () => { startNew(); if (narrow.matches) setDrawer(false); });
+
+  // The logo resets the page: a fresh chat, an empty box, back at the top. Ctrl/Cmd/middle
+  // click still opens BoloSIP in a new tab, as a link should.
+  $("brand").addEventListener("click", e => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    state.confirming = null;
+    ui.input.value = "";
+    autosize(); closeSuggest();
+    startNew();
+    ui.scroll.scrollTo({ top: 0 });
+    if (narrow.matches) { setDrawer(false); ui.input.blur(); }   // no keyboard pop-up on phones
+    const mark = $("brand").querySelector(".brand-mark");
+    mark.classList.remove("spin"); void mark.getBoundingClientRect(); mark.classList.add("spin");
+  });
 
   // -------------------------------------------------------------------------
   // Start
